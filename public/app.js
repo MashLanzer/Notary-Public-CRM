@@ -812,10 +812,99 @@ const EmailManager = {
     }
 };
 
-// Make available globally
+// ============================================
+// AUDIT LOGS MANAGER
+// ============================================
+
+const AuditManager = {
+    logs: [],
+
+    init() {
+        this.attachListeners();
+    },
+
+    async logAction(action, resource, details) {
+        if (!NotaryCRM.useFirestore || !NotaryCRM.currentUser) {
+            console.log('Audit log (local):', { action, resource, details, time: new Date() });
+            return;
+        }
+
+        try {
+            const { collection, addDoc, serverTimestamp } = window.dbFuncs;
+            const db = window.firebaseDB;
+            await addDoc(collection(db, 'audit_logs'), {
+                userId: NotaryCRM.currentUser.uid,
+                userEmail: NotaryCRM.currentUser.email,
+                action,
+                resource,
+                details: typeof details === 'object' ? JSON.stringify(details) : details,
+                timestamp: serverTimestamp() || new Date()
+            });
+        } catch (e) {
+            console.error('Audit logs failed', e);
+        }
+    },
+
+    startListener() {
+        if (!NotaryCRM.useFirestore) return;
+        const { collection, query, orderBy, limit, onSnapshot } = window.dbFuncs;
+        try {
+            const logsCol = collection(window.firebaseDB, 'audit_logs');
+            const q = query(logsCol, orderBy('timestamp', 'desc'), limit(100));
+            onSnapshot(q, snapshot => {
+                this.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                this.render();
+            });
+        } catch (e) {
+            console.error('Audit listener failed', e);
+        }
+    },
+
+    render() {
+        const container = document.getElementById('audit-logs-list');
+        if (!container) return;
+
+        if (this.logs.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" class="empty-state">No hay registros de auditoría aún.</td></tr>';
+            return;
+        }
+
+        container.innerHTML = this.logs.map(log => {
+            const timeStr = NotaryCRM.formatDate(log.timestamp, true);
+            const actionClass = log.action.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+            return `
+                <tr>
+                    <td style="font-size: 0.85rem; white-space: nowrap;">${timeStr}</td>
+                    <td>
+                        <div style="font-weight:600; font-size: 0.9rem;">${log.userEmail}</div>
+                        <div style="font-size:0.7rem; color:var(--color-gray-400);">ID: ${log.userId}</div>
+                    </td>
+                    <td><span class="audit-action-badge action-${actionClass}">${log.action}</span></td>
+                    <td><span style="font-weight:500;">${log.resource}</span></td>
+                    <td style="max-width: 250px; font-size: 0.85rem; color:var(--color-gray-600);">${log.details || '-'}</td>
+                </tr>
+            `;
+        }).join('');
+    },
+
+    attachListeners() {
+        const refreshBtn = document.getElementById('refresh-logs-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                Toast.info('Actualizando...', 'Recuperando los registros de auditoría.');
+            });
+        }
+    }
+};
+
+// ============================================
+// EXPORT MANAGERS
+// ============================================
+
 if (typeof window !== 'undefined') {
     window.DashboardManager = DashboardManager;
     window.EmailManager = EmailManager;
+    window.AuditManager = AuditManager;
 }
 
 // Application State
@@ -866,6 +955,9 @@ window.NotaryCRM = {
 
         // Initialize email templates
         EmailManager.init();
+
+        // Initialize audit logs
+        AuditManager.init();
     },
 
     // Initialize form validation
@@ -1112,6 +1204,7 @@ window.NotaryCRM = {
         try {
             const ref = doc(window.firebaseDB, 'users', uid);
             await updateDoc(ref, { role });
+            AuditManager.logAction('Cambio de Rol', `Usuario: ${uid}`, `Nuevo rol: ${role}`);
             Toast.success('Rol Actualizado', `El usuario ahora tiene el rol de ${role}.`);
         } catch (e) {
             console.error('setUserRole failed', e);
@@ -1321,6 +1414,7 @@ window.NotaryCRM = {
 
                     if (this.isAdmin) {
                         this.startUsersListener();
+                        AuditManager.startListener();
                     }
 
                     this.render(); // Re-render everything with new permissions
@@ -1366,6 +1460,9 @@ window.NotaryCRM = {
 
         const usersTabBtn = document.getElementById('users-tab-btn');
         if (usersTabBtn) usersTabBtn.style.display = this.isAdmin ? '' : 'none';
+
+        const auditTabBtn = document.getElementById('audit-tab-btn');
+        if (auditTabBtn) auditTabBtn.style.display = this.isAdmin ? '' : 'none';
     },
 
     // Sign in with Google
@@ -1377,6 +1474,7 @@ window.NotaryCRM = {
         try {
             const provider = new window.authFuncs.GoogleAuthProvider();
             await window.authFuncs.signInWithPopup(window.firebaseAuth, provider);
+            AuditManager.logAction('Inicio de Sesión', 'Google', 'Autenticación exitosa');
             Toast.success('¡Bienvenido!', 'Has iniciado sesión con Google exitosamente.');
         } catch (err) {
             console.error('Google Sign-in failed', err);
@@ -1395,6 +1493,7 @@ window.NotaryCRM = {
         const password = fd.get('password');
         try {
             await window.authFuncs.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+            AuditManager.logAction('Inicio de Sesión', 'Email/Password', email);
             // onAuthStateChanged will handle UI changes
         } catch (err) {
             console.error('Sign-in failed', err);
@@ -1559,6 +1658,7 @@ window.NotaryCRM = {
             const toInsert = Object.assign({}, client, { ownerId: this.currentUser ? this.currentUser.uid : null, createdAt: window.dbFuncs.serverTimestamp() });
             addDoc(clientsCol, toInsert)
                 .then(async (docRef) => {
+                    AuditManager.logAction('Creación de Cliente', client.name, `ID: ${docRef.id}`);
                     this.closeModal('client-modal');
                     Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
                     // also save to SQL backend (if available)
@@ -1589,6 +1689,7 @@ window.NotaryCRM = {
 
     // Delete client
     deleteClient(id) {
+        const client = this.state.clients.find(c => c.id === id);
         this.confirmAction(
             '¿Eliminar Cliente?',
             'Esta acción eliminará todos los datos asociados a este cliente.',
@@ -1601,7 +1702,10 @@ window.NotaryCRM = {
                     const { doc, deleteDoc } = window.dbFuncs;
                     const clientRef = doc(window.firebaseDB, 'clients', id);
                     deleteDoc(clientRef)
-                        .then(() => Toast.success('Cliente Eliminado', 'El cliente ha sido eliminado correctamente.'))
+                        .then(() => {
+                            AuditManager.logAction('Eliminación de Cliente', client ? client.name : 'Unknown', `ID: ${id}`);
+                            Toast.success('Cliente Eliminado', 'El cliente ha sido eliminado correctamente.');
+                        })
                         .catch(err => {
                             console.error('Delete client failed', err);
                             Toast.error('Error', 'No se pudo eliminar el cliente.');
@@ -1705,6 +1809,7 @@ window.NotaryCRM = {
                     }
 
                     this.closeModal('case-modal');
+                    AuditManager.logAction('Creación de Caso', caseItem.caseNumber, `DocID: ${docRef.id}`);
                     Toast.success('Caso Creado', `Caso ${caseItem.caseNumber} ha sido creado exitosamente.`);
                 })
                 .catch(err => {
@@ -1727,6 +1832,7 @@ window.NotaryCRM = {
             '¿Eliminar Caso?',
             '¿Estás seguro de que deseas eliminar este expediente notarial?',
             () => {
+                const caseItem = this.state.cases.find(c => c.id === id);
                 if (this.useFirestore) {
                     if (!this.currentUser) {
                         Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para eliminar casos.');
@@ -1735,7 +1841,10 @@ window.NotaryCRM = {
                     const { doc, deleteDoc } = window.dbFuncs;
                     const caseRef = doc(window.firebaseDB, 'cases', id);
                     deleteDoc(caseRef)
-                        .then(() => Toast.success('Caso Eliminado', 'El caso ha sido eliminado correctamente.'))
+                        .then(() => {
+                            AuditManager.logAction('Eliminación de Caso', caseItem ? caseItem.caseNumber : 'Unknown', `ID: ${id}`);
+                            Toast.success('Caso Eliminado', 'El caso ha sido eliminado correctamente.');
+                        })
                         .catch(err => {
                             console.error('Delete case failed', err);
                             Toast.error('Error', 'No se pudo eliminar el caso.');
@@ -1788,6 +1897,8 @@ window.NotaryCRM = {
             const ref = doc(window.firebaseDB, 'clients', id);
             try {
                 await updateDoc(ref, updates);
+                AuditManager.logAction('Actualización de Cliente', updates.name || id, `ID: ${id}`);
+                Toast.success('Cliente Actualizado', 'Los datos del cliente han sido actualizados.');
             } catch (err) {
                 console.error('Update client failed', err);
             }
@@ -1838,6 +1949,8 @@ window.NotaryCRM = {
             try {
                 // update basic fields
                 await updateDoc(ref, updates);
+                AuditManager.logAction('Actualización de Caso', updates.caseNumber || id, `ID: ${id}`);
+                Toast.success('Caso Actualizado', 'Los datos del expediente han sido actualizados.');
             } catch (err) {
                 console.error('Update case failed', err);
             }
@@ -2133,7 +2246,7 @@ window.NotaryCRM = {
     },
 
     // Format date (handles ISO strings and Firestore Timestamps)
-    formatDate(value) {
+    formatDate(value, showTime = false) {
         if (!value) return 'N/A';
         let dateObj;
         try {
@@ -2146,11 +2259,20 @@ window.NotaryCRM = {
             return 'N/A';
         }
         if (isNaN(dateObj.getTime())) return 'N/A';
-        return dateObj.toLocaleDateString('es-ES', {
+
+        const options = {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
-        });
+        };
+
+        if (showTime) {
+            options.hour = '2-digit';
+            options.minute = '2-digit';
+            options.second = '2-digit';
+        }
+
+        return dateObj.toLocaleDateString('es-ES', options);
     },
 
     copyToClipboard(text) {

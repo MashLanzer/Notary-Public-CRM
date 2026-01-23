@@ -2274,3 +2274,40 @@ body:not(.authenticated) {
     border-radius: var(--radius-md);
     font-size: 0.85rem;
 }
+
+/* Audit Log Badges */
+.audit-action-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.action-creacin-de-cliente,
+.action-creacin-de-caso {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.action-actualizacin-de-cliente,
+.action-actualizacin-de-caso {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.action-eliminacin-de-cliente,
+.action-eliminacin-de-caso {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.action-cambio-de-rol {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.action-inicio-de-sesin {
+    background: #f3e8ff;
+    color: #6b21a8;
+}

@@ -153,6 +153,12 @@
                     </svg>
                     Users
                 </button>
+                <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    Auditoría
+                </button>
             </div>
 
             <!-- Dashboard Tab -->
@@ -437,8 +443,36 @@
                         <p class="empty-state">No users available.</p>
                     </div>
                 </div>
+                <!-- Audit Logs Tab (admin) -->
+                <div class="tab-content" id="audit-tab">
+                    <div class="actions-bar">
+                        <h2 class="section-title">Registros de Auditoría</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha y Hora</th>
+                                        <th>Usuario</th>
+                                        <th>Acción</th>
+                                        <th>Recurso</th>
+                                        <th>Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-logs-list">
+                                    <tr>
+                                        <td colspan="5" class="empty-state">No hay registros de auditoría aún.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
     </main>
 
     <!-- Footer -->
