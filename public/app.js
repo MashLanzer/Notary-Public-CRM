@@ -1240,6 +1240,7 @@ window.NotaryCRM = {
             // No Firebase available — fall back
             this.loadData();
             this.render();
+            this.checkAutomations();
         }
 
         // Register Service Worker for Performance & Offline
@@ -1639,6 +1640,20 @@ window.NotaryCRM = {
         if (exportCasesCsv) exportCasesCsv.addEventListener('click', () => this.exportCases('csv'));
         if (exportCasesJson) exportCasesJson.addEventListener('click', () => this.exportCases('json'));
 
+        // Import Clients CSV
+        const importClientsBtn = document.getElementById('import-clients-btn');
+        const importClientsFile = document.getElementById('import-clients-file');
+        if (importClientsBtn && importClientsFile) {
+            importClientsBtn.addEventListener('click', () => importClientsFile.click());
+            importClientsFile.addEventListener('change', (e) => this.importClients(e.target.files[0]));
+        }
+
+        // Export Report PDF
+        const exportReportPdf = document.getElementById('export-report-pdf');
+        if (exportReportPdf) {
+            exportReportPdf.addEventListener('click', () => this.generateReportPDF());
+        }
+
         // ESC key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1757,6 +1772,7 @@ window.NotaryCRM = {
                     }
 
                     this.render(); // Re-render everything with new permissions
+                    this.checkAutomations();
                 } catch (e) {
                     console.error('Failed to fetch user profile', e);
                     this.currentUserRole = 'viewer';
@@ -1774,6 +1790,7 @@ window.NotaryCRM = {
             this.state.clients = [];
             this.state.cases = [];
             this.render();
+            this.checkAutomations();
         }
     },
 
@@ -3353,11 +3370,92 @@ window.NotaryCRM = {
     },
 
     copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Copiado al portapapeles: ' + text);
-        }).catch(err => {
-            console.error('Error al copiar: ', err);
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                Toast.success('Copiado', 'Enlace copiado al portapapeles.');
+            });
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            Toast.success('Copiado', 'Enlace copiado al portapapeles.');
+        }
+    },
+
+    // --- CSV Import ---
+    async importClients(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const lines = e.target.result.split('\n');
+            if (lines.length < 2) return;
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            let count = 0;
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const vals = lines[i].split(',');
+                const data = {};
+                headers.forEach((h, idx) => data[h] = vals[idx]?.trim() || '');
+                const client = {
+                    name: data.name || data.nombre || 'Imported Client',
+                    email: data.email || '',
+                    phone: data.phone || data.telefono || '',
+                    address: data.address || data.direccion || '',
+                    idType: data.idtype || 'DNI',
+                    idNumber: data.idnumber || data.id || '',
+                    joinDate: new Date().toISOString()
+                };
+                if (this.useFirestore) {
+                    try {
+                        const { collection, addDoc } = window.dbFuncs;
+                        await addDoc(collection(window.firebaseDB, 'clients'), Object.assign({}, client, {
+                            ownerId: this.currentUser ? this.currentUser.uid : null,
+                            createdAt: window.dbFuncs.serverTimestamp()
+                        }));
+                    } catch (err) { }
+                } else {
+                    client.id = Date.now().toString() + i;
+                    this.state.clients.push(client);
+                }
+                count++;
+            }
+            if (!this.useFirestore) this.saveData();
+            this.render();
+            Toast.success('Importación Exitosa', `${count} clientes importados.`);
+        };
+        reader.readAsText(file);
+    },
+
+    // --- Report PDF ---
+    async generateReportPDF() {
+        if (!window.jspdf) return Toast.error('Error', 'PDF library not loaded');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('NOTARY CRM - ANALYTICS', 20, 25);
+        doc.setTextColor(0, 0, 0); doc.setFontSize(10); doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 50);
+        doc.setFontSize(16); doc.text('Executive Summary', 20, 65);
+        doc.setFontSize(12);
+        doc.text(`Total Clients: ${this.state.clients.length}`, 30, 75);
+        doc.text(`Total Cases: ${this.state.cases.length}`, 30, 82);
+        const totalRev = this.state.cases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        doc.text(`Total Revenue: $${totalRev.toFixed(2)}`, 30, 89);
+        const revenueCanvas = document.getElementById('revenueChart');
+        if (revenueCanvas) {
+            try { doc.addImage(revenueCanvas.toDataURL('image/png'), 'PNG', 20, 110, 170, 70); } catch (e) { }
+        }
+        doc.save(`Analytics_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        Toast.success('PDF Guardado', 'El reporte se ha descargado.');
+    },
+
+    // --- Automations ---
+    checkAutomations() {
+        const now = new Date();
+        const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) < now);
+        if (overdue.length > 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
     }
 };
 

@@ -35,7 +35,7 @@
 - [x] **Historial de Actividad**: Timeline completo de interacciones con cada cliente ✅ **COMPLETADO 2026-01-23**
 - [x] **Tags/Etiquetas**: Sistema de categorización con tags personalizables ✅ **COMPLETADO 2026-01-23**
 - [ ] **Fusión de Duplicados**: Herramienta para detectar y fusionar clientes duplicados
-- [ ] **Importación Masiva**: Importar clientes desde CSV/Excel con validación
+- [x] **Importación Masiva**: Importar clientes desde CSV/Excel con validación ✅ **COMPLETADO 2026-01-23**
 - [ ] **Fotos de Perfil**: Permitir subir fotos de perfil de clientes
 - [ ] **Relaciones Familiares**: Vincular clientes relacionados (cónyuge, hijos, etc.)
 - [ ] **Verificación de Identidad**: Integración con servicios de verificación de ID
@@ -43,7 +43,7 @@
 
 ### Gestión de Casos
 - [x] **Templates de Casos**: Plantillas predefinidas para casos comunes ✅ **COMPLETADO 2026-01-23**
-- [ ] **Workflow Automatizado**: Estados y transiciones automáticas según reglas
+- [x] **Workflow Automatizado**: Estados y transiciones automáticas según reglas (Detección de vencimiento) ✅ **COMPLETADO 2026-01-23**
 - [ ] **Asignación de Tareas**: Sistema de tareas/checklist por caso
 - [ ] **Colaboración**: Múltiples usuarios trabajando en el mismo caso
 - [ ] **Versionado de Documentos**: Control de versiones de documentos del caso
@@ -88,7 +88,7 @@
 - [ ] **Predicción de Ingresos**: Proyecciones basadas en históricos
 - [ ] **Análisis de Tendencias**: Identificar patrones en servicios solicitados
 - [ ] **Comparativas Periodo a Periodo**: Comparar rendimiento mes a mes
-- [ ] **Exportación de Reportes**: PDF, Excel, CSV con formato profesional
+- [x] **Exportación de Reportes**: PDF, Excel, CSV con formato profesional ✅ **COMPLETADO 2026-01-23**
 - [ ] **Gráficos Interactivos**: Filtros y drill-down en gráficos
 - [ ] **Heatmaps de Ocupación**: Visualizar días/horas más ocupados
 
