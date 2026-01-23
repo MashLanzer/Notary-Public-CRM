@@ -1,169 +1,122 @@
-# Notary CRM - Versión Vanilla (HTML, CSS, JavaScript)
+# Notary CRM
 
-## 📋 Descripción
+Aplicación personal de Notary CRM. Esta versión incluye:
 
-Aplicación CRM para servicios de notaría pública convertida a **HTML, CSS y JavaScript puro** (sin frameworks ni dependencias).
+- Frontend (vanilla JS) en `public/` con integración a Firebase (Auth, Firestore). (Storage eliminado)
+- Un backend opcional en `server/` (Express + SQLite) para persistencia en SQL y sincronización local.
 
-## 🚀 Características
+Este repositorio ya incluye reglas para Firestore (`firebase.rules`) y configuración mínima (`firebase.json`).
 
-- ✅ **100% Vanilla** - Sin React, Vite, TypeScript, TailwindCSS ni dependencias
-- ✅ **Sistema de Pestañas** - Dashboard, Clientes, Casos
-- ✅ **CRUD Completo** - Crear, Leer, Actualizar, Eliminar
-- ✅ **Persistencia de Datos** - LocalStorage para guardar información
-- ✅ **Búsqueda en Tiempo Real** - Filtrado de clientes y casos
-- ✅ **Diseño Responsivo** - Móvil, tablet y escritorio
-- ✅ **Modales Interactivos** - Formularios para agregar clientes y casos
-- ✅ **Estadísticas en Vivo** - Dashboard con métricas calculadas dinámicamente
+## Rápido resumen de lo que implementé
 
-## 📁 Estructura de Archivos
+- Autenticación con Firebase Auth (email/password).
+- Roles (`/users/{uid}`) con `role: 'user'` por defecto y posibilidad de promover a `admin`.
+- CRUD completo para clientes y casos usando Firestore (realtime) y además sincronizando con un servidor SQL local (Express + SQLite).
+-- En esta versión no se suben archivos a Firebase Storage; los casos no almacenan adjuntos en Storage.
+-- Reglas de seguridad de Firestore para permitir acceso solo al `ownerId` o `admin`.
+- Preparé `firebase.json` para Hosting y reglas.
+
+## Estructura relevante
 
 ```
-vanilla/
-├── index.html    # Estructura HTML completa
-├── styles.css    # Sistema de diseño CSS personalizado
-├── app.js        # Lógica JavaScript de la aplicación
-└── README.md     # Este archivo
+.
+├── public/                 # Frontend static site (index.html, app.js, styles.css)
+├── server/                 # Optional Express backend with SQLite (notary.db)
+│   ├── index.js
+│   └── package.json
+├── firebase.rules
+ 
+├── firebase.json
+└── README.md
 ```
 
-## 🎯 Cómo Usar
+## Ejecutar localmente (recomendado flujo de desarrollo)
 
-### Opción 1: Abrir Directamente
-1. Abre el archivo `index.html` en tu navegador web
-2. ¡Listo! La aplicación ya está funcionando
+1) Backend SQL (opcional, para guardar también en SQL):
 
-### Opción 2: Con Servidor Local (Recomendado)
+```powershell
+cd server
+npm install
+npm start
 
-Si tienes Python instalado:
-```bash
-cd vanilla
-python -m http.server 8000
+# el servidor escuchará en http://localhost:5000
 ```
 
-Si tienes Node.js instalado:
-```bash
-cd vanilla
-npx serve
+2) Servir `public/` desde un servidor estático (o Firebase Hosting después):
+
+```powershell
+# desde la raíz del repo
+python -m http.server 5500 --directory public
+# abrir http://localhost:5500
 ```
 
-Luego abre `http://localhost:8000` en tu navegador.
+3) Usar Firebase (opcional pero necesario para Auth/Firestore reales):
 
-## 🎨 Personalización
-
-### Colores
-Edita las variables CSS en `styles.css`:
-```css
-:root {
-    --color-primary: #1e3a8a;      /* Azul principal */
-    --color-success: #16a34a;       /* Verde (completado) */
-    --color-warning: #eab308;       /* Amarillo (pendiente) */
-    --color-danger: #dc2626;        /* Rojo (eliminar) */
-}
+```powershell
+npm install -g firebase-tools
+firebase login
+# inicializar si no lo hiciste: firebase init (elige Hosting y Firestore)
+firebase deploy --only hosting,firestore
 ```
 
-### Tipografía
-Por defecto usa Google Fonts (Inter y Poppins). Cambia en `index.html`:
-```html
-<link href="https://fonts.googleapis.com/css2?family=TuFuente&display=swap" rel="stylesheet">
+Nota: el frontend intentará sincronizar con el backend SQL en `http://localhost:5000/api/...` si está activo. En producción deberías usar una API segura (Cloud Functions, Cloud Run, etc.).
+
+## CI/CD (GitHub Actions)
+
+También puedo añadir un workflow para desplegar automáticamente a Firebase cuando pushes a `main`. Necesitas un `FIREBASE_TOKEN` (ci token) en los Secrets de GitHub.
+
+## Reminders / Recordatorios (local)
+
+La aplicación ahora incluye una funcionalidad de recordatorios que se ejecuta completamente en el navegador sin necesidad de servidor:
+
+- Abre el botón "Recordatorios" en el header para crear, listar y eliminar recordatorios.
+- Los recordatorios se guardan en `localStorage` (clave `notary_reminders_v1`).
+- Cuando llega la hora, la app intenta mostrar una notificación del navegador (Notification API). Si el navegador bloquea notificaciones, la app mostrará un `alert()` como fallback.
+- No se envían datos a ningún servicio externo: todo se gestiona localmente.
+
+## Tests
+
+- Se añadió una prueba de humo (smoke) para validar la presencia de `public/index.html`.
+- Ejecutar desde la carpeta `server`:
+
+```powershell
+cd server
+npm run test:smoke
 ```
 
-## 💾 Almacenamiento de Datos
+## Notas sobre deploy
 
-Los datos se guardan automáticamente en `localStorage`:
-- `notary_clients` - Lista de clientes
-- `notary_cases` - Lista de casos
+- No pude ejecutar `firebase deploy` en este entorno porque no dispongo de las credenciales del proyecto del usuario. Para desplegar:
 
-Para limpiar los datos:
-```javascript
-localStorage.clear();
-location.reload();
-```
+	- Localmente (interactivo):
 
-## 🔧 Funcionalidades
+	```powershell
+	npm install -g firebase-tools
+	firebase login
+	firebase deploy --only hosting,firestore
+	```
 
-### Dashboard
-- Total de clientes
-- Total de casos
-- Casos completados
-- Ingresos totales
-- Tabla de casos recientes
+	- CI/GitHub Actions: añade `FIREBASE_TOKEN` en los Secrets y el workflow en `.github/workflows/firebase-deploy.yml` hará el deploy automático al hacer push a `main`.
 
-### Gestión de Clientes
-- Agregar nuevos clientes
-- Buscar clientes por nombre
-- Ver detalles (email, teléfono, dirección)
-- Eliminar clientes
-- Fecha de registro automática
 
-### Gestión de Casos
-- Agregar nuevos casos
-- Buscar por número de caso o cliente
-- Estados: Pendiente, En Progreso, Completado
-- Seguimiento de montos y fechas
-- Eliminar casos
+## Seguridad y Reglas
 
-## 🌐 Compatibilidad de Navegadores
+- `firebase.rules` contiene las reglas de Firestore (ownerId + admin checks).
+-- No hay reglas de Storage en este repo (Storage eliminado).
 
-- ✅ Chrome/Edge (Chromium) - Última versión
-- ✅ Firefox - Última versión
-- ✅ Safari - Última versión
-- ⚠️ Internet Explorer - No soportado
+## Siguientes mejoras recomendadas (puedo implementarlas):
 
-## 📱 Responsive Design
-
-La aplicación se adapta automáticamente a:
-- 📱 Móvil: < 640px
-- 📱 Tablet: 640px - 1024px
-- 💻 Desktop: > 1024px
-
-## 🎓 Estructura del Código
-
-### JavaScript (app.js)
-```javascript
-NotaryCRM.init()           // Inicializar aplicación
-NotaryCRM.render()         // Renderizar UI completa
-NotaryCRM.addClient()      // Agregar cliente
-NotaryCRM.addCase()        // Agregar caso
-NotaryCRM.deleteClient()   // Eliminar cliente
-NotaryCRM.deleteCase()     // Eliminar caso
-```
-
-### Datos de Ejemplo
-La aplicación viene con datos de ejemplo para demostración. Se cargan automáticamente la primera vez que abres la app.
-
-## 🔒 Seguridad
-
-⚠️ **Nota Importante**: Esta es una aplicación de cliente (frontend only). Los datos se almacenan localmente en el navegador del usuario. Para un entorno de producción, deberías:
-
-1. Implementar un backend (Node.js, PHP, Python, etc.)
-2. Usar una base de datos (MySQL, PostgreSQL, MongoDB, etc.)
-3. Agregar autenticación de usuarios
-4. Implementar validación del lado del servidor
-
-## 📝 Notas de Conversión
-
-Esta versión vanilla fue convertida desde:
-- React 19.2.1
-- Vite 7.1.7
-- TypeScript 5.6.3
-- TailwindCSS 4.1.14
-- Radix UI Components
-
-Toda la funcionalidad se mantiene sin dependencias externas.
-
-## 🤝 Contribuciones
-
-Para agregar nuevas características:
-
-1. **Nuevo campo en formulario**: Edita el HTML del modal y actualiza las funciones `addClient()` o `addCase()` en `app.js`
-
-2. **Nuevo estado de caso**: Agrega al objeto `statusConfig` en el método `renderStatusBadge()`
-
-3. **Nuevo estilo**: Agrega clases CSS en `styles.css` siguiendo el patrón BEM
-
-## 📄 Licencia
-
-MIT License - Libre para uso personal y comercial
+- Paginación y búsqueda avanzada (indexación Firestore).
+- Cache offline con Firestore persistence.
+- Exportar a CSV/JSON.
+- Notificaciones y recordatorios (Cloud Functions + SendGrid / FCM).
+- Crear GitHub Action para deploy automático.
 
 ---
 
-**Desarrollado con ❤️ usando Vanilla JavaScript**
+Si quieres, procedo con:
+
+- implementar paginación y búsqueda avanzada ahora (sugerido), o
+- generar GitHub Action para CI/CD y luego intentar `firebase deploy` desde este entorno (nota: deploy requiere que el entorno esté autenticado o que proporciones un token CI).
+
+Dime cuál prefieres y continúo.

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notary Public CRM & Professional Website</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <div class="landing-content">
+            <div class="landing-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    style="width:40px;height:40px;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <h1 class="landing-title">Notary CRM</h1>
+            <p class="landing-subtitle">Administra tu negocio de notaría de forma profesional y eficiente.</p>
+
+            <button class="google-btn" id="google-login-btn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continuar con Google
+            </button>
+
+            <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--color-gray-500);">
+                O usa tu cuenta de correo corporativo
+                <div style="margin-top: 0.8rem;">
+                    <button class="btn" onclick="NotaryCRM.openModal('auth-modal')">Iniciar sesión con Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="header-title">Notary Public CRM</h1>
+                    <p class="header-subtitle">Professional Client & Case Management</p>
+                </div>
+                <div class="header-badge">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span class="badge-text">Notary License</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-reminders" id="open-reminders-panel" style="display:none;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        Reminders
+                    </button>
+                    <div id="auth-area" class="auth-area">
+                        <!-- Sign Out will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    Dashboard
+                </button>
+                <button class="tab-btn" data-tab="clients">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Clients
+                </button>
+                <button class="tab-btn" data-tab="cases">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Cases
+                </button>
+                <button class="tab-btn" data-tab="reminders">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Reminders
+                </button>
+                <button class="tab-btn" data-tab="calendar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Calendar
+                </button>
+                <button class="tab-btn" data-tab="reports">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Reports
+                </button>
+                <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                    Users
+                </button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard-tab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Total Clients</p>
+                                <p class="stat-value" id="total-clients">0</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Total Cases</p>
+                                <p class="stat-value" id="total-cases">0</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-success">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Completed</p>
+                                <p class="stat-value stat-value-success" id="completed-cases">0</p>
+                            </div>
+                            <svg class="stat-icon stat-icon-success" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Total Revenue</p>
+                                <p class="stat-value" id="total-revenue">$0</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Cases -->
+                <div class="card">
+                    <h2 class="card-title">Recent Cases</h2>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Case #</th>
+                                    <th>Client</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-cases-table">
+                                <tr>
+                                    <td colspan="5" class="empty-state">No cases yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div class="tab-content" id="clients-tab">
+                <div class="actions-bar">
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="search-clients" placeholder="Search clients...">
+                    </div>
+                    <button class="btn btn-primary" id="add-client-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Client
+                    </button>
+                    <button class="btn" id="export-clients-csv">Export CSV</button>
+                    <button class="btn" id="export-clients-json">Export JSON</button>
+                </div>
+
+                <div class="clients-grid" id="clients-grid">
+                    <p class="empty-state">No clients yet. Click "Add Client" to get started.</p>
+                </div>
+                <div class="pagination" id="clients-pagination"
+                    style="display:flex; gap:.5rem; align-items:center; margin-top:1rem;">
+                    <button class="btn" id="clients-prev">Prev</button>
+                    <span id="clients-page-indicator">Page 1</span>
+                    <button class="btn" id="clients-next">Next</button>
+                    <label style="margin-left:8px;">Per page:
+                        <select id="clients-page-size">
+                            <option value="4">4</option>
+                            <option value="6" selected>6</option>
+                            <option value="12">12</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Reminders Tab -->
+            <div class="tab-content" id="reminders-tab">
+                <div class="actions-bar">
+                    <h2 class="section-title">Recordatorios Programados</h2>
+                    <button class="btn btn-primary" onclick="NotaryCRM.openModal('reminders-modal')">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nuevo Recordatorio
+                    </button>
+                </div>
+
+                <div class="reminders-timeline" id="reminders-tab-timeline">
+                    <!-- Timeline content injected by app.js -->
+                </div>
+            </div>
+
+            <!-- Calendar Tab -->
+            <div class="tab-content" id="calendar-tab">
+                <div class="actions-bar">
+                    <h2 class="section-title">Calendario de Citas</h2>
+                    <button class="btn btn-primary" onclick="NotaryCRM.openModal('calendar-modal')">Nueva Cita</button>
+                </div>
+                <div class="card" style="margin-top: 1.5rem; padding: 1.5rem;">
+                    <div id="calendar-view"></div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reports-tab">
+                <div class="actions-bar">
+                    <h2 class="section-title">Análisis de Ingresos y Servicios</h2>
+                    <div class="header-actions">
+                        <select class="form-input" id="report-filter" style="width: 200px;"
+                            onchange="NotaryCRM.renderReports()">
+                            <option value="all">Todo el tiempo</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                            <option value="lastMonth">Mes pasado</option>
+                            <option value="year">Este año</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 1.5rem; grid-template-columns: 1fr;">
+                    <div class="stat-card" style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <p class="stat-label">Total Ingresos Filatrados</p>
+                            <p class="stat-value" id="report-total-revenue">$0.00</p>
+                        </div>
+                        <div class="brand-icon"
+                            style="background: var(--color-success); border-radius: 12px; width: 48px; height: 48px;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid reports-grid" style="margin-top: 1.5rem;">
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3>Ingresos por Mes</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3>Servicios más Solicitados</h3>
+                        <canvas id="servicesChart"></canvas>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3>Estado de los Casos</h3>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3>Ingresos por Ubicación</h3>
+                        <canvas id="locationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cases Tab -->
+            <div class="tab-content" id="cases-tab">
+                <div class="actions-bar">
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="search-cases" placeholder="Search cases...">
+                    </div>
+                    <button class="btn btn-primary" id="add-case-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Case
+                    </button>
+                    <button class="btn" id="export-cases-csv">Export CSV</button>
+                    <button class="btn" id="export-cases-json">Export JSON</button>
+                </div>
+
+                <div class="cases-list" id="cases-list">
+                    <p class="empty-state">No cases yet. Click "Add Case" to get started.</p>
+                </div>
+                <div class="pagination" id="cases-pagination"
+                    style="display:flex; gap:.5rem; align-items:center; margin-top:1rem;">
+                    <button class="btn" id="cases-prev">Prev</button>
+                    <span id="cases-page-indicator">Page 1</span>
+                    <button class="btn" id="cases-next">Next</button>
+                    <label style="margin-left:8px;">Per page:
+                        <select id="cases-page-size">
+                            <option value="4">4</option>
+                            <option value="6" selected>6</option>
+                            <option value="12">12</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <!-- Users Tab (admin) -->
+            <div class="tab-content" id="users-tab">
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="refresh-users-btn">Refresh Users</button>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">Users</h2>
+                    <div id="users-list">
+                        <p class="empty-state">No users available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4 class="footer-title">Notary Public CRM</h4>
+                    <p class="footer-text">Professional client and case management system for notary services.</p>
+                </div>
+                <div>
+                    <h4 class="footer-heading">Features</h4>
+                    <ul class="footer-list">
+                        <li>Client Management</li>
+                        <li>Case Tracking</li>
+                        <li>Revenue Analytics</li>
+                        <li>Document Management</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-heading">Contact</h4>
+                    <p class="footer-text">Email: info@notarycrm.com</p>
+                    <p class="footer-text">Phone: (555) 123-4567</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Notary Public CRM. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Add Client Modal -->
+    <div class="modal" id="client-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Client</h3>
+                <button class="modal-close" data-modal="client-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="client-form">
+                <input type="hidden" name="id" />
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" name="name" placeholder="Client name" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" name="email" placeholder="client@example.com" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-input" name="phone" placeholder="(555) 123-4567" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="date" class="form-input" name="birthDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" name="address" placeholder="Street address" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">ID Type</label>
+                        <select class="form-input" name="idType">
+                            <option value="DNI">DNI / Cédula</option>
+                            <option value="Passport">Pasaporte</option>
+                            <option value="Driver License">Licencia de conducir</option>
+                            <option value="Other">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">ID Number</label>
+                        <input type="text" class="form-input" name="idNumber" placeholder="Number">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Marital Status</label>
+                        <select class="form-input" name="maritalStatus">
+                            <option value="Single">Soltero(a)</option>
+                            <option value="Married">Casado(a)</option>
+                            <option value="Divorced">Divorciado(a)</option>
+                            <option value="Widowed">Viudo(a)</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Occupation</label>
+                        <select class="form-input" name="occupation">
+                            <option value="Empleado">Empleado</option>
+                            <option value="Empresario">Empresario / Dueño de Negocio</option>
+                            <option value="Profesional Independiente">Profesional Independiente</option>
+                            <option value="Estudiante">Estudiante</option>
+                            <option value="Jubilado">Jubilado</option>
+                            <option value="Ama de Casa">Ama de Casa</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes / Observations</label>
+                    <textarea class="form-input" name="notes" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Save Client</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Case Modal -->
+    <div class="modal" id="case-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Case</h3>
+                <button class="modal-close" data-modal="case-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="case-form">
+                <input type="hidden" name="id" />
+                <!-- attachment removed per project settings -->
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Case Number (Auto-generated)</label>
+                        <input type="text" class="form-input" name="caseNumber" placeholder="Auto-generated" readonly>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Client</label>
+                        <select class="form-input" name="clientId" id="case-client-select" required>
+                            <option value="">Select a client</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Service Type</label>
+                        <select class="form-input" name="type" required>
+                            <option value="Apostille">Apostilla</option>
+                            <option value="Power of Attorney">Poder Notarial</option>
+                            <option value="Affidavit">Declaración Jurada (Affidavit)</option>
+                            <option value="Real Estate Deed">Escritura de Propiedad</option>
+                            <option value="Wills / Trusts">Testamentos / Fideicomisos</option>
+                            <option value="Certified Copies">Copias Certificadas</option>
+                            <option value="Oath / Affirmation">Juramentos</option>
+                            <option value="Loan Signing">Firma de Préstamos</option>
+                            <option value="Acknowledgment">Reconocimiento de Firma</option>
+                            <option value="Other">Otro Servicio</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Location</label>
+                        <select class="form-input" name="location">
+                            <option value="Oficina">Oficina</option>
+                            <option value="Casa">Casa</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Notary Fee ($)</label>
+                        <input type="number" class="form-input" name="amount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Payment Status</label>
+                        <select class="form-input" name="paymentStatus">
+                            <option value="pending">Pendiente</option>
+                            <option value="partial">Pago Parcial</option>
+                            <option value="paid">Pagado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-input" name="dueDate" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Status</label>
+                        <select class="form-input" name="status">
+                            <option value="pending">Pendiente</option>
+                            <option value="in-progress">En proceso</option>
+                            <option value="completed">Completado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description / Internal Notes</label>
+                    <textarea class="form-input" name="description" rows="2" placeholder="Case details..."
+                        required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Save Case</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reminders Modal -->
+    <div class="modal" id="reminders-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Recordatorios</h3>
+                <button class="modal-close" data-modal="reminders-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="reminder-form">
+                <div class="form-group">
+                    <label class="form-label">Título</label>
+                    <input type="text" class="form-input" name="title" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mensaje</label>
+                    <input type="text" class="form-input" name="message" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha y hora</label>
+                    <input type="datetime-local" class="form-input" name="when" required />
+                </div>
+                <div style="display:flex; gap:.5rem; align-items:center;">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn" id="refresh-reminders-btn">Refrescar</button>
+                </div>
+                <div style="margin-top:1rem;">
+                    <h4>Próximos recordatorios</h4>
+                    <div id="reminders-list">
+                        <p class="empty-state">No hay recordatorios.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-confirm">
+            <div class="confirm-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h3 id="confirm-title">¿Estás seguro?</h3>
+            <p id="confirm-message">Esta acción no se puede deshacer.</p>
+            <div class="confirm-actions">
+                <button class="btn" id="confirm-cancel">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment/Calendar Modal -->
+    <div class="modal" id="calendar-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Programar Cita</h3>
+                <button class="modal-close" data-modal="calendar-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="calendar-form">
+                <div class="form-group">
+                    <label class="form-label">Cliente</label>
+                    <select class="form-input" name="clientId" id="cal-client-select" required>
+                        <option value="">Selecciona un cliente</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" class="form-input" name="date" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Hora</label>
+                        <input type="time" class="form-input" name="time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Servicio</label>
+                    <select class="form-input" name="type" required>
+                        <option value="Apostille">Apostilla</option>
+                        <option value="Power of Attorney">Poder Notarial</option>
+                        <option value="Affidavit">Declaración Jurada</option>
+                        <option value="Loan Signing">Firma de Préstamos</option>
+                        <option value="Other">Otro</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Agendar Cita</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div class="modal" id="day-details-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('day-details-modal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="day-details-title">Citas del día</h3>
+                <button class="modal-close" data-modal="day-details-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="day-appointments-list" class="reminders-timeline" style="margin-top: 0;">
+                    <!-- Appointed items will be injected here -->
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" id="add-from-day-btn">Nueva Cita</button>
+                    <button class="btn" onclick="NotaryCRM.shareDayAgenda()" style="background:#e0f2fe; color:#0369a1;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                        Compartir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Details Modal -->
+    <div class="modal" id="client-details-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('client-details-modal')"></div>
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Expediente del Cliente</h3>
+                <button class="modal-close" data-modal="client-details-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="client-details-content">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Case Details Modal -->
+    <div class="modal" id="case-details-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('case-details-modal')"></div>
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalles del Caso</h3>
+                <button class="modal-close" data-modal="case-details-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="case-details-content">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content for Reminders -->
+    <div id="reminders-tab-container" style="display:none;">
+        <!-- This will be handled in app.js by switching tabs -->
+    </div>
+
+    <!-- Keep existing auth-modal but improve its styling via CSS -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Acceder</h3>
+                <button class="modal-close" data-modal="auth-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico</label>
+                    <input type="email" class="form-input" name="email" placeholder="tu@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-input" name="password" placeholder="Contraseña" required>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:1.5rem;">
+                    <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
+                    <button type="button" class="btn btn-block" id="register-btn">Crear cuenta nueva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- jsPDF Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
