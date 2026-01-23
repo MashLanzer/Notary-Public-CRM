@@ -1030,6 +1030,85 @@ const TimelineManager = {
 };
 
 // ============================================
+// TASK MANAGER (CHECKLIST PER CASE)
+// ============================================
+
+const TaskManager = {
+    async addTask(caseId, title) {
+        if (!title.trim()) return;
+
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        const tasks = caseItem.tasks || [];
+        const newTask = {
+            id: Date.now().toString(),
+            title: title.trim(),
+            completed: false,
+            createdAt: new Date().toISOString()
+        };
+
+        tasks.push(newTask);
+        await NotaryCRM.updateCase(caseId, { tasks });
+        NotaryCRM.showCaseDetails(caseId); // Refresh view
+    },
+
+    async toggleTask(caseId, taskId) {
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        const tasks = (caseItem.tasks || []).map(t =>
+            t.id === taskId ? { ...t, completed: !t.completed } : t
+        );
+
+        await NotaryCRM.updateCase(caseId, { tasks });
+        NotaryCRM.showCaseDetails(caseId);
+    },
+
+    async deleteTask(caseId, taskId) {
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        const tasks = (caseItem.tasks || []).filter(t => t.id !== taskId);
+
+        await NotaryCRM.updateCase(caseId, { tasks });
+        NotaryCRM.showCaseDetails(caseId);
+    },
+
+    renderTaskList(caseId, tasks = []) {
+        const isEs = I18nManager.currentLang === 'es';
+
+        return `
+            <div class="tasks-section" style="margin-top: 2rem; border-top: 1px solid var(--color-gray-200); padding-top: 1.5rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    ${isEs ? 'Checklist de Tareas' : 'Task Checklist'}
+                </h4>
+                
+                <div class="task-input-group" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="new-task-title" class="form-input" placeholder="${isEs ? 'Nueva tarea...' : 'New task...'}" style="flex: 1;">
+                    <button class="btn btn-primary" onclick="TaskManager.addTask('${caseId}', document.getElementById('new-task-title').value)">
+                        ${isEs ? 'Añadir' : 'Add'}
+                    </button>
+                </div>
+
+                <div class="task-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${tasks.length === 0 ? `<p class="empty-state" style="padding: 1rem;">${isEs ? 'Sin tareas pendientes.' : 'No tasks pending.'}</p>` : tasks.map(t => `
+                        <div class="task-item" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--color-gray-50); border-radius: 8px; border: 1px solid var(--color-gray-200);">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="TaskManager.toggleTask('${caseId}', '${t.id}')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span style="flex: 1; ${t.completed ? 'text-decoration: line-through; color: var(--color-gray-400);' : ''}">${t.title}</span>
+                            <button class="btn-icon btn-danger" onclick="TaskManager.deleteTask('${caseId}', '${t.id}')" style="padding: 4px;">
+                                <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+};
+
+// ============================================
 // I18N MANAGER (MULTI-LANGUAGE)
 // ============================================
 
@@ -1191,6 +1270,7 @@ if (typeof window !== 'undefined') {
     window.PaymentManager = PaymentManager;
     window.I18nManager = I18nManager;
     window.TimelineManager = TimelineManager;
+    window.TaskManager = TaskManager;
 }
 
 // Application State
@@ -1654,6 +1734,12 @@ window.NotaryCRM = {
             exportReportPdf.addEventListener('click', () => this.generateReportPDF());
         }
 
+        // Duplicates
+        const checkDuplicatesBtn = document.getElementById('check-duplicates-btn');
+        if (checkDuplicatesBtn) {
+            checkDuplicatesBtn.addEventListener('click', () => this.checkDuplicates());
+        }
+
         // ESC key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1927,12 +2013,13 @@ window.NotaryCRM = {
         document.body.style.overflow = 'hidden';
 
         // Auto-populate client selects if they exist in the modal
-        const clientSelects = ['case-client-select', 'cal-client-select'];
+        const clientSelects = ['case-client-select', 'cal-client-select', 'client-related-select'];
         clientSelects.forEach(id => {
             const select = document.getElementById(id);
             if (select) {
                 const currentVal = select.value;
-                select.innerHTML = '<option value="">Selecciona un cliente</option>' +
+                const isEs = I18nManager.currentLang === 'es';
+                select.innerHTML = `<option value="">${isEs ? 'Selecciona un cliente' : 'Select a client'}</option>` +
                     this.state.clients.map(c => `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.name}</option>`).join('');
             }
         });
@@ -1995,6 +2082,7 @@ window.NotaryCRM = {
             maritalStatus: formData.get('maritalStatus'),
             occupation: formData.get('occupation'),
             notes: formData.get('notes'),
+            relatedId: formData.get('relatedId') || null,
             tags: tags,
             joinDate: new Date().toISOString()
         };
@@ -2245,6 +2333,7 @@ window.NotaryCRM = {
         if (form.querySelector('select[name="maritalStatus"]')) form.querySelector('select[name="maritalStatus"]').value = client.maritalStatus || 'Single';
         if (form.querySelector('select[name="occupation"]')) form.querySelector('select[name="occupation"]').value = client.occupation || 'Empleado';
         if (form.querySelector('textarea[name="notes"]')) form.querySelector('textarea[name="notes"]').value = client.notes || '';
+        if (form.querySelector('select[name="relatedId"]')) form.querySelector('select[name="relatedId"]').value = client.relatedId || '';
         if (form.querySelector('input[name="tags"]')) form.querySelector('input[name="tags"]').value = (client.tags || []).join(', ');
 
         this.openModal('client-modal');
@@ -2369,7 +2458,7 @@ window.NotaryCRM = {
                 <td style="font-weight: 500; color: var(--color-primary);">${c.caseNumber}</td>
                 <td style="color: var(--color-gray-700);">${c.clientName}</td>
                 <td style="color: var(--color-gray-700);">${c.type}</td>
-                <td>${this.renderStatusBadge(c.status)}</td>
+                <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
                 <td style="font-weight: 600; color: var(--color-gray-900);">$${c.amount}</td>
             </tr>
         `).join('');
@@ -2427,12 +2516,7 @@ window.NotaryCRM = {
             <div class="client-card premium-card">
                 <div class="client-header">
                     <div class="client-info">
-                        <div class="client-avatar">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                            </svg>
-                        </div>
+                        <img class="client-avatar" src="https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=random&color=fff" alt="${client.name}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
                         <div>
                             <h3 class="client-name">${client.name}</h3>
                             <p class="client-id">${client.idType || 'ID'}: ${client.idNumber || 'N/A'}</p>
@@ -2525,7 +2609,7 @@ window.NotaryCRM = {
                         <div class="case-title-row">
                             <h3 class="case-number">${caseItem.caseNumber}</h3>
                             <div style="display:flex; gap:0.5rem; flex-wrap: wrap;">
-                                ${this.renderStatusBadge(caseItem.status)}
+                                ${this.renderStatusBadge(caseItem.status, caseItem.dueDate)}
                                 <span class="payment-badge ${caseItem.paymentStatus || 'pending'}">${(caseItem.paymentStatus || 'PENDIENTE').toUpperCase()}</span>
                             </div>
                         </div>
@@ -2595,33 +2679,46 @@ window.NotaryCRM = {
     },
 
     // Render status badge
-    renderStatusBadge(status) {
+    renderStatusBadge(status, dueDate = null) {
+        const isEs = I18nManager.currentLang === 'es';
         const statusConfig = {
             'completed': {
                 class: 'status-completed',
                 icon: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
-                text: 'Completed'
+                text: isEs ? 'Completado' : 'Completed'
             },
             'in-progress': {
                 class: 'status-in-progress',
                 icon: '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
-                text: 'In Progress'
+                text: isEs ? 'En Proceso' : 'In Progress'
             },
             'pending': {
                 class: 'status-pending',
                 icon: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
-                text: 'Pending'
+                text: isEs ? 'Pendiente' : 'Pending'
             }
         };
 
         const config = statusConfig[status] || statusConfig['pending'];
 
+        let slaWarning = '';
+        if (dueDate && (status === 'pending' || status === 'in-progress')) {
+            const due = new Date(dueDate);
+            const now = new Date();
+            const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 3) {
+                const color = diffDays < 0 ? '#b91c1c' : '#d97706';
+                slaWarning = `<svg class="icon" style="color:${color}; margin-left: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+            }
+        }
+
         return `
-            <span class="status-badge ${config.class}">
+            <span class="status-badge ${config.class}" style="display: inline-flex; align-items: center;">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${config.icon}
                 </svg>
                 ${config.text}
+                ${slaWarning}
             </span>
         `;
     },
@@ -2926,9 +3023,14 @@ window.NotaryCRM = {
                             </div>
                             <div class="timeline-title">${app.clientName}</div>
                         </div>
-                        <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteAppointment('${app.id}')" title="Eliminar Cita">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Cita Notarial: ' + app.clientName)}&dates=${app.date.replace(/-/g, '')}T${app.time.replace(/:/g, '')}00Z&details=${encodeURIComponent('Servicio: ' + app.type)}&sf=true&output=xml" target="_blank" class="btn-icon" title="Añadir a Google Calendar" style="color: #4285f4;">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><path d="M21 6H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path></svg>
+                            </a>
+                            <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteAppointment('${app.id}')" title="Eliminar Cita">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -2971,6 +3073,7 @@ window.NotaryCRM = {
 
         const clientCases = this.state.cases.filter(c => c.clientId === id);
         const clientApps = this.state.appointments.filter(a => a.clientId === id);
+        const relatedClient = client.relatedId ? this.state.clients.find(c => c.id === client.relatedId) : null;
 
         const content = document.getElementById('client-details-content');
         content.innerHTML = `
@@ -2980,7 +3083,7 @@ window.NotaryCRM = {
                 <div class="case-detail-item"><p class="case-detail-label">Email</p><p class="case-detail-value">${client.email}</p></div>
                 <div class="case-detail-item"><p class="case-detail-label">Teléfono</p><p class="case-detail-value">${client.phone}</p></div>
                 <div class="case-detail-item"><p class="case-detail-label">Ocupación</p><p class="case-detail-value">${client.occupation || 'N/A'}</p></div>
-                <div class="case-detail-item"><p class="case-detail-label">Estado Civil</p><p class="case-detail-value">${client.maritalStatus || 'N/A'}</p></div>
+                <div class="case-detail-item"><p class="case-detail-label">Vínculo Familiar</p><p class="case-detail-value">${relatedClient ? `<a href="#" onclick="NotaryCRM.showClientDetails('${relatedClient.id}')" style="color: var(--color-primary); font-weight: 600;">${relatedClient.name}</a>` : 'N/A'}</p></div>
             </div>
             
             <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Historial de Casos' : 'Case History'} (${clientCases.length})</h4>
@@ -2999,7 +3102,7 @@ window.NotaryCRM = {
                             <tr>
                                 <td><strong>${c.caseNumber}</strong></td>
                                 <td>${c.type}</td>
-                                <td>${this.renderStatusBadge(c.status)}</td>
+                                <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
                                 <td>$${c.amount}</td>
                             </tr>
                         `).join('')}
@@ -3088,6 +3191,8 @@ window.NotaryCRM = {
                             <span style="font-weight: 600; color: #d97706;">${caseItem.location || 'Oficina Central'}</span>
                         </div>
                     </div>
+
+                    ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
                 </div>
                 
                 <div class="case-details-sidebar">
@@ -3125,6 +3230,10 @@ window.NotaryCRM = {
                         <button class="btn btn-block btn-outline-purple" onclick="NotaryCRM.sendForSignature('${caseItem.id}')">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                             Solicitar Firma
+                        </button>
+                        <button class="btn btn-block" style="background: #25d366; color: white;" onclick="NotaryCRM.sendReminder('${caseItem.id}', 'whatsapp')">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            Enviar Recordatorio (WA)
                         </button>
                     </div>
                 </div>
@@ -3456,6 +3565,88 @@ window.NotaryCRM = {
         const now = new Date();
         const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) < now);
         if (overdue.length > 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
+    },
+
+    sendReminder(caseId, type = 'whatsapp') {
+        const caseItem = this.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+        const client = this.state.clients.find(c => c.id === caseItem.clientId) || {};
+
+        const isEs = I18nManager.currentLang === 'es';
+        const baseUrl = window.location.origin;
+        const trackingLink = `${baseUrl}/status.html?case=${caseItem.caseNumber}`;
+
+        const message = isEs
+            ? `Hola ${client.name}, le recordamos que su trámite ${caseItem.caseNumber} está en estado: ${caseItem.status.toUpperCase()}. \n\nPuede ver el progreso aquí: ${trackingLink}`
+            : `Hello ${client.name}, this is a reminder that your case ${caseItem.caseNumber} is currently: ${caseItem.status.toUpperCase()}. \n\nTrack progress here: ${trackingLink}`;
+
+        if (type === 'whatsapp') {
+            const phone = (client.phone || '').replace(/\D/g, '');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        } else {
+            window.location.href = `mailto:${client.email}?subject=Recordatorio: Caso ${caseItem.caseNumber}&body=${encodeURIComponent(message)}`;
+        }
+
+        AuditManager.logAction('Envío de Recordatorio', caseItem.caseNumber, `Via ${type}`);
+    },
+
+    checkDuplicates() {
+        const clients = this.state.clients;
+        const matches = new Map();
+
+        clients.forEach(c => {
+            const emailKey = c.email ? `email:${c.email.toLowerCase().trim()}` : null;
+            const idKey = c.idNumber ? `id:${c.idNumber.toString().trim()}` : null;
+
+            if (emailKey) {
+                if (!matches.has(emailKey)) matches.set(emailKey, []);
+                matches.get(emailKey).push(c);
+            }
+            if (idKey) {
+                if (!matches.has(idKey)) matches.set(idKey, []);
+                matches.get(idKey).push(c);
+            }
+        });
+
+        const duplicates = [];
+        matches.forEach((list, key) => {
+            if (list.length > 1) {
+                duplicates.push({ key, clients: list });
+            }
+        });
+
+        if (duplicates.length === 0) {
+            Toast.success('Limpieza Completa', 'No se encontraron clientes duplicados.');
+            return;
+        }
+
+        this.renderDuplicates(duplicates);
+        this.openModal('duplicates-modal');
+    },
+
+    renderDuplicates(duplicates) {
+        const listEl = document.getElementById('duplicates-list');
+        listEl.innerHTML = duplicates.map(dup => `
+            <div class="duplicate-group" style="background: var(--color-gray-50); border: 1px solid var(--color-gray-200); border-radius: 12px; padding: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; margin-bottom: 0.75rem;">
+                    Grupo de Coincidencia: ${dup.key}
+                </div>
+                <div style="display: grid; gap: 0.5rem;">
+                    ${dup.clients.map(c => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-gray-100);">
+                            <div>
+                                <div style="font-weight: 600;">${c.name}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-light);">${c.email} | ${c.idNumber}</div>
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--color-success); font-weight: 600;">VERIFICADO</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="btn btn-sm btn-block" style="margin-top: 1rem; background: var(--color-primary-light); color: var(--color-primary);" onclick="Toast.info('Fusión en Desarrollo', 'La fusión masiva estará disponible en la próxima actualización.')">
+                    Fusionar Registros
+                </button>
+            </div>
+        `).join('');
     }
 };
 

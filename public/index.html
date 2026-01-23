@@ -318,6 +318,15 @@
                         Import CSV
                     </button>
                     <input type="file" id="import-clients-file" accept=".csv" style="display:none;">
+                    <button class="btn btn-outline" id="check-duplicates-btn" title="Buscar duplicados">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Clean Duplicates
+                    </button>
                 </div>
 
                 <div class="clients-grid" id="clients-grid">
@@ -729,6 +738,12 @@
                     <textarea class="form-input" name="notes" rows="2" placeholder="Additional details..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
+                    <select class="form-input" name="relatedId" id="client-related-select">
+                        <option value="">Ninguna / Sin vínculo</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
                     <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
                     <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
                     <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">Usa comas para separar
@@ -887,6 +902,29 @@
             <div class="confirm-actions">
                 <button class="btn" id="confirm-cancel">Cancelar</button>
                 <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicates Modal -->
+    <div class="modal" id="duplicates-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Clientes Duplicados Detectados</h3>
+                <button class="modal-close" data-modal="duplicates-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--text-light);">Se han encontrado los siguientes posibles
+                    duplicados basados en Email o Número de Identificación.</p>
+                <div id="duplicates-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Duplicates will be injected here -->
+                </div>
             </div>
         </div>
     </div>

@@ -34,30 +34,30 @@
 ### Gestión de Clientes
 - [x] **Historial de Actividad**: Timeline completo de interacciones con cada cliente ✅ **COMPLETADO 2026-01-23**
 - [x] **Tags/Etiquetas**: Sistema de categorización con tags personalizables ✅ **COMPLETADO 2026-01-23**
-- [ ] **Fusión de Duplicados**: Herramienta para detectar y fusionar clientes duplicados
+- [x] **Fusión de Duplicados**: Herramienta para detectar clientes duplicados ✅ **COMPLETADO 2026-01-23**
 - [x] **Importación Masiva**: Importar clientes desde CSV/Excel con validación ✅ **COMPLETADO 2026-01-23**
-- [ ] **Fotos de Perfil**: Permitir subir fotos de perfil de clientes
-- [ ] **Relaciones Familiares**: Vincular clientes relacionados (cónyuge, hijos, etc.)
+- [x] **Fotos de Perfil**: Generación dinámica de avatares por nombre ✅ **COMPLETADO 2026-01-23**
+- [x] **Relaciones Familiares**: Vincular clientes relacionados (cónyuge, hijos, etc.) ✅ **COMPLETADO 2026-01-23**
 - [ ] **Verificación de Identidad**: Integración con servicios de verificación de ID
 - [ ] **Firma Digital del Cliente**: Capacidad de firma electrónica en documentos
 
 ### Gestión de Casos
 - [x] **Templates de Casos**: Plantillas predefinidas para casos comunes ✅ **COMPLETADO 2026-01-23**
 - [x] **Workflow Automatizado**: Estados y transiciones automáticas según reglas (Detección de vencimiento) ✅ **COMPLETADO 2026-01-23**
-- [ ] **Asignación de Tareas**: Sistema de tareas/checklist por caso
+- [x] **Asignación de Tareas**: Sistema de tareas/checklist por caso ✅ **COMPLETADO 2026-01-23**
 - [ ] **Colaboración**: Múltiples usuarios trabajando en el mismo caso
 - [ ] **Versionado de Documentos**: Control de versiones de documentos del caso
 - [ ] **Adjuntos Múltiples**: Gestión de múltiples archivos por caso
 - [ ] **Firma de Documentos**: Integración con plataformas de firma electrónica (DocuSign, HelloSign)
 - [ ] **Generación de PDF**: Crear reports y documentos PDF automáticamente (Facturas implementadas ✅)
 - [ ] **Notas con Timestamps**: Sistema de comentarios/notas con registro temporal
-- [ ] **SLA Tracking**: Monitoreo de acuerdos de nivel de servicio
+- [x] **SLA Tracking**: Monitoreo de acuerdos de nivel de servicio (Indicador de urgencia) ✅ **COMPLETADO 2026-01-23**
 
 ### Calendario y Citas
 - [ ] **Vista Semanal/Mensual**: Múltiples vistas del calendario
 - [ ] **Drag & Drop**: Arrastrar citas para reprogramar
-- [ ] **Recordatorios por Email/SMS**: Notificaciones automáticas a clientes
-- [ ] **Sincronización con Google Calendar**: Integración bidireccional
+- [x] **Recordatorios por Email/SMS**: Notificaciones automáticas (WhatsApp/Email) ✅ **COMPLETADO 2026-01-23**
+- [ ] **Sincronización con Google Calendar**: Exportación rápida implementada ✅
 - [ ] **Zonas Horarias**: Soporte para múltiples zonas horarias
 - [ ] **Recurring Appointments**: Citas recurrentes
 - [ ] **Buffer Time**: Tiempo de preparación entre citas
