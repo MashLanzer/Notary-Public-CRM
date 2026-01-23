@@ -150,8 +150,21 @@
 
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="dashboard-tab">
-                <div class="stats-grid">
-                    <div class="stat-card">
+                <div class="actions-bar" style="margin-bottom: 1.5rem;">
+                    <h2 class="section-title">Dashboard</h2>
+                    <button class="btn" id="customize-dashboard-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                            <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                            </path>
+                        </svg>
+                        Personalizar
+                    </button>
+                </div>
+
+                <div class="stats-grid" id="dashboard-stats-grid">
+                    <div class="stat-card" data-widget-id="total-clients">
                         <div class="stat-content">
                             <div>
                                 <p class="stat-label">Total Clients</p>
@@ -166,7 +179,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card">
+                    <div class="stat-card" data-widget-id="total-cases">
                         <div class="stat-content">
                             <div>
                                 <p class="stat-label">Total Cases</p>
@@ -179,7 +192,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card stat-success">
+                    <div class="stat-card stat-success" data-widget-id="completed-cases">
                         <div class="stat-content">
                             <div>
                                 <p class="stat-label">Completed</p>
@@ -192,7 +205,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card">
+                    <div class="stat-card" data-widget-id="total-revenue">
                         <div class="stat-content">
                             <div>
                                 <p class="stat-label">Total Revenue</p>
@@ -207,7 +220,7 @@
                 </div>
 
                 <!-- Recent Cases -->
-                <div class="card">
+                <div class="card" data-widget-id="recent-cases">
                     <h2 class="card-title">Recent Cases</h2>
                     <div class="table-container">
                         <table class="table">
@@ -817,6 +830,37 @@
                     <button type="button" class="btn btn-block" id="register-btn">Crear cuenta nueva</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Customization Modal -->
+    <div class="modal" id="customize-dashboard-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Personalizar Dashboard</h3>
+                <button class="modal-close" data-modal="customize-dashboard-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--color-gray-600); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                    Selecciona qué widgets quieres ver en tu dashboard
+                </p>
+
+                <div id="widgets-config" class="widgets-config">
+                    <!-- Widget toggles will be dynamically inserted here -->
+                </div>
+
+                <div
+                    style="display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-gray-200);">
+                    <button class="btn btn-primary" id="save-dashboard-config">Guardar Cambios</button>
+                    <button class="btn" id="reset-dashboard-config">Restaurar Predeterminado</button>
+                </div>
+            </div>
         </div>
     </div>
 

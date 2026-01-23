@@ -438,6 +438,136 @@ if (typeof window !== 'undefined') {
     window.FormValidator = FormValidator;
 }
 
+// ============================================
+// DASHBOARD CUSTOMIZATION MANAGER
+// ============================================
+
+const DashboardManager = {
+    defaultConfig: {
+        'total-clients': { visible: true, title: 'Total Clientes', description: 'Número total de clientes registrados' },
+        'total-cases': { visible: true, title: 'Total Casos', description: 'Número total de expedientes' },
+        'completed-cases': { visible: true, title: 'Casos Completados', description: 'Total de servicios finalizados' },
+        'total-revenue': { visible: true, title: 'Ingresos Totales', description: 'Recaudación total confirmada' },
+        'recent-cases': { visible: true, title: 'Casos Recientes', description: 'Tabla de los últimos movimientos' }
+    },
+
+    config: {},
+
+    init() {
+        this.loadConfig();
+        this.applyConfig();
+        this.attachListeners();
+    },
+
+    loadConfig() {
+        const saved = localStorage.getItem('notary_dashboard_config');
+        if (saved) {
+            this.config = JSON.parse(saved);
+            // Merge with defaults to ensure new widgets are included
+            Object.keys(this.defaultConfig).forEach(id => {
+                if (this.config[id] === undefined) {
+                    this.config[id] = { ...this.defaultConfig[id] };
+                }
+            });
+        } else {
+            this.config = JSON.parse(JSON.stringify(this.defaultConfig));
+        }
+    },
+
+    saveConfig() {
+        localStorage.setItem('notary_dashboard_config', JSON.stringify(this.config));
+
+        // If logged in, save to Firestore too
+        if (NotaryCRM.currentUser && NotaryCRM.useFirestore) {
+            const { doc, setDoc } = window.dbFuncs;
+            const db = window.firebaseDB;
+            const ref = doc(db, 'users', NotaryCRM.currentUser.uid, 'settings', 'dashboard');
+            setDoc(ref, this.config).catch(err => console.error('Error saving dashboard to Firestore:', err));
+        }
+    },
+
+    applyConfig() {
+        Object.keys(this.config).forEach(id => {
+            const element = document.querySelector(`[data-widget-id="${id}"]`);
+            if (element) {
+                if (this.config[id].visible) {
+                    element.classList.remove('widget-hidden');
+                } else {
+                    element.classList.add('widget-hidden');
+                }
+            }
+        });
+    },
+
+    openCustomization() {
+        const container = document.getElementById('widgets-config');
+        if (!container) return;
+
+        container.innerHTML = Object.keys(this.config).map(id => {
+            const widget = this.config[id];
+            return `
+                <div class="widget-toggle" data-id="${id}">
+                    <div class="widget-toggle-info">
+                        <div class="widget-toggle-icon">
+                            ${this.getWidgetIcon(id)}
+                        </div>
+                        <div class="widget-toggle-text">
+                            <h4>${widget.title}</h4>
+                            <p>${widget.description}</p>
+                        </div>
+                    </div>
+                    <div class="toggle-switch ${widget.visible ? 'active' : ''}" onclick="DashboardManager.toggleWidget('${id}', this)"></div>
+                </div>
+            `;
+        }).join('');
+
+        NotaryCRM.openModal('customize-dashboard-modal');
+    },
+
+    toggleWidget(id, element) {
+        element.classList.toggle('active');
+        this.config[id].visible = element.classList.contains('active');
+    },
+
+    getWidgetIcon(id) {
+        const icons = {
+            'total-clients': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+            'total-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+            'completed-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+            'total-revenue': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+            'recent-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>'
+        };
+        return icons[id] || icons['total-cases'];
+    },
+
+    attachListeners() {
+        const customBtn = document.getElementById('customize-dashboard-btn');
+        if (customBtn) customBtn.addEventListener('click', () => this.openCustomization());
+
+        const saveBtn = document.getElementById('save-dashboard-config');
+        if (saveBtn) saveBtn.addEventListener('click', () => {
+            this.saveConfig();
+            this.applyConfig();
+            NotaryCRM.closeModal('customize-dashboard-modal');
+            Toast.success('Configuración Guardada', 'El dashboard se ha actualizado correctamente.');
+        });
+
+        const resetBtn = document.getElementById('reset-dashboard-config');
+        if (resetBtn) resetBtn.addEventListener('click', () => {
+            this.config = JSON.parse(JSON.stringify(this.defaultConfig));
+            this.saveConfig();
+            this.applyConfig();
+            this.openCustomization(); // Re-render toggles
+            Toast.info('Dashboard Restablecido', 'Se han restaurado los widgets predeterminados.');
+        });
+    }
+};
+
+// Make available globally
+if (typeof window !== 'undefined') {
+    window.DashboardManager = DashboardManager;
+}
+
 // Application State
 window.NotaryCRM = {
     state: {
@@ -480,6 +610,9 @@ window.NotaryCRM = {
 
         // Initialize form validation
         this.initFormValidation();
+
+        // Initialize dashboard customization
+        DashboardManager.init();
     },
 
     // Initialize form validation

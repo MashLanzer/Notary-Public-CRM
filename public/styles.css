@@ -2004,3 +2004,103 @@ body:not(.authenticated) {
         max-width: none;
     }
 }
+
+/* ============================================
+   DASHBOARD CUSTOMIZATION
+   ============================================ */
+
+.widgets-config {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.widget-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+}
+
+.widget-toggle:hover {
+    background: var(--color-gray-100);
+    border-color: var(--color-gray-300);
+}
+
+.widget-toggle-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.widget-toggle-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    color: var(--color-primary);
+    border: 1px solid var(--color-gray-200);
+}
+
+.widget-toggle-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.widget-toggle-text h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0 0 2px 0;
+}
+
+.widget-toggle-text p {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+    margin: 0;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background: var(--color-gray-300);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background var(--transition-base);
+}
+
+.toggle-switch.active {
+    background: var(--color-success);
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform var(--transition-base);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active::after {
+    transform: translateX(24px);
+}
+
+/* Hidden dashboard widgets */
+[data-widget-id].widget-hidden {
+    display: none !important;
+}
