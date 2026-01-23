@@ -98,7 +98,7 @@
 
 ### Autenticación y Autorización
 - [ ] **2FA/MFA**: Autenticación de dos factores
-- [ ] **Roles Granulares**: Permisos más detallados (viewer, editor, admin, super-admin)
+- [x] **Roles Granulares**: Permisos más detallados (viewer, editor, admin) ✅ **COMPLETADO 2026-01-23**
 - [ ] **Session Management**: Control de sesiones activas
 - [ ] **Password Policies**: Políticas de contraseñas robustas
 - [ ] **Login History**: Registro de intentos de acceso
@@ -286,7 +286,7 @@
 2. Validación en Tiempo Real en formularios
 3. Dashboard Personalizable ✅ **COMPLETADO**
 4. Email Templates ✅ **COMPLETADO**
-5. Roles Granulares
+5. Roles Granulares ✅ **COMPLETADO**
 6. Audit Logs
 7. Lazy Loading y Performance
 
