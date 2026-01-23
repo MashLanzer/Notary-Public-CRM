@@ -898,6 +898,116 @@ const AuditManager = {
 };
 
 // ============================================
+// CASE TEMPLATES MANAGER
+// ============================================
+
+const CaseTemplates = {
+    'Apostille': { amount: 150, description: 'Servicio de Apostilla completo para documentos internacionales.' },
+    'Power of Attorney': { amount: 200, description: 'Elaboración y legalización de Poder Notarial (General o Especial).' },
+    'Affidavit': { amount: 80, description: 'Declaración Jurada notarizada para trámites legales o personales.' },
+    'Real Estate Deed': { amount: 500, description: 'Procesamiento de Escritura de Propiedad y cierre de bienes raíces.' },
+    'Wills / Trusts': { amount: 350, description: 'Elaboración de Testamentos o Fideicomisos con validez legal.' },
+    'Certified Copies': { amount: 50, description: 'Certificación de copia fiel de documento original.' },
+    'Oath / Affirmation': { amount: 40, description: 'Administración de juramentos o afirmaciones.' },
+    'Loan Signing': { amount: 250, description: 'Firma de documentos de préstamo hipotecario (Closing Agent).' },
+    'Acknowledgment': { amount: 60, description: 'Reconocimiento de firma en documentos privados.' },
+    'Other': { amount: 0, description: '' }
+};
+
+// ============================================
+// PAYMENT MANAGER (SIMULATED)
+// ============================================
+
+const PaymentManager = {
+    currentCaseId: null,
+
+    init() {
+        // UI for payment usually happens on specific buttons
+    },
+
+    openPaymentModal(caseId) {
+        this.currentCaseId = caseId;
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        // Reset and open modal
+        const modal = document.getElementById('payment-modal');
+        if (!modal) return;
+
+        // Update modal info
+        const amountDisplay = modal.querySelector('#payment-amount-display');
+        const caseDisplay = modal.querySelector('#payment-case-display');
+        if (amountDisplay) amountDisplay.textContent = `$${caseItem.amount.toFixed(2)}`;
+        if (caseDisplay) caseDisplay.textContent = `Cargo por: ${caseItem.type} (${caseItem.caseNumber})`;
+
+        NotaryCRM.openModal('payment-modal');
+    },
+
+    processPayment(formData) {
+        return new Promise((resolve) => {
+            // Simulate processing time
+            setTimeout(async () => {
+                const updates = {
+                    paymentStatus: 'paid',
+                    status: 'in-progress' // Auto-advance to in-progress if paid
+                };
+
+                await NotaryCRM.updateCase(this.currentCaseId, updates);
+
+                AuditManager.logAction('Pago Recibido', `Caso: ${this.currentCaseId}`, `Monto procesado exitosamente.`);
+
+                NotaryCRM.closeModal('payment-modal');
+                Toast.success('Pago Exitoso', 'El pago ha sido procesado y el caso actualizado.');
+                resolve(true);
+            }, 1500);
+        });
+    }
+};
+
+// ============================================
+// THEME MANAGER (DARK MODE)
+// ============================================
+
+const ThemeManager = {
+    init() {
+        this.toggleBtn = document.getElementById('theme-toggle');
+        if (!this.toggleBtn) return;
+
+        this.sunIcon = this.toggleBtn.querySelector('.sun-icon');
+        this.moonIcon = this.toggleBtn.querySelector('.moon-icon');
+
+        // Check for saved theme or system preference
+        const savedTheme = localStorage.getItem('notary_theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+            this.setTheme('dark');
+        } else {
+            this.setTheme('light');
+        }
+
+        this.toggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark-theme');
+            this.setTheme(isDark ? 'light' : 'dark');
+        });
+    },
+
+    setTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+            if (this.sunIcon) this.sunIcon.style.display = 'none';
+            if (this.moonIcon) this.moonIcon.style.display = 'block';
+            localStorage.setItem('notary_theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark-theme');
+            if (this.sunIcon) this.sunIcon.style.display = 'block';
+            if (this.moonIcon) this.moonIcon.style.display = 'none';
+            localStorage.setItem('notary_theme', 'light');
+        }
+    }
+};
+
+// ============================================
 // EXPORT MANAGERS
 // ============================================
 
@@ -905,6 +1015,8 @@ if (typeof window !== 'undefined') {
     window.DashboardManager = DashboardManager;
     window.EmailManager = EmailManager;
     window.AuditManager = AuditManager;
+    window.ThemeManager = ThemeManager;
+    window.PaymentManager = PaymentManager;
 }
 
 // Application State
@@ -915,18 +1027,24 @@ window.NotaryCRM = {
         appointments: [],
         users: [],
         activeTab: 'dashboard',
-        clientsPage: 1,
-        casesPage: 1,
-        clientsPageSize: 6,
-        casesPageSize: 6,
+        isLoadingClients: false,
+        isLoadingCases: false,
         searchClientQuery: '',
-        searchCaseQuery: ''
+        searchCaseQuery: '',
+        clientsPage: 1,
+        clientsPageSize: 6,
+        casesPage: 1,
+        casesPageSize: 6
     },
     currentUser: null,
 
     // Initialize application
     init() {
         this.useFirestore = !!window.firebaseDB && !!window.dbFuncs;
+
+        // Initialize Theme Mode
+        ThemeManager.init();
+
         this.attachEventListeners();
 
         // ensure no stray active modals block clicks
@@ -946,6 +1064,20 @@ window.NotaryCRM = {
             this.loadData();
             this.render();
         }
+
+        // Register Service Worker for Performance & Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.warn('Service Worker registration failed', err));
+            });
+        }
+
+        // Performance log
+        console.log(`%c Notary CRM v1.5 %c Loaded in ${performance.now().toFixed(0)}ms`,
+            'background: #2563eb; color: #fff; border-radius: 4px; padding: 2px 6px; font-weight: bold;',
+            'color: #2563eb; font-weight: bold;');
 
         // Initialize form validation
         this.initFormValidation();
@@ -1101,6 +1233,11 @@ window.NotaryCRM = {
         const { collection, query, orderBy, onSnapshot } = window.dbFuncs;
         const db = window.firebaseDB;
 
+        this.state.isLoadingClients = true;
+        this.state.isLoadingCases = true;
+        this.renderClients();
+        this.renderCases();
+
         try {
             const { where } = window.dbFuncs;
             const clientsCol = collection(db, 'clients');
@@ -1109,6 +1246,7 @@ window.NotaryCRM = {
             // Listen to data belonging ONLY to the current user for real-time updates
             const clientsQuery = query(clientsCol, where('ownerId', '==', this.currentUser.uid));
             onSnapshot(clientsQuery, snapshot => {
+                this.state.isLoadingClients = false;
                 this.state.clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 this.renderClients();
                 this.renderDashboard();
@@ -1117,6 +1255,7 @@ window.NotaryCRM = {
 
             const casesQuery = query(casesCol, where('ownerId', '==', this.currentUser.uid));
             onSnapshot(casesQuery, snapshot => {
+                this.state.isLoadingCases = false;
                 this.state.cases = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 this.renderCases();
                 this.renderDashboard();
@@ -1266,7 +1405,30 @@ window.NotaryCRM = {
         if (clientForm) clientForm.addEventListener('submit', (e) => { e.preventDefault(); this.addClient(e.target); });
 
         const caseForm = document.getElementById('case-form');
-        if (caseForm) caseForm.addEventListener('submit', (e) => { e.preventDefault(); this.addCase(e.target); });
+        if (caseForm) {
+            caseForm.addEventListener('submit', (e) => { e.preventDefault(); this.addCase(e.target); });
+
+            // Case Template Auto-fill
+            const typeSelect = caseForm.querySelector('select[name="type"]');
+            if (typeSelect) {
+                typeSelect.addEventListener('change', (e) => {
+                    const template = CaseTemplates[e.target.value];
+                    if (template) {
+                        if (caseForm.querySelector('input[name="amount"]')) {
+                            caseForm.querySelector('input[name="amount"]').value = template.amount;
+                        }
+                        if (caseForm.querySelector('textarea[name="description"]')) {
+                            caseForm.querySelector('textarea[name="description"]').value = template.description;
+                        }
+                        // Also update case number if it's a new case
+                        const idInput = caseForm.querySelector('input[name="id"]');
+                        if (!idInput || !idInput.value) {
+                            caseForm.querySelector('input[name="caseNumber"]').value = this.generateCaseNumber(e.target.value);
+                        }
+                    }
+                });
+            }
+        }
 
         // Search functionality
         const searchClients = document.getElementById('search-clients');
@@ -2020,6 +2182,16 @@ window.NotaryCRM = {
         const container = document.getElementById('clients-grid');
         if (!container) return;
 
+        if (this.state.isLoadingClients) {
+            container.innerHTML = this.renderSkeletons(6);
+            return;
+        }
+
+        if (this.state.isLoadingClients) {
+            container.innerHTML = this.renderSkeletons(6);
+            return;
+        }
+
         // Populate client select for cases modal
         const clientSelect = document.getElementById('case-client-select');
         if (clientSelect) {
@@ -2122,6 +2294,11 @@ window.NotaryCRM = {
         const container = document.getElementById('cases-list');
         if (!container) return;
 
+        if (this.state.isLoadingCases) {
+            container.innerHTML = this.renderSkeletons(4);
+            return;
+        }
+
         const filteredCases = this.state.cases.filter(c =>
             c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
             c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
@@ -2177,6 +2354,10 @@ window.NotaryCRM = {
                         ${this.checkPermission('CASE_DELETE') ? `
                         <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteCase('${caseItem.id}')" title="Eliminar Caso">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>` : ''}
+                        ${caseItem.paymentStatus !== 'paid' ? `
+                        <button class="btn-icon" style="color: var(--color-success);" onclick="PaymentManager.openPaymentModal('${caseItem.id}')" title="Procesar Pago">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                         </button>` : ''}
                     </div>
                 </div>
@@ -2310,6 +2491,29 @@ window.NotaryCRM = {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+    },
+
+    // Render skeleton placeholders
+    renderSkeletons(count) {
+        let skeletons = '';
+        for (let i = 0; i < count; i++) {
+            skeletons += `
+                <div class="skeleton-card fade-in">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                        <div class="skeleton skeleton-avatar"></div>
+                        <div class="skeleton-title skeleton" style="flex: 1;"></div>
+                    </div>
+                    <div class="skeleton-text skeleton" style="margin-bottom: 8px;"></div>
+                    <div class="skeleton-text skeleton" style="width: 50%; margin-bottom: 12px;"></div>
+                    <div style="display: flex; gap: 8px; margin-top: auto;">
+                        <div class="skeleton skeleton-line" style="width: 32px; height: 32px; border-radius: 8px;"></div>
+                        <div class="skeleton skeleton-line" style="width: 32px; height: 32px; border-radius: 8px;"></div>
+                        <div class="skeleton skeleton-line" style="width: 32px; height: 32px; border-radius: 8px;"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return skeletons;
     },
 
     // Convert array of objects to CSV (simple, uses keys of first object)

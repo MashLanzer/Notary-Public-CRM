@@ -14,6 +14,9 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 
 <body>
@@ -72,6 +75,25 @@
                     <span class="badge-text">Notary License</span>
                 </div>
                 <div class="header-actions">
+                    <button class="btn-icon header-btn" id="theme-toggle" title="Cambiar Tema"
+                        style="margin-right: 1rem;">
+                        <svg class="icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.07" x2="5.64" y2="17.66"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="display:none;">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
                     <button class="btn btn-reminders" id="open-reminders-panel" style="display:none;">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -443,36 +465,38 @@
                         <p class="empty-state">No users available.</p>
                     </div>
                 </div>
-                <!-- Audit Logs Tab (admin) -->
-                <div class="tab-content" id="audit-tab">
-                    <div class="actions-bar">
-                        <h2 class="section-title">Registros de Auditoría</h2>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
-                        </div>
+            </div>
+
+            <!-- Audit Logs Tab (admin) -->
+            <div class="tab-content" id="audit-tab">
+                <div class="actions-bar">
+                    <h2 class="section-title">Registros de Auditoría</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
                     </div>
-                    <div class="card">
-                        <div class="table-container">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha y Hora</th>
-                                        <th>Usuario</th>
-                                        <th>Acción</th>
-                                        <th>Recurso</th>
-                                        <th>Detalles</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="audit-logs-list">
-                                    <tr>
-                                        <td colspan="5" class="empty-state">No hay registros de auditoría aún.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                </div>
+                <div class="card">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha y Hora</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Recurso</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-logs-list">
+                                <tr>
+                                    <td colspan="5" class="empty-state">No hay registros de auditoría aún.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -828,6 +852,71 @@
                 <button class="btn" id="confirm-cancel">Cancelar</button>
                 <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Procesar Pago</h3>
+                <button class="modal-close" data-modal="payment-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="payment-form"
+                onsubmit="event.preventDefault(); PaymentManager.processPayment(this);">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <p id="payment-case-display"
+                        style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 0.5rem;"></p>
+                    <h2 id="payment-amount-display"
+                        style="font-size: 2.5rem; color: var(--color-primary); font-weight: 800;">$0.00</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nombre en la tarjeta</label>
+                    <input type="text" class="form-input" placeholder="Nombre completo" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Número de tarjeta</label>
+                    <div style="position: relative;">
+                        <input type="text" class="form-input" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                        <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
+                            <svg width="32" height="20" viewBox="0 0 32 20">
+                                <rect width="32" height="20" rx="4" fill="#1e293b" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Expiración (MM/YY)</label>
+                        <input type="text" class="form-input" placeholder="MM/YY" maxlength="5" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">CVC</label>
+                        <input type="text" class="form-input" placeholder="123" maxlength="4" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="height: 50px; font-weight: 600;">
+                    Confirmar y Pagar
+                </button>
+                <p style="text-align: center; font-size: 0.75rem; color: var(--text-light); margin-top: 1rem;">
+                    <svg class="icon" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Pagos seguros procesados por NotaryPay
+                </p>
+            </form>
         </div>
     </div>
 
