@@ -94,6 +94,17 @@
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
+                    <button class="btn-icon header-btn" id="lang-toggle" title="Cambiar Idioma"
+                        style="margin-right: 1rem; display: flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; min-width: 50px;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                            </path>
+                        </svg>
+                        <span id="current-lang-text" style="font-size: 0.75rem; font-weight: 800;">ES</span>
+                    </button>
                     <button class="btn btn-reminders" id="open-reminders-panel" style="display:none;">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -114,14 +125,14 @@
         <div class="container">
             <!-- Tab Navigation -->
             <div class="tabs">
-                <button class="tab-btn active" data-tab="dashboard">
+                <button class="tab-btn active" data-tab="dashboard" data-i18n="nav_dashboard">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                     </svg>
                     Dashboard
                 </button>
-                <button class="tab-btn" data-tab="clients">
+                <button class="tab-btn" data-tab="clients" data-i18n="nav_clients">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -130,21 +141,21 @@
                     </svg>
                     Clients
                 </button>
-                <button class="tab-btn" data-tab="cases">
+                <button class="tab-btn" data-tab="cases" data-i18n="nav_cases">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                     </svg>
                     Cases
                 </button>
-                <button class="tab-btn" data-tab="reminders">
+                <button class="tab-btn" data-tab="reminders" data-i18n="nav_reminders">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                     Reminders
                 </button>
-                <button class="tab-btn" data-tab="calendar">
+                <button class="tab-btn" data-tab="calendar" data-i18n="nav_calendar">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -153,7 +164,7 @@
                     </svg>
                     Calendar
                 </button>
-                <button class="tab-btn" data-tab="reports">
+                <button class="tab-btn" data-tab="reports" data-i18n="nav_reports">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="20" x2="18" y2="10"></line>
                         <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -161,21 +172,21 @@
                     </svg>
                     Reports
                 </button>
-                <button class="tab-btn" data-tab="emails" id="emails-tab-btn">
+                <button class="tab-btn" data-tab="emails" id="emails-tab-btn" data-i18n="nav_emails">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                     Email
                 </button>
-                <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;">
+                <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;" data-i18n="nav_users">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                     </svg>
                     Users
                 </button>
-                <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;">
+                <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;" data-i18n="nav_audit">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
@@ -202,7 +213,7 @@
                     <div class="stat-card" data-widget-id="total-clients">
                         <div class="stat-content">
                             <div>
-                                <p class="stat-label">Total Clients</p>
+                                <p class="stat-label" data-i18n="total_clients">Total Clients</p>
                                 <p class="stat-value" id="total-clients">0</p>
                             </div>
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -217,7 +228,7 @@
                     <div class="stat-card" data-widget-id="total-cases">
                         <div class="stat-content">
                             <div>
-                                <p class="stat-label">Total Cases</p>
+                                <p class="stat-label" data-i18n="total_cases">Total Cases</p>
                                 <p class="stat-value" id="total-cases">0</p>
                             </div>
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -230,7 +241,7 @@
                     <div class="stat-card stat-success" data-widget-id="completed-cases">
                         <div class="stat-content">
                             <div>
-                                <p class="stat-label">Completed</p>
+                                <p class="stat-label" data-i18n="completed">Completed</p>
                                 <p class="stat-value stat-value-success" id="completed-cases">0</p>
                             </div>
                             <svg class="stat-icon stat-icon-success" viewBox="0 0 24 24" fill="currentColor">
@@ -243,7 +254,7 @@
                     <div class="stat-card" data-widget-id="total-revenue">
                         <div class="stat-content">
                             <div>
-                                <p class="stat-label">Total Revenue</p>
+                                <p class="stat-label" data-i18n="total_revenue">Total Revenue</p>
                                 <p class="stat-value" id="total-revenue">$0</p>
                             </div>
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -256,16 +267,16 @@
 
                 <!-- Recent Cases -->
                 <div class="card" data-widget-id="recent-cases">
-                    <h2 class="card-title">Recent Cases</h2>
+                    <h2 class="card-title" data-i18n="recent_cases">Recent Cases</h2>
                     <div class="table-container">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Case #</th>
-                                    <th>Client</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Amount</th>
+                                    <th data-i18n="case_num">Case #</th>
+                                    <th data-i18n="client">Client</th>
+                                    <th data-i18n="type">Type</th>
+                                    <th data-i18n="status">Status</th>
+                                    <th data-i18n="amount">Amount</th>
                                 </tr>
                             </thead>
                             <tbody id="recent-cases-table">
@@ -286,14 +297,15 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
-                        <input type="text" class="search-input" id="search-clients" placeholder="Search clients...">
+                        <input type="text" class="search-input" id="search-clients" placeholder="Search clients..."
+                            data-i18n="search_clients">
                     </div>
                     <button class="btn btn-primary" id="add-client-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
-                        Add Client
+                        <span data-i18n="add_client">Add Client</span>
                     </button>
                     <button class="btn" id="export-clients-csv">Export CSV</button>
                     <button class="btn" id="export-clients-json">Export JSON</button>
@@ -406,14 +418,15 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
-                        <input type="text" class="search-input" id="search-cases" placeholder="Search cases...">
+                        <input type="text" class="search-input" id="search-cases" placeholder="Search cases..."
+                            data-i18n="search_cases">
                     </div>
                     <button class="btn btn-primary" id="add-case-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
-                        Add Case
+                        <span data-i18n="add_case">Add Case</span>
                     </button>
                     <button class="btn" id="export-cases-csv">Export CSV</button>
                     <button class="btn" id="export-cases-json">Export JSON</button>
@@ -696,7 +709,13 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Notes / Observations</label>
-                    <textarea class="form-input" name="notes" rows="3" placeholder="Additional details..."></textarea>
+                    <textarea class="form-input" name="notes" rows="2" placeholder="Additional details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
+                    <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
+                    <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">Usa comas para separar
+                        múltiples etiquetas.</p>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Save Client</button>
             </form>

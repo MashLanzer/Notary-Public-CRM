@@ -965,6 +965,178 @@ const PaymentManager = {
 };
 
 // ============================================
+// TIMELINE MANAGER (ACTIVITY HISTORY)
+// ============================================
+
+const TimelineManager = {
+    getClientTimeline(clientId) {
+        const events = [];
+
+        // Find cases for this client
+        const clientCases = NotaryCRM.state.cases.filter(c => c.clientId === clientId);
+        clientCases.forEach(c => {
+            events.push({
+                type: 'case',
+                title: I18nManager.currentLang === 'es' ? `Caso Creado: ${c.caseNumber}` : `Case Created: ${c.caseNumber}`,
+                date: c.createdAt || c.dueDate,
+                icon: 'file-text',
+                color: 'blue'
+            });
+
+            if (c.paymentStatus === 'paid') {
+                events.push({
+                    type: 'payment',
+                    title: I18nManager.currentLang === 'es' ? `Pago Recibido ($${c.amount})` : `Payment Received ($${c.amount})`,
+                    date: c.updatedAt || c.dueDate,
+                    icon: 'credit-card',
+                    color: 'green'
+                });
+            }
+        });
+
+        // Find appointments
+        const clientApps = NotaryCRM.state.appointments.filter(a => a.clientId === clientId);
+        clientApps.forEach(a => {
+            events.push({
+                type: 'appointment',
+                title: I18nManager.currentLang === 'es' ? `Cita de ${a.type}` : `${a.type} Appointment`,
+                date: `${a.date}T${a.time}`,
+                icon: 'calendar',
+                color: 'purple'
+            });
+        });
+
+        // Sort by date desc
+        return events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    },
+
+    renderTimeline(events) {
+        if (events.length === 0) {
+            return `<p class="empty-state">${I18nManager.currentLang === 'es' ? 'Sin actividad registrada.' : 'No activity recorded.'}</p>`;
+        }
+
+        return `
+            <div class="timeline" style="margin-top: 1rem;">
+                ${events.map(ev => `
+                    <div class="timeline-item" style="border-left: 2px solid var(--color-gray-200); padding-left: 20px; position: relative; margin-bottom: 20px;">
+                        <div style="position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--color-${ev.color || 'primary'}); border: 4px solid var(--bg-card);"></div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); margin-bottom: 4px;">${NotaryCRM.formatDate(ev.date, true)}</div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${ev.title}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+};
+
+// ============================================
+// I18N MANAGER (MULTI-LANGUAGE)
+// ============================================
+
+const I18nManager = {
+    currentLang: 'es',
+
+    translations: {
+        'en': {
+            'nav_dashboard': 'Dashboard',
+            'nav_clients': 'Clients',
+            'nav_cases': 'Cases',
+            'nav_reminders': 'Reminders',
+            'nav_calendar': 'Calendar',
+            'nav_reports': 'Reports',
+            'nav_emails': 'Emails',
+            'nav_users': 'Users',
+            'nav_audit': 'Audit',
+            'total_clients': 'Total Clients',
+            'total_cases': 'Total Cases',
+            'completed': 'Completed',
+            'total_revenue': 'Total Revenue',
+            'recent_cases': 'Recent Cases',
+            'case_num': 'Case #',
+            'client': 'Client',
+            'type': 'Type',
+            'status': 'Status',
+            'amount': 'Amount',
+            'add_client': 'Add Client',
+            'add_case': 'Add Case',
+            'search_clients': 'Search clients...',
+            'search_cases': 'Search cases...',
+            'settings': 'Settings',
+            'logout': 'Sign Out',
+            'theme_toggle': 'Toggle Theme',
+            'lang_toggle': 'Change Language',
+            'welcome': 'Welcome back'
+        },
+        'es': {
+            'nav_dashboard': 'Dashboard',
+            'nav_clients': 'Clientes',
+            'nav_cases': 'Casos',
+            'nav_reminders': 'Recordatorios',
+            'nav_calendar': 'Calendario',
+            'nav_reports': 'Reportes',
+            'nav_emails': 'Emails',
+            'nav_users': 'Usuarios',
+            'nav_audit': 'Auditoría',
+            'total_clients': 'Total Clientes',
+            'total_cases': 'Total Casos',
+            'completed': 'Completados',
+            'total_revenue': 'Ingresos Totales',
+            'recent_cases': 'Casos Recientes',
+            'case_num': 'Caso #',
+            'client': 'Cliente',
+            'type': 'Tipo',
+            'status': 'Estado',
+            'amount': 'Monto',
+            'add_client': 'Añadir Cliente',
+            'add_case': 'Añadir Caso',
+            'search_clients': 'Buscar clientes...',
+            'search_cases': 'Buscar casos...',
+            'settings': 'Configuración',
+            'logout': 'Cerrar Sesión',
+            'theme_toggle': 'Cambiar Tema',
+            'lang_toggle': 'Cambiar Idioma',
+            'welcome': 'Bienvenido de nuevo'
+        }
+    },
+
+    init() {
+        const savedLang = localStorage.getItem('notary_lang');
+        this.currentLang = savedLang || 'es';
+        this.apply();
+
+        const langToggle = document.getElementById('lang-toggle');
+        if (langToggle) {
+            langToggle.addEventListener('click', () => {
+                this.currentLang = this.currentLang === 'es' ? 'en' : 'es';
+                localStorage.setItem('notary_lang', this.currentLang);
+                this.apply();
+                NotaryCRM.render(); // Re-render lists to apply translations
+            });
+        }
+    },
+
+    t(key) {
+        return this.translations[this.currentLang][key] || key;
+    },
+
+    apply() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.t(key);
+            if (el.tagName === 'INPUT' && el.placeholder) {
+                el.placeholder = translation;
+            } else {
+                el.textContent = translation;
+            }
+        });
+
+        // Update language indicator in UI
+        const langIndicator = document.getElementById('current-lang-text');
+        if (langIndicator) langIndicator.textContent = this.currentLang.toUpperCase();
+    }
+};
+
+// ============================================
 // THEME MANAGER (DARK MODE)
 // ============================================
 
@@ -1017,6 +1189,8 @@ if (typeof window !== 'undefined') {
     window.AuditManager = AuditManager;
     window.ThemeManager = ThemeManager;
     window.PaymentManager = PaymentManager;
+    window.I18nManager = I18nManager;
+    window.TimelineManager = TimelineManager;
 }
 
 // Application State
@@ -1044,6 +1218,9 @@ window.NotaryCRM = {
 
         // Initialize Theme Mode
         ThemeManager.init();
+
+        // Initialize Language
+        I18nManager.init();
 
         this.attachEventListeners();
 
@@ -1788,6 +1965,8 @@ window.NotaryCRM = {
     addClient(form) {
         const formData = new FormData(form);
         const id = formData.get('id');
+        const tags = formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
+
         const client = {
             name: formData.get('name'),
             email: formData.get('email'),
@@ -1799,6 +1978,7 @@ window.NotaryCRM = {
             maritalStatus: formData.get('maritalStatus'),
             occupation: formData.get('occupation'),
             notes: formData.get('notes'),
+            tags: tags,
             joinDate: new Date().toISOString()
         };
 
@@ -2048,6 +2228,7 @@ window.NotaryCRM = {
         if (form.querySelector('select[name="maritalStatus"]')) form.querySelector('select[name="maritalStatus"]').value = client.maritalStatus || 'Single';
         if (form.querySelector('select[name="occupation"]')) form.querySelector('select[name="occupation"]').value = client.occupation || 'Empleado';
         if (form.querySelector('textarea[name="notes"]')) form.querySelector('textarea[name="notes"]').value = client.notes || '';
+        if (form.querySelector('input[name="tags"]')) form.querySelector('input[name="tags"]').value = (client.tags || []).join(', ');
 
         this.openModal('client-modal');
     },
@@ -2206,7 +2387,8 @@ window.NotaryCRM = {
             const name = (client.name || '').toLowerCase();
             const email = (client.email || '').toLowerCase();
             const idNum = (client.idNumber || '').toLowerCase();
-            return name.includes(query) || email.includes(query) || idNum.includes(query);
+            const tags = (client.tags || []).join(' ').toLowerCase();
+            return name.includes(query) || email.includes(query) || idNum.includes(query) || tags.includes(query);
         });
 
         if (filteredClients.length === 0) {
@@ -2270,6 +2452,7 @@ window.NotaryCRM = {
                     <div class="client-tags">
                         ${client.maritalStatus ? `<span class="tag">${client.maritalStatus}</span>` : ''}
                         ${client.occupation ? `<span class="tag">${client.occupation}</span>` : ''}
+                        ${(client.tags || []).map(t => `<span class="tag" style="border-color: var(--color-primary); color: var(--color-primary);">${t}</span>`).join('')}
                     </div>
                 </div>
                 ${client.notes ? `<div class="client-notes"><strong>Notas:</strong> ${client.notes}</div>` : ''}
@@ -2783,11 +2966,16 @@ window.NotaryCRM = {
                 <div class="case-detail-item"><p class="case-detail-label">Estado Civil</p><p class="case-detail-value">${client.maritalStatus || 'N/A'}</p></div>
             </div>
             
-            <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Historial de Casos (${clientCases.length})</h4>
+            <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Historial de Casos' : 'Case History'} (${clientCases.length})</h4>
             <div class="table-container" style="margin-bottom: 2rem;">
                 <table class="data-table">
                     <thead>
-                        <tr><th>Caso #</th><th>Servicio</th><th>Estado</th><th>Monto</th></tr>
+                        <tr>
+                            <th data-i18n="case_num">${I18nManager.t('case_num')}</th>
+                            <th data-i18n="type">${I18nManager.t('type')}</th>
+                            <th data-i18n="status">${I18nManager.t('status')}</th>
+                            <th data-i18n="amount">${I18nManager.t('amount')}</th>
+                        </tr>
                     </thead>
                     <tbody>
                         ${clientCases.map(c => `
@@ -2802,15 +2990,23 @@ window.NotaryCRM = {
                 </table>
             </div>
 
-            <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Próximas Citas</h4>
-            <div class="reminders-timeline">
-                ${clientApps.length === 0 ? '<p>No hay citas programadas.</p>' : clientApps.map(a => `
-                    <div class="timeline-item" style="padding-left:0;">
-                        <div class="timeline-card" style="margin-left:0; border-left: 4px solid #10b981;">
-                            <strong>${a.date} a las ${a.time}</strong> - ${a.type}
-                        </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Línea de Tiempo' : 'Activity Timeline'}</h4>
+                    ${TimelineManager.renderTimeline(TimelineManager.getClientTimeline(client.id))}
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Próximas Citas' : 'Upcoming Appointments'}</h4>
+                    <div class="reminders-timeline">
+                        ${clientApps.length === 0 ? `<p>${I18nManager.currentLang === 'es' ? 'No hay citas programadas.' : 'No upcoming appointments.'}</p>` : clientApps.map(a => `
+                            <div class="timeline-item" style="padding-left:0;">
+                                <div class="timeline-card" style="margin-left:0; border-left: 4px solid #10b981;">
+                                    <strong>${a.date} a las ${a.time}</strong> - ${a.type}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('')}
+                </div>
             </div>
         `;
 
