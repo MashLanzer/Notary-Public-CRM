@@ -37,6 +37,151 @@ window.addEventListener('unhandledrejection', (ev) => {
     showFatalError(ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason));
 });
 
+// ============================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================
+
+const Toast = {
+    container: null,
+
+    init() {
+        this.container = document.getElementById('toast-container');
+        if (!this.container) {
+            console.warn('Toast container not found');
+        }
+    },
+
+    show(options) {
+        if (!this.container) this.init();
+
+        const {
+            type = 'info',
+            title = '',
+            message = '',
+            duration = 5000,
+            dismissible = true
+        } = options;
+
+        const toast = this.createToast(type, title, message, dismissible);
+        this.container.appendChild(toast);
+
+        // Trigger animation
+        setTimeout(() => toast.classList.add('toast-show'), 10);
+
+        // Auto dismiss
+        if (duration > 0) {
+            const progressBar = toast.querySelector('.toast-progress');
+            if (progressBar) {
+                progressBar.style.animationDuration = `${duration}ms`;
+            }
+
+            setTimeout(() => {
+                this.dismiss(toast);
+            }, duration);
+        }
+
+        return toast;
+    },
+
+    createToast(type, title, message, dismissible) {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const icons = {
+            success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>`,
+            error: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>`,
+            warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>`,
+            info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>`
+        };
+
+        const titleHtml = title ? `<h4 class="toast-title">${this.escapeHtml(title)}</h4>` : '';
+        const messageHtml = message ? `<p class="toast-message">${this.escapeHtml(message)}</p>` : '';
+
+        toast.innerHTML = `
+            <div class="toast-icon">
+                ${icons[type] || icons.info}
+            </div>
+            <div class="toast-content">
+                ${titleHtml}
+                ${messageHtml}
+            </div>
+            ${dismissible ? `
+                <button class="toast-close" aria-label="Cerrar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            ` : ''}
+            <div class="toast-progress"></div>
+        `;
+
+        if (dismissible) {
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => this.dismiss(toast));
+        }
+
+        return toast;
+    },
+
+    dismiss(toast) {
+        toast.classList.add('toast-hiding');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    // Convenience methods
+    success(title, message, duration) {
+        return this.show({ type: 'success', title, message, duration });
+    },
+
+    error(title, message, duration) {
+        return this.show({ type: 'error', title, message, duration });
+    },
+
+    warning(title, message, duration) {
+        return this.show({ type: 'warning', title, message, duration });
+    },
+
+    info(title, message, duration) {
+        return this.show({ type: 'info', title, message, duration });
+    }
+};
+
+// Initialize Toast on page load
+if (typeof window !== 'undefined') {
+    window.Toast = Toast;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => Toast.init());
+    } else {
+        Toast.init();
+    }
+}
+
 // Application State
 window.NotaryCRM = {
     state: {
@@ -434,19 +579,26 @@ window.NotaryCRM = {
 
     // Sign in with Google
     async googleLogin() {
-        if (!this.useFirestore) return alert('Firebase no está disponible.');
+        if (!this.useFirestore) {
+            Toast.error('Firebase No Disponible', 'El servicio de autenticación no está disponible.');
+            return;
+        }
         try {
             const provider = new window.authFuncs.GoogleAuthProvider();
             await window.authFuncs.signInWithPopup(window.firebaseAuth, provider);
+            Toast.success('¡Bienvenido!', 'Has iniciado sesión con Google exitosamente.');
         } catch (err) {
             console.error('Google Sign-in failed', err);
-            alert('Error al ingresar con Google: ' + err.message);
+            Toast.error('Error de Google', 'No se pudo iniciar sesión con Google: ' + (err.message || err));
         }
     },
 
     // Sign in with email/password
     async signIn(form) {
-        if (!this.useFirestore) return alert('Firebase no está disponible.');
+        if (!this.useFirestore) {
+            Toast.error('Firebase No Disponible', 'El servicio de autenticación no está disponible.');
+            return;
+        }
         const fd = new FormData(form);
         const email = fd.get('email');
         const password = fd.get('password');
@@ -455,7 +607,7 @@ window.NotaryCRM = {
             // onAuthStateChanged will handle UI changes
         } catch (err) {
             console.error('Sign-in failed', err);
-            alert('Error al iniciar sesión: ' + (err.message || err));
+            Toast.error('Error de Autenticación', 'No se pudo iniciar sesión: ' + (err.message || err));
         }
     },
 
@@ -466,7 +618,10 @@ window.NotaryCRM = {
         const fd = new FormData(authForm);
         const email = fd.get('email');
         const password = fd.get('password');
-        if (!email || !password) return alert('Proporciona email y contraseña.');
+        if (!email || !password) {
+            Toast.warning('Campos Requeridos', 'Por favor proporciona email y contraseña.');
+            return;
+        }
         try {
             const cred = await window.authFuncs.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
             const uid = cred.user.uid;
@@ -478,10 +633,10 @@ window.NotaryCRM = {
             } catch (e) {
                 console.warn('Could not create user profile doc', e);
             }
-            alert('Cuenta creada. Inicia sesión ahora.');
+            Toast.success('¡Cuenta Creada!', 'Tu cuenta ha sido creada exitosamente. Inicia sesión ahora.');
         } catch (err) {
             console.error('Register failed', err);
-            alert('Error al registrarse: ' + (err.message || err));
+            Toast.error('Error de Registro', 'No se pudo crear la cuenta: ' + (err.message || err));
         }
     },
 
@@ -602,7 +757,10 @@ window.NotaryCRM = {
         }
 
         if (this.useFirestore) {
-            if (!this.currentUser) return alert('Debes iniciar sesión para añadir clientes.');
+            if (!this.currentUser) {
+                Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para añadir clientes.');
+                return;
+            }
             const { collection, addDoc } = window.dbFuncs;
             const clientsCol = collection(window.firebaseDB, 'clients');
             // attach ownerId and createdAt server timestamp
@@ -610,6 +768,7 @@ window.NotaryCRM = {
             addDoc(clientsCol, toInsert)
                 .then(async (docRef) => {
                     this.closeModal('client-modal');
+                    Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
                     // also save to SQL backend (if available)
                     try {
                         const api = getApiBase();
@@ -622,12 +781,16 @@ window.NotaryCRM = {
                         console.warn('Sync to SQL failed', e);
                     }
                 })
-                .catch(err => console.error('Add client failed', err));
+                .catch(err => {
+                    console.error('Add client failed', err);
+                    Toast.error('Error', 'No se pudo agregar el cliente.');
+                });
         } else {
             client.id = Date.now().toString();
             this.state.clients.push(client);
             this.saveData();
             this.closeModal('client-modal');
+            Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
             this.render();
         }
     },
@@ -639,13 +802,22 @@ window.NotaryCRM = {
             'Esta acción eliminará todos los datos asociados a este cliente.',
             () => {
                 if (this.useFirestore) {
-                    if (!this.currentUser) return alert('Debes iniciar sesión para eliminar clientes.');
+                    if (!this.currentUser) {
+                        Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para eliminar clientes.');
+                        return;
+                    }
                     const { doc, deleteDoc } = window.dbFuncs;
                     const clientRef = doc(window.firebaseDB, 'clients', id);
-                    deleteDoc(clientRef).catch(err => console.error('Delete client failed', err));
+                    deleteDoc(clientRef)
+                        .then(() => Toast.success('Cliente Eliminado', 'El cliente ha sido eliminado correctamente.'))
+                        .catch(err => {
+                            console.error('Delete client failed', err);
+                            Toast.error('Error', 'No se pudo eliminar el cliente.');
+                        });
                 } else {
                     this.state.clients = this.state.clients.filter(c => c.id !== id);
                     this.saveData();
+                    Toast.success('Cliente Eliminado', 'El cliente ha sido eliminado correctamente.');
                     this.render();
                 }
 
@@ -689,7 +861,10 @@ window.NotaryCRM = {
         }
 
         if (this.useFirestore) {
-            if (!this.currentUser) return alert('Debes iniciar sesión para añadir casos.');
+            if (!this.currentUser) {
+                Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para añadir casos.');
+                return;
+            }
             const { collection, addDoc, serverTimestamp } = window.dbFuncs;
             const casesCol = collection(window.firebaseDB, 'cases');
             const toInsert = Object.assign({}, caseItem, {
@@ -738,16 +913,18 @@ window.NotaryCRM = {
                     }
 
                     this.closeModal('case-modal');
+                    Toast.success('Caso Creado', `Caso ${caseItem.caseNumber} ha sido creado exitosamente.`);
                 })
                 .catch(err => {
                     console.error('Add case failed', err);
-                    alert('Error al añadir caso: ' + err.message);
+                    Toast.error('Error al Crear Caso', 'No se pudo crear el caso: ' + (err.message || err));
                 });
         } else {
             caseItem.id = Date.now().toString();
             this.state.cases.push(caseItem);
             this.saveData();
             this.closeModal('case-modal');
+            Toast.success('Caso Creado', `Caso ${caseItem.caseNumber} ha sido creado exitosamente.`);
             this.render();
         }
     },
@@ -759,10 +936,18 @@ window.NotaryCRM = {
             '¿Estás seguro de que deseas eliminar este expediente notarial?',
             () => {
                 if (this.useFirestore) {
-                    if (!this.currentUser) return alert('Debes iniciar sesión para eliminar casos.');
+                    if (!this.currentUser) {
+                        Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para eliminar casos.');
+                        return;
+                    }
                     const { doc, deleteDoc } = window.dbFuncs;
                     const caseRef = doc(window.firebaseDB, 'cases', id);
-                    deleteDoc(caseRef).catch(err => console.error('Delete case failed', err));
+                    deleteDoc(caseRef)
+                        .then(() => Toast.success('Caso Eliminado', 'El caso ha sido eliminado correctamente.'))
+                        .catch(err => {
+                            console.error('Delete case failed', err);
+                            Toast.error('Error', 'No se pudo eliminar el caso.');
+                        });
                 } else {
                     this.state.cases = this.state.cases.filter(c => c.id !== id);
                     this.saveData();
