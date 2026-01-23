@@ -65,7 +65,7 @@
 - [ ] **Conflictos de Agenda**: Detección automática de solapamientos
 
 ### Comunicación
-- [ ] **Email Templates**: Plantillas personalizables para comunicación con clientes
+- [x] **Email Templates**: Plantillas personalizables para comunicación con clientes ✅ **COMPLETADO 2026-01-23**
 - [ ] **SMS Notifications**: Envío de SMS para recordatorios
 - [ ] **WhatsApp Integration**: Comunicación via WhatsApp Business API
 - [ ] **Chat Interno**: Sistema de mensajería entre miembros del equipo
@@ -285,7 +285,7 @@
 1. Toast Notifications
 2. Validación en Tiempo Real en formularios
 3. Dashboard Personalizable ✅ **COMPLETADO**
-4. Email Templates
+4. Email Templates ✅ **COMPLETADO**
 5. Roles Granulares
 6. Audit Logs
 7. Lazy Loading y Performance
