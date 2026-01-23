@@ -979,6 +979,130 @@ body:not(.authenticated) {
 }
 
 /* ============================================
+   FORM VALIDATION STYLES
+   ============================================ */
+
+.form-group {
+    position: relative;
+}
+
+.form-input.is-valid {
+    border-color: var(--color-success);
+    background-color: #ffffff;
+    padding-right: 2.5rem;
+}
+
+.form-input.is-valid:focus {
+    border-color: var(--color-success);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+.form-input.is-invalid {
+    border-color: var(--color-danger);
+    background-color: #ffffff;
+    padding-right: 2.5rem;
+}
+
+.form-input.is-invalid:focus {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Validation icons */
+.validation-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+.form-label+.form-input+.validation-icon {
+    top: calc(50% + 12px);
+}
+
+.validation-icon.valid {
+    color: var(--color-success);
+}
+
+.validation-icon.invalid {
+    color: var(--color-danger);
+}
+
+/* Validation messages */
+.validation-message {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.validation-message.error {
+    color: var(--color-danger);
+}
+
+.validation-message.success {
+    color: var(--color-success);
+}
+
+.validation-message.warning {
+    color: var(--color-warning);
+}
+
+.validation-message svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/* Character counter */
+.char-counter {
+    display: block;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--color-gray-400);
+    margin-top: 4px;
+}
+
+.char-counter.warning {
+    color: var(--color-warning);
+}
+
+.char-counter.danger {
+    color: var(--color-danger);
+}
+
+/* Required field indicator */
+.form-label.required::after {
+    content: ' *';
+    color: var(--color-danger);
+}
+
+/* Input group for validation */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ============================================
    FOOTER
    ============================================ */
 

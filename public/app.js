@@ -182,6 +182,262 @@ if (typeof window !== 'undefined') {
     }
 }
 
+// ============================================
+// FORM VALIDATION SYSTEM
+// ============================================
+
+const FormValidator = {
+    validators: {
+        required: (value) => {
+            const isValid = value.toString().trim() !== '';
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'Este campo es requerido'
+            };
+        },
+
+        email: (value) => {
+            if (!value) return { valid: true, message: '' };
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isValid = emailRegex.test(value);
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'Email inválido (ej: usuario@ejemplo.com)'
+            };
+        },
+
+        phone: (value) => {
+            if (!value) return { valid: true, message: '' };
+            // Acepta formatos: (555) 123-4567, 555-123-4567, 5551234567, +1 555 123 4567
+            const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
+            const isValid = phoneRegex.test(value.replace(/\s/g, ''));
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'Número de teléfono inválido'
+            };
+        },
+
+        minLength: (min) => (value) => {
+            if (!value) return { valid: true, message: '' };
+            const isValid = value.length >= min;
+            return {
+                valid: isValid,
+                message: isValid ? '' : `Mínimo ${min} caracteres`
+            };
+        },
+
+        maxLength: (max) => (value) => {
+            if (!value) return { valid: true, message: '' };
+            const isValid = value.length <= max;
+            return {
+                valid: isValid,
+                message: isValid ? '' : `Máximo ${max} caracteres`
+            };
+        },
+
+        number: (value) => {
+            if (!value) return { valid: true, message: '' };
+            const isValid = !isNaN(value) && value.toString().trim() !== '';
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'Debe ser un número válido'
+            };
+        },
+
+        min: (minValue) => (value) => {
+            if (!value) return { valid: true, message: '' };
+            const numValue = parseFloat(value);
+            const isValid = !isNaN(numValue) && numValue >= minValue;
+            return {
+                valid: isValid,
+                message: isValid ? '' : `Valor mínimo: ${minValue}`
+            };
+        },
+
+        max: (maxValue) => (value) => {
+            if (!value) return { valid: true, message: '' };
+            const numValue = parseFloat(value);
+            const isValid = !isNaN(numValue) && numValue <= maxValue;
+            return {
+                valid: isValid,
+                message: isValid ? '' : `Valor máximo: ${maxValue}`
+            };
+        },
+
+        date: (value) => {
+            if (!value) return { valid: true, message: '' };
+            const date = new Date(value);
+            const isValid = date instanceof Date && !isNaN(date);
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'Fecha inválida'
+            };
+        },
+
+        futureDate: (value) => {
+            if (!value) return { valid: true, message: '' };
+            const date = new Date(value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isValid = date >= today;
+            return {
+                valid: isValid,
+                message: isValid ? '' : 'La fecha debe ser hoy o posterior'
+            };
+        },
+
+        pattern: (regex, customMessage) => (value) => {
+            if (!value) return { valid: true, message: '' };
+            const isValid = regex.test(value);
+            return {
+                valid: isValid,
+                message: isValid ? '' : (customMessage || 'Formato inválido')
+            };
+        }
+    },
+
+    validateField(input, rules) {
+        const value = input.value;
+        let isValid = true;
+        let message = '';
+
+        // Ejecutar todas las reglas de validación
+        for (const rule of rules) {
+            const result = rule(value);
+            if (!result.valid) {
+                isValid = false;
+                message = result.message;
+                break; // Detener en el primer error
+            }
+        }
+
+        return { isValid, message };
+    },
+
+    showValidation(input, isValid, message) {
+        const formGroup = input.closest('.form-group');
+        if (!formGroup) return;
+
+        // Remover clases y elementos anteriores
+        input.classList.remove('is-valid', 'is-invalid');
+        const oldIcon = formGroup.querySelector('.validation-icon');
+        const oldMessage = formGroup.querySelector('.validation-message');
+        if (oldIcon) oldIcon.remove();
+        if (oldMessage) oldMessage.remove();
+
+        // Si el campo está vacío y no es requerido, no mostrar nada
+        if (!input.value && !input.hasAttribute('required')) {
+            return;
+        }
+
+        // Agregar clase apropiada
+        input.classList.add(isValid ? 'is-valid' : 'is-invalid');
+
+        // Crear icono de validación
+        const icon = document.createElement('div');
+        icon.className = `validation-icon ${isValid ? 'valid' : 'invalid'}`;
+        icon.innerHTML = isValid
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>`;
+
+        // Insertar icono después del input
+        input.parentNode.insertBefore(icon, input.nextSibling);
+
+        // Mostrar mensaje de error
+        if (!isValid && message) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'validation-message error';
+            messageEl.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>${message}</span>
+            `;
+            formGroup.appendChild(messageEl);
+        }
+    },
+
+    setupValidation(formElement, validationRules) {
+        if (!formElement) return;
+
+        Object.keys(validationRules).forEach(fieldName => {
+            const input = formElement.querySelector(`[name="${fieldName}"]`);
+            if (!input) return;
+
+            const rules = validationRules[fieldName];
+
+            // Validar en tiempo real (al escribir)
+            input.addEventListener('input', () => {
+                const { isValid, message } = this.validateField(input, rules);
+                this.showValidation(input, isValid, message);
+            });
+
+            // Validar al perder el foco
+            input.addEventListener('blur', () => {
+                const { isValid, message } = this.validateField(input, rules);
+                this.showValidation(input, isValid, message);
+            });
+        });
+
+        // Validar todo el formulario antes de enviar
+        formElement.addEventListener('submit', (e) => {
+            let hasErrors = false;
+
+            Object.keys(validationRules).forEach(fieldName => {
+                const input = formElement.querySelector(`[name="${fieldName}"]`);
+                if (!input) return;
+
+                const rules = validationRules[fieldName];
+                const { isValid, message } = this.validateField(input, rules);
+                this.showValidation(input, isValid, message);
+
+                if (!isValid) {
+                    hasErrors = true;
+                    // Hacer scroll al primer error
+                    if (hasErrors && input === formElement.querySelector('.is-invalid')) {
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        input.focus();
+                    }
+                }
+            });
+
+            if (hasErrors) {
+                e.preventDefault();
+                Toast.error('Formulario Inválido', 'Por favor corrige los errores antes de continuar.');
+                return false;
+            }
+        });
+    },
+
+    // Marcar campos requeridos visualmente
+    markRequiredFields(formElement) {
+        if (!formElement) return;
+
+        const requiredInputs = formElement.querySelectorAll('[required]');
+        requiredInputs.forEach(input => {
+            const label = formElement.querySelector(`label[for="${input.id}"]`)
+                || input.closest('.form-group')?.querySelector('.form-label');
+            if (label && !label.classList.contains('required')) {
+                label.classList.add('required');
+            }
+        });
+    }
+};
+
+// Hacer disponible globalmente
+if (typeof window !== 'undefined') {
+    window.FormValidator = FormValidator;
+}
+
 // Application State
 window.NotaryCRM = {
     state: {
@@ -220,6 +476,71 @@ window.NotaryCRM = {
             // No Firebase available — fall back
             this.loadData();
             this.render();
+        }
+
+        // Initialize form validation
+        this.initFormValidation();
+    },
+
+    // Initialize form validation
+    initFormValidation() {
+        // Client form validation
+        const clientForm = document.getElementById('client-form');
+        if (clientForm) {
+            const V = FormValidator.validators;
+
+            FormValidator.setupValidation(clientForm, {
+                name: [V.required, V.minLength(2)],
+                email: [V.required, V.email],
+                phone: [V.required, V.phone],
+                address: [V.required, V.minLength(5)]
+            });
+
+            FormValidator.markRequiredFields(clientForm);
+        }
+
+        // Case form validation
+        const caseForm = document.getElementById('case-form');
+        if (caseForm) {
+            const V = FormValidator.validators;
+
+            FormValidator.setupValidation(caseForm, {
+                clientId: [V.required],
+                type: [V.required],
+                amount: [V.required, V.number, V.min(0)],
+                dueDate: [V.required, V.date],
+                description: [V.required, V.minLength(10)]
+            });
+
+            FormValidator.markRequiredFields(caseForm);
+        }
+
+        // Calendar/Appointment form validation
+        const calendarForm = document.getElementById('calendar-form');
+        if (calendarForm) {
+            const V = FormValidator.validators;
+
+            FormValidator.setupValidation(calendarForm, {
+                clientId: [V.required],
+                date: [V.required, V.date, V.futureDate],
+                time: [V.required],
+                type: [V.required]
+            });
+
+            FormValidator.markRequiredFields(calendarForm);
+        }
+
+        // Auth form validation
+        const authForm = document.getElementById('auth-form');
+        if (authForm) {
+            const V = FormValidator.validators;
+
+            FormValidator.setupValidation(authForm, {
+                email: [V.required, V.email],
+                password: [V.required, V.minLength(6)]
+            });
+
+            FormValidator.markRequiredFields(authForm);
         }
     },
 
