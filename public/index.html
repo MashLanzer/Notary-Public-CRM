@@ -139,6 +139,13 @@
                     </svg>
                     Reports
                 </button>
+                <button class="tab-btn" data-tab="emails">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    Email
+                </button>
                 <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -401,6 +408,24 @@
                     </label>
                 </div>
             </div>
+            <!-- Emails Tab -->
+            <div class="tab-content" id="emails-tab">
+                <div class="actions-bar">
+                    <h2 class="section-title">Plantillas de Email</h2>
+                    <button class="btn btn-primary" id="add-template-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nueva Plantilla
+                    </button>
+                </div>
+                <div class="template-grid" id="templates-list">
+                    <!-- Templates will be injected here -->
+                    <p class="empty-state">No hay plantillas creadas.</p>
+                </div>
+            </div>
+
             <!-- Users Tab (admin) -->
             <div class="tab-content" id="users-tab">
                 <div class="actions-bar">
@@ -444,6 +469,95 @@
             </div>
         </div>
     </footer>
+
+    <!-- Email Template Modal -->
+    <div class="modal" id="template-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Configurar Plantilla de Email</h3>
+                <button class="modal-close" data-modal="template-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="template-form">
+                <input type="hidden" name="id" />
+                <div class="form-group">
+                    <label class="form-label">Nombre de la Plantilla</label>
+                    <input type="text" class="form-input" name="name" placeholder="Ej: Confirmación de Cita" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asunto del Correo</label>
+                    <input type="text" class="form-input" name="subject" placeholder="Asunto" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contenido (HTML soportado)</label>
+                    <textarea class="form-input" name="body" rows="10" placeholder="Escribe el mensaje aquí..."
+                        required></textarea>
+                </div>
+                <div class="template-editor-variables">
+                    <p
+                        style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-gray-600);">
+                        Variables Disponibles (clic para insertar):</p>
+                    <div id="variable-tags-container">
+                        <span class="variable-tag" data-var="{client_name}">Nombre Cliente</span>
+                        <span class="variable-tag" data-var="{case_number}">Num. Caso</span>
+                        <span class="variable-tag" data-var="{service_type}">Tipo Servicio</span>
+                        <span class="variable-tag" data-var="{due_date}">Fecha Vencimiento</span>
+                        <span class="variable-tag" data-var="{amount}">Monto</span>
+                        <span class="variable-tag" data-var="{company_name}">Mi Empresa</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">Guardar
+                    Plantilla</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Email Modal -->
+    <div class="modal" id="send-email-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Enviar Correo al Cliente</h3>
+                <button class="modal-close" data-modal="send-email-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Seleccionar Plantilla</label>
+                    <select class="form-input" id="email-template-select">
+                        <option value="">Cargando plantillas...</option>
+                    </select>
+                </div>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--color-gray-200);">
+                <div id="email-preview"
+                    style="background:var(--color-gray-50); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--color-gray-200);">
+                    <h4 id="preview-subject" style="margin-bottom:0.5rem; color:var(--color-gray-900);">Asunto:
+                        (Selecciona una plantilla)</h4>
+                    <div id="preview-body" style="font-size:0.9rem; color:var(--color-gray-700); min-height:100px;">
+                        Contenido del mensaje...
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" id="confirm-send-email" style="flex: 1;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Enviar Ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Add Client Modal -->
     <div class="modal" id="client-modal">

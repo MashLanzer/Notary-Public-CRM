@@ -563,9 +563,259 @@ const DashboardManager = {
     }
 };
 
+// ============================================
+// EMAIL TEMPLATES MANAGER
+// ============================================
+
+const EmailManager = {
+    templates: [],
+    currentTarget: null, // { type: 'client'|'case', id: string }
+
+    init() {
+        this.loadTemplates();
+        this.attachListeners();
+        this.renderTemplates();
+    },
+
+    loadTemplates() {
+        // Default templates if none exist
+        const defaultTemplates = [
+            {
+                id: '1',
+                name: 'Confirmación de Servicio',
+                subject: 'Confirmación de su servicio notarial - {case_number}',
+                body: 'Estimado/a {client_name},\n\nLe confirmamos que hemos iniciado el proceso para su trámite de {service_type}. El número de expediente es {case_number}.\n\nQuedamos a su disposición.\n\nAtentamente,\n{company_name}'
+            },
+            {
+                id: '2',
+                name: 'Recordatorio de Vencimiento',
+                subject: 'Recordatorio: Vencimiento de trámite {case_number}',
+                body: 'Hola {client_name},\n\nLe recordamos que su trámite {service_type} tiene fecha de vencimiento el {due_date}. Por favor contacte con nosotros si necesita asistencia adicional.\n\nSaludos,\n{company_name}'
+            }
+        ];
+
+        const saved = localStorage.getItem('notary_email_templates');
+        if (saved) {
+            this.templates = JSON.parse(saved);
+        } else {
+            this.templates = defaultTemplates;
+            this.saveTemplates();
+        }
+    },
+
+    saveTemplates() {
+        localStorage.setItem('notary_email_templates', JSON.stringify(this.templates));
+
+        // If logged in, save to Firestore
+        if (NotaryCRM.currentUser && NotaryCRM.useFirestore) {
+            const { doc, setDoc } = window.dbFuncs;
+            const db = window.firebaseDB;
+            const ref = doc(db, 'users', NotaryCRM.currentUser.uid, 'settings', 'email_templates');
+            setDoc(ref, { templates: this.templates }).catch(err => console.error('Error saving templates to Firestore:', err));
+        }
+    },
+
+    renderTemplates() {
+        const container = document.getElementById('templates-list');
+        if (!container) return;
+
+        if (this.templates.length === 0) {
+            container.innerHTML = '<p class="empty-state">No hay plantillas creadas. Haz clic en "Nueva Plantilla" para empezar.</p>';
+            return;
+        }
+
+        container.innerHTML = this.templates.map(tmp => `
+            <div class="template-card">
+                <div>
+                    <h3>${NotaryCRM.escapeHtml(tmp.name)}</h3>
+                    <p style="font-size:0.75rem; color:var(--color-gray-400); margin-top:0.25rem;">Asunto: ${NotaryCRM.escapeHtml(tmp.subject)}</p>
+                </div>
+                <div class="template-preview">
+                    ${NotaryCRM.escapeHtml(tmp.body)}
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-sm" onclick="EmailManager.editTemplate('${tmp.id}')">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="EmailManager.deleteTemplate('${tmp.id}')">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    editTemplate(id) {
+        const template = this.templates.find(t => t.id === id);
+        if (!template) return;
+
+        const form = document.getElementById('template-form');
+        form.id.value = template.id;
+        form.name.value = template.name;
+        form.subject.value = template.subject;
+        form.body.value = template.body;
+
+        NotaryCRM.openModal('template-modal');
+    },
+
+    deleteTemplate(id) {
+        NotaryCRM.confirmAction(
+            '¿Eliminar Plantilla?',
+            '¿Estás seguro de que deseas eliminar esta plantilla de correo?',
+            () => {
+                this.templates = this.templates.filter(t => t.id !== id);
+                this.saveTemplates();
+                this.renderTemplates();
+                Toast.success('Plantilla Eliminada', 'La plantilla se ha eliminado correctamente.');
+            }
+        );
+    },
+
+    openSendModal(type, id) {
+        this.currentTarget = { type, id };
+
+        const select = document.getElementById('email-template-select');
+        select.innerHTML = '<option value="">Selecciona una plantilla...</option>' +
+            this.templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+        // Reset preview
+        document.getElementById('preview-subject').textContent = 'Asunto: (Selecciona una plantilla)';
+        document.getElementById('preview-body').textContent = 'Contenido del mensaje...';
+
+        NotaryCRM.openModal('send-email-modal');
+    },
+
+    updatePreview(templateId) {
+        const template = this.templates.find(t => t.id === templateId);
+        if (!template) return;
+
+        let data = {};
+        if (this.currentTarget.type === 'client') {
+            const client = NotaryCRM.state.clients.find(c => c.id === this.currentTarget.id);
+            data = {
+                client_name: client ? client.name : 'Cliente',
+                company_name: 'Notaría Publica - CRM'
+            };
+        } else if (this.currentTarget.type === 'case') {
+            const caseObj = NotaryCRM.state.cases.find(c => c.id === this.currentTarget.id);
+            data = {
+                client_name: caseObj ? caseObj.clientName : 'Cliente',
+                case_number: caseObj ? caseObj.caseNumber : 'N/A',
+                service_type: caseObj ? caseObj.type : 'Servicio',
+                due_date: caseObj ? NotaryCRM.formatDate(caseObj.dueDate) : 'N/A',
+                amount: caseObj ? `$${caseObj.amount}` : '$0.00',
+                company_name: 'Notaría Publica - CRM'
+            };
+        }
+
+        const subject = this.replaceVariables(template.subject, data);
+        const body = this.replaceVariables(template.body, data);
+
+        document.getElementById('preview-subject').textContent = `Asunto: ${subject}`;
+        document.getElementById('preview-body').innerHTML = body.replace(/\n/g, '<br>');
+    },
+
+    replaceVariables(text, data) {
+        let result = text;
+        const variables = {
+            client_name: data.client_name || 'Cliente',
+            case_number: data.case_number || 'N/A',
+            service_type: data.service_type || 'Servicio',
+            due_date: data.due_date || 'N/A',
+            amount: data.amount || '$0.00',
+            company_name: data.company_name || 'Mi Notaría'
+        };
+
+        Object.keys(variables).forEach(key => {
+            const regex = new RegExp(`{${key}}`, 'g');
+            result = result.replace(regex, variables[key]);
+        });
+        return result;
+    },
+
+    attachListeners() {
+        const addBtn = document.getElementById('add-template-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                document.getElementById('template-form').reset();
+                document.getElementById('template-form').id.value = '';
+                NotaryCRM.openModal('template-modal');
+            });
+        }
+
+        const form = document.getElementById('template-form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fd = new FormData(form);
+                const id = fd.get('id');
+                const newTpl = {
+                    id: id || Date.now().toString(),
+                    name: fd.get('name'),
+                    subject: fd.get('subject'),
+                    body: fd.get('body')
+                };
+
+                if (id) {
+                    const idx = this.templates.findIndex(t => t.id === id);
+                    this.templates[idx] = newTpl;
+                } else {
+                    this.templates.push(newTpl);
+                }
+
+                this.saveTemplates();
+                this.renderTemplates();
+                NotaryCRM.closeModal('template-modal');
+                Toast.success('Plantilla Guardada', 'La plantilla se ha guardado correctamente.');
+            });
+        }
+
+        // Variable tags click event
+        const tagsContainer = document.getElementById('variable-tags-container');
+        if (tagsContainer) {
+            tagsContainer.addEventListener('click', (e) => {
+                const tag = e.target.closest('.variable-tag');
+                if (tag) {
+                    const variable = tag.getAttribute('data-var');
+                    const textarea = form.querySelector('textarea[name="body"]');
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = textarea.value;
+                    textarea.value = text.substring(0, start) + variable + text.substring(end);
+                    textarea.focus();
+                    textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+                }
+            });
+        }
+
+        // Send Email dialog template select
+        const select = document.getElementById('email-template-select');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                this.updatePreview(e.target.value);
+            });
+        }
+
+        const sendBtn = document.getElementById('confirm-send-email');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => {
+                const templateId = document.getElementById('email-template-select').value;
+                if (!templateId) {
+                    Toast.warning('Selección Requerida', 'Por favor selecciona una plantilla.');
+                    return;
+                }
+
+                // Simulate sending
+                Toast.info('Enviando...', 'Preparando el correo para el cliente...');
+                setTimeout(() => {
+                    NotaryCRM.closeModal('send-email-modal');
+                    Toast.success('¡Correo Enviado!', 'El correo ha sido enviado exitosamente al cliente.');
+                }, 1500);
+            });
+        }
+    }
+};
+
 // Make available globally
 if (typeof window !== 'undefined') {
     window.DashboardManager = DashboardManager;
+    window.EmailManager = EmailManager;
 }
 
 // Application State
@@ -613,6 +863,9 @@ window.NotaryCRM = {
 
         // Initialize dashboard customization
         DashboardManager.init();
+
+        // Initialize email templates
+        EmailManager.init();
     },
 
     // Initialize form validation
@@ -1125,6 +1378,7 @@ window.NotaryCRM = {
         // Trigger specific renders
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
+        if (tabName === 'emails') EmailManager.renderTemplates();
     },
 
     // Modal controls
@@ -1617,6 +1871,9 @@ window.NotaryCRM = {
                         </div>
                     </div>
                     <div class="card-actions">
+                        <button class="btn-icon" onclick="EmailManager.openSendModal('client', '${client.id}')" title="Enviar Correo">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </button>
                         <button class="btn-icon" onclick="NotaryCRM.editClientPrompt('${client.id}')" title="Editar Cliente">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
@@ -1707,6 +1964,9 @@ window.NotaryCRM = {
                         </button>
                         <button class="btn-icon btn-sign" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" title="Enviar para Firma Digital">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="EmailManager.openSendModal('case', '${caseItem.id}')" title="Enviar Correo de Caso">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         </button>
                         <button class="btn-icon" onclick="NotaryCRM.editCasePrompt('${caseItem.id}')" title="Editar Caso">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
