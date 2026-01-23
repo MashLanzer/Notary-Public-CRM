@@ -1077,27 +1077,46 @@ window.NotaryCRM = {
 
         container.innerHTML = this.state.users.map(u => `
             <div class="user-row">
-                <div style="flex:1">
-                    <strong>${u.email || '(no email)'}</strong>
-                    <div class="muted">Role: ${u.role || 'user'}</div>
+                <div class="user-info">
+                    <div class="user-avatar-small">${(u.email || '?').charAt(0).toUpperCase()}</div>
+                    <div class="user-details">
+                        <div class="user-name-email">
+                            <strong>${u.email || '(no email)'}</strong>
+                            ${u.id === this.currentUser?.uid ? '<span class="self-tag">Tú</span>' : ''}
+                        </div>
+                        <div class="user-uid muted">${u.id}</div>
+                    </div>
                 </div>
-                <div>
-                    ${u.role === 'admin' ? `<button class="btn" onclick="NotaryCRM.setUserRole('${u.id}','user')">Revoke admin</button>` : `<button class="btn" onclick="NotaryCRM.setUserRole('${u.id}','admin')">Make admin</button>`}
+                <div class="user-actions">
+                    <select class="role-selector" onchange="NotaryCRM.setUserRole('${u.id}', this.value)" ${u.id === this.currentUser?.uid ? 'disabled' : ''}>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
+                        <option value="editor" ${u.role === 'editor' ? 'selected' : ''}>Editor</option>
+                        <option value="viewer" ${u.role === 'viewer' || !u.role ? 'selected' : ''}>Lector (Solo Ver)</option>
+                    </select>
                 </div>
             </div>
         `).join('');
     },
 
     async setUserRole(uid, role) {
-        if (!this.useFirestore) return alert('Firebase no disponible');
-        if (!this.isAdmin) return alert('No estás autorizado');
+        if (!this.useFirestore) {
+            Toast.error('Error', 'Firebase no disponible');
+            return;
+        }
+        if (!this.isAdmin) {
+            Toast.error('No Autorizado', 'No tienes permisos para cambiar roles.');
+            return;
+        }
+
         const { doc, updateDoc } = window.dbFuncs;
         try {
             const ref = doc(window.firebaseDB, 'users', uid);
             await updateDoc(ref, { role });
+            Toast.success('Rol Actualizado', `El usuario ahora tiene el rol de ${role}.`);
         } catch (e) {
             console.error('setUserRole failed', e);
-            alert('Error al cambiar rol: ' + (e.message || e));
+            Toast.error('Error', 'No se pudo cambiar el rol: ' + (e.message || e));
+            this.renderUsers(); // reset UI state
         }
     },
 
@@ -1222,6 +1241,24 @@ window.NotaryCRM = {
         });
     },
 
+    // Check if current user has a specific permission
+    checkPermission(permission) {
+        if (!this.currentUser) return false;
+        const role = this.currentUserRole || 'viewer';
+
+        // Admin has all permissions
+        if (role === 'admin') return true;
+
+        const permissions = {
+            'viewer': ['DASHBOARD_VIEW', 'CLIENT_VIEW', 'CASE_VIEW', 'CALENDAR_VIEW', 'REPORTS_VIEW'],
+            'editor': ['DASHBOARD_VIEW', 'CLIENT_VIEW', 'CLIENT_CREATE', 'CLIENT_EDIT', 'CASE_VIEW', 'CASE_CREATE', 'CASE_EDIT', 'CALENDAR_VIEW', 'CALENDAR_CREATE', 'REPORTS_VIEW', 'EMAIL_VIEW', 'EMAIL_USE'],
+            'admin': ['*'] // Handled by the shortcut above
+        };
+
+        const userPermissions = permissions[role] || [];
+        return userPermissions.includes(permission) || userPermissions.includes('*');
+    },
+
     // Handle auth state
     handleAuthState(user) {
         this.currentUser = user;
@@ -1230,8 +1267,13 @@ window.NotaryCRM = {
             document.body.classList.add('authenticated');
             // show user email and sign out
             if (authArea) authArea.innerHTML = `
-                <span class="user-email">${user.email}</span> 
-                <button class="btn btn-signout" id="sign-out-btn">Cerrar sesión</button>
+                <div class="user-profile-badge">
+                   <div class="user-info-mini">
+                      <span class="user-email">${user.email}</span>
+                      <span class="user-role-tag" id="current-user-role-display">Cargando...</span>
+                   </div>
+                   <button class="btn btn-signout btn-sm" id="sign-out-btn">Cerrar sesión</button>
+                </div>
             `;
             const signOutBtn = document.getElementById('sign-out-btn');
             if (signOutBtn) signOutBtn.addEventListener('click', () => this.signOutUser());
@@ -1248,31 +1290,49 @@ window.NotaryCRM = {
                     const userRef = doc(db, 'users', user.uid);
 
                     // Also ensure user document exists in 'users' collection
-                    const userSnap = await getDoc(userRef);
+                    let userSnap = await getDoc(userRef);
                     if (!userSnap.exists()) {
                         await setDoc(userRef, {
                             email: user.email,
-                            role: 'user',
+                            role: 'admin', // First user is admin by default (or we can change this)
                             createdAt: new Date().toISOString()
                         });
+                        userSnap = await getDoc(userRef); // re-fetch
                     }
 
-                    const data = userSnap.exists() ? userSnap.data() : { role: 'user' };
-                    this.isAdmin = data && data.role === 'admin';
+                    const data = userSnap.data();
+                    this.currentUserRole = data.role || 'viewer';
+                    this.isAdmin = this.currentUserRole === 'admin';
 
-                    // show users tab if admin
+                    // Update role display
+                    const roleDisplay = document.getElementById('current-user-role-display');
+                    if (roleDisplay) {
+                        const roleNames = { 'admin': 'Administrador', 'editor': 'Editor', 'viewer': 'Lector' };
+                        roleDisplay.textContent = roleNames[this.currentUserRole] || this.currentUserRole;
+                        roleDisplay.className = `user-role-tag role-${this.currentUserRole}`;
+                    }
+
+                    // toggle sensitive sidebar items
                     const usersBtn = document.getElementById('users-tab-btn');
                     if (this.isAdmin && usersBtn) usersBtn.style.display = '';
+
+                    // Apply permissions to UI immediately
+                    this.applyUIPermissions();
 
                     if (this.isAdmin) {
                         this.startUsersListener();
                     }
+
+                    this.render(); // Re-render everything with new permissions
                 } catch (e) {
                     console.error('Failed to fetch user profile', e);
+                    this.currentUserRole = 'viewer';
+                    this.render();
                 }
             })();
         } else {
             document.body.classList.remove('authenticated');
+            this.currentUserRole = null;
             if (authArea) authArea.innerHTML = `<button class="btn" id="sign-in-btn">Iniciar sesión</button>`;
             const signInBtn = document.getElementById('sign-in-btn');
             if (signInBtn) signInBtn.addEventListener('click', () => this.openModal('auth-modal'));
@@ -1282,6 +1342,30 @@ window.NotaryCRM = {
             this.state.cases = [];
             this.render();
         }
+    },
+
+    // Method to hide/show UI elements based on global permissions
+    applyUIPermissions() {
+        if (!this.currentUser) return;
+
+        const canCreateClient = this.checkPermission('CLIENT_CREATE');
+        const canCreateCase = this.checkPermission('CASE_CREATE');
+        const canViewEmail = this.checkPermission('EMAIL_VIEW');
+
+        const addClientBtn = document.getElementById('add-client-btn');
+        if (addClientBtn) addClientBtn.style.display = canCreateClient ? '' : 'none';
+
+        const addCaseBtn = document.getElementById('add-case-btn');
+        if (addCaseBtn) addCaseBtn.style.display = canCreateCase ? '' : 'none';
+
+        const addTemplateBtn = document.getElementById('add-template-btn');
+        if (addTemplateBtn) addTemplateBtn.style.display = this.isAdmin ? '' : 'none';
+
+        const emailTabBtn = document.getElementById('emails-tab-btn');
+        if (emailTabBtn) emailTabBtn.style.display = canViewEmail ? '' : 'none';
+
+        const usersTabBtn = document.getElementById('users-tab-btn');
+        if (usersTabBtn) usersTabBtn.style.display = this.isAdmin ? '' : 'none';
     },
 
     // Sign in with Google
@@ -1871,15 +1955,18 @@ window.NotaryCRM = {
                         </div>
                     </div>
                     <div class="card-actions">
+                        ${this.checkPermission('EMAIL_USE') ? `
                         <button class="btn-icon" onclick="EmailManager.openSendModal('client', '${client.id}')" title="Enviar Correo">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        </button>
+                        </button>` : ''}
+                        ${this.checkPermission('CLIENT_EDIT') ? `
                         <button class="btn-icon" onclick="NotaryCRM.editClientPrompt('${client.id}')" title="Editar Cliente">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
+                        </button>` : ''}
+                        ${this.checkPermission('CLIENT_DELETE') ? `
                         <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteClient('${client.id}')" title="Eliminar Cliente">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
+                        </button>` : ''}
                     </div>
                 </div>
                 <div class="client-details">
@@ -1959,21 +2046,25 @@ window.NotaryCRM = {
                         <button class="btn-icon" onclick="const link = window.location.origin + '/status.html?case=${caseItem.caseNumber}'; NotaryCRM.copyToClipboard(link)" title="Copiar Enlace de Seguimiento">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                         </button>
+                        ${this.checkPermission('CASE_EDIT') ? `
                         <button class="btn-icon btn-invoice" onclick="NotaryCRM.generateInvoice('${caseItem.id}')" title="Generar Recibo/Factura">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         </button>
                         <button class="btn-icon btn-sign" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" title="Enviar para Firma Digital">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                        </button>
+                        </button>` : ''}
+                        ${this.checkPermission('EMAIL_USE') ? `
                         <button class="btn-icon" onclick="EmailManager.openSendModal('case', '${caseItem.id}')" title="Enviar Correo de Caso">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        </button>
+                        </button>` : ''}
+                        ${this.checkPermission('CASE_EDIT') ? `
                         <button class="btn-icon" onclick="NotaryCRM.editCasePrompt('${caseItem.id}')" title="Editar Caso">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
+                        </button>` : ''}
+                        ${this.checkPermission('CASE_DELETE') ? `
                         <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteCase('${caseItem.id}')" title="Eliminar Caso">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
+                        </button>` : ''}
                     </div>
                 </div>
                 <div class="case-details-grid">
