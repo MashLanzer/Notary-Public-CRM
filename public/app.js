@@ -4089,14 +4089,52 @@ const Reminders = {
         this.render();
         console.info('Reminders initialized');
     },
-    load() {
-        const saved = localStorage.getItem('notary_reminders');
-        if (saved) {
-            this.state.items = JSON.parse(saved);
+    async load() {
+        // Si usamos Firestore, cargar desde ahí
+        if (NotaryCRM.useFirestore && NotaryCRM.currentUser) {
+            try {
+                const { collection, query, where, getDocs } = window.dbFuncs;
+                const db = window.firebaseDB;
+                const q = query(
+                    collection(db, 'reminders'),
+                    where('ownerId', '==', NotaryCRM.currentUser.uid)
+                );
+                const snapshot = await getDocs(q);
+                this.state.items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (err) {
+                console.error('Error loading reminders from Firestore:', err);
+            }
+        } else {
+            // Cargar desde localStorage y filtrar por usuario
+            const saved = localStorage.getItem('notary_reminders');
+            if (saved) {
+                const allReminders = JSON.parse(saved);
+                // Filtrar solo los recordatorios del usuario actual
+                if (NotaryCRM.currentUser) {
+                    this.state.items = allReminders.filter(r => r.ownerId === NotaryCRM.currentUser.uid);
+                } else {
+                    this.state.items = allReminders.filter(r => !r.ownerId); // Recordatorios sin dueño (legacy)
+                }
+            }
         }
     },
     save() {
-        localStorage.setItem('notary_reminders', JSON.stringify(this.state.items));
+        // Solo guardar en localStorage si no usamos Firestore
+        if (!NotaryCRM.useFirestore) {
+            // Cargar todos los recordatorios existentes
+            const saved = localStorage.getItem('notary_reminders');
+            let allReminders = saved ? JSON.parse(saved) : [];
+
+            // Filtrar los recordatorios que no son del usuario actual
+            if (NotaryCRM.currentUser) {
+                allReminders = allReminders.filter(r => r.ownerId !== NotaryCRM.currentUser.uid);
+            }
+
+            // Agregar los recordatorios actuales del usuario
+            allReminders.push(...this.state.items);
+
+            localStorage.setItem('notary_reminders', JSON.stringify(allReminders));
+        }
     },
     attachListeners() {
         const openBtn = document.getElementById('open-reminders');
@@ -4110,24 +4148,68 @@ const Reminders = {
         });
 
         const refreshBtn = document.getElementById('refresh-reminders-btn');
-        if (refreshBtn) refreshBtn.addEventListener('click', () => this.render());
+        if (refreshBtn) refreshBtn.addEventListener('click', () => this.load().then(() => this.render()));
     },
-    add(formData) {
+    async add(formData) {
+        if (!NotaryCRM.currentUser) {
+            Toast.error('Error', 'Debes iniciar sesión para crear recordatorios.');
+            return;
+        }
+
         const item = {
             id: Date.now().toString(),
             title: formData.get('title'),
             message: formData.get('message'),
             when: formData.get('when'),
+            ownerId: NotaryCRM.currentUser.uid,
             createdAt: new Date().toISOString()
         };
-        this.state.items.push(item);
-        this.save();
+
+        // Guardar en Firestore si está disponible
+        if (NotaryCRM.useFirestore) {
+            try {
+                const { collection, addDoc } = window.dbFuncs;
+                const db = window.firebaseDB;
+                const docRef = await addDoc(collection(db, 'reminders'), item);
+                item.id = docRef.id;
+                this.state.items.push(item);
+                Toast.success('Recordatorio Guardado', 'El recordatorio ha sido creado.');
+            } catch (err) {
+                console.error('Error adding reminder to Firestore:', err);
+                Toast.error('Error', 'No se pudo guardar el recordatorio.');
+                return;
+            }
+        } else {
+            this.state.items.push(item);
+            this.save();
+            Toast.success('Recordatorio Guardado', 'El recordatorio ha sido creado.');
+        }
+
         this.render();
-        alert('Recordatorio guardado');
+        NotaryCRM.closeModal('reminders-modal');
     },
-    delete(id) {
-        this.state.items = this.state.items.filter(it => it.id !== id);
-        this.save();
+    async delete(id) {
+        if (!confirm('¿Estás seguro de eliminar este recordatorio?')) return;
+
+        // Eliminar de Firestore si está disponible
+        if (NotaryCRM.useFirestore) {
+            try {
+                const { doc, deleteDoc } = window.dbFuncs;
+                const db = window.firebaseDB;
+                await deleteDoc(doc(db, 'reminders', id));
+                this.state.items = this.state.items.filter(it => it.id !== id);
+                Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
+            } catch (err) {
+                console.error('Error deleting reminder from Firestore:', err);
+                Toast.error('Error', 'No se pudo eliminar el recordatorio.');
+                return;
+            }
+        } else {
+            this.state.items = this.state.items.filter(it => it.id !== id);
+            this.save();
+            Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
+        }
+
         this.render();
     },
     render() {
