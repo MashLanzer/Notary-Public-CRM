@@ -6,11 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notary Public CRM & Professional Website</title>
 
+    <!-- Prevenir caché del navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- PayPal SDK se carga dinámicamente desde payment-manager.js con su Client ID de producción -->
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
@@ -94,19 +101,11 @@
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
-                    <button class="btn-icon header-btn" id="lang-toggle" title="Cambiar Idioma"
-                        style="margin-right: 1rem; display: flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; min-width: 50px;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path
-                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                            </path>
-                        </svg>
-                        <span id="current-lang-text" style="font-size: 0.75rem; font-weight: 800;">ES</span>
-                    </button>
-                    <button class="btn btn-reminders" id="open-reminders-panel" style="display:none;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+                    <button class="btn btn-reminders" id="open-reminders-panel" style="display:none;"
+                        aria-label="Open reminders">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            aria-hidden="true">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                         </svg>
@@ -121,78 +120,56 @@
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" id="main-content" role="main">
         <div class="container">
             <!-- Tab Navigation -->
             <div class="tabs">
                 <button class="tab-btn active" data-tab="dashboard" data-i18n="nav_dashboard">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                    </svg>
+                    <i data-lucide="layout-dashboard"></i>
                     Dashboard
                 </button>
                 <button class="tab-btn" data-tab="clients" data-i18n="nav_clients">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
+                    <i data-lucide="users"></i>
                     Clients
                 </button>
                 <button class="tab-btn" data-tab="cases" data-i18n="nav_cases">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                    </svg>
+                    <i data-lucide="briefcase"></i>
                     Cases
                 </button>
                 <button class="tab-btn" data-tab="reminders" data-i18n="nav_reminders">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
+                    <i data-lucide="bell"></i>
                     Reminders
                 </button>
                 <button class="tab-btn" data-tab="calendar" data-i18n="nav_calendar">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
+                    <i data-lucide="calendar"></i>
                     Calendar
                 </button>
                 <button class="tab-btn" data-tab="reports" data-i18n="nav_reports">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                    </svg>
+                    <i data-lucide="bar-chart-3"></i>
                     Reports
                 </button>
                 <button class="tab-btn" data-tab="emails" id="emails-tab-btn" data-i18n="nav_emails">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
+                    <i data-lucide="mail"></i>
                     Email
                 </button>
                 <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;" data-i18n="nav_users">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                    </svg>
+                    <i data-lucide="user-cog"></i>
                     Users
                 </button>
                 <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;" data-i18n="nav_audit">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
+                    <i data-lucide="shield-check"></i>
                     Auditoría
                 </button>
             </div>
+
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumbs" id="breadcrumbs"
+                style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-light);">
+                <i data-lucide="home" style="width: 14px; height: 14px;"></i>
+                <span style="color: var(--color-primary); font-weight: 600;">Home</span>
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px; opacity: 0.5;"></i>
+                <span id="breadcrumb-current">Dashboard</span>
+            </nav>
 
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="dashboard-tab">
@@ -254,12 +231,42 @@
                     <div class="stat-card" data-widget-id="total-revenue">
                         <div class="stat-content">
                             <div>
-                                <p class="stat-label" data-i18n="total_revenue">Total Revenue</p>
-                                <p class="stat-value" id="total-revenue">$0</p>
+                                <p class="stat-label" data-i18n="revenue">Revenue</p>
+                                <p class="stat-value" id="total-revenue">$0.00</p>
                             </div>
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
                                 <line x1="12" y1="1" x2="12" y2="23"></line>
                                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" data-widget-id="avg-ticket">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label" data-i18n="avg_ticket">Average Ticket</p>
+                                <p class="stat-value" id="avg-ticket">$0.00</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor"
+                                style="color: var(--color-purple-500);">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" data-widget-id="success-rate">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label" data-i18n="success_rate">Success Rate</p>
+                                <div style="display: flex; align-items: baseline; gap: 4px;">
+                                    <p class="stat-value" id="success-rate">0</p>
+                                    <span style="font-size: 1rem; color: var(--color-gray-500);">%</span>
+                                </div>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor"
+                                style="color: var(--color-blue-500);">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
                             </svg>
                         </div>
                     </div>
@@ -369,7 +376,10 @@
             <div class="tab-content" id="calendar-tab">
                 <div class="actions-bar">
                     <h2 class="section-title">Calendario de Citas</h2>
-                    <button class="btn btn-primary" onclick="NotaryCRM.openModal('calendar-modal')">Nueva Cita</button>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="NotaryCRM.openModal('calendar-modal')">Nueva
+                            Cita</button>
+                    </div>
                 </div>
                 <div class="card" style="margin-top: 1.5rem; padding: 1.5rem;">
                     <div id="calendar-view"></div>
@@ -378,9 +388,23 @@
 
             <!-- Reports Tab -->
             <div class="tab-content" id="reports-tab">
-                <div class="actions-bar">
-                    <h2 class="section-title">Análisis de Ingresos y Servicios</h2>
-                    <div class="header-actions">
+                <div class="actions-bar" style="flex-direction: column; align-items: flex-start;">
+                    <div
+                        style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 1rem;">
+                        <h2 class="section-title" style="margin: 0;">💰 Análisis de Ingresos y Servicios</h2>
+                        <button class="btn btn-primary" onclick="PaymentManager.promptPayPalConfig()"
+                            title="Configurar Cuenta de PayPal para Recibir Pagos"
+                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                                <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                                </path>
+                            </svg>
+                            ⚙️ Configurar PayPal
+                        </button>
+                    </div>
+                    <div class="header-actions" style="width: 100%;">
                         <select class="form-input" id="report-filter" style="width: 200px;"
                             onchange="NotaryCRM.renderReports()">
                             <option value="all">Todo el tiempo</option>
@@ -388,6 +412,11 @@
                             <option value="month">Este mes</option>
                             <option value="lastMonth">Mes pasado</option>
                             <option value="year">Este año</option>
+                        </select>
+                        <select class="form-input" id="currency-selector" style="width: 100px; margin-right: 0.5rem;"
+                            onchange="NotaryCRM.setCurrency(this.value)">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
                         </select>
                         <button class="btn btn-primary" id="export-report-pdf">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -400,10 +429,10 @@
                     </div>
                 </div>
 
-                <div class="stats-grid" style="margin-top: 1.5rem; grid-template-columns: 1fr;">
+                <div class="stats-grid" style="margin-top: 1.5rem; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="stat-card" style="display: flex; align-items: center; justify-content: space-between;">
                         <div>
-                            <p class="stat-label">Total Ingresos Filatrados</p>
+                            <p class="stat-label">Total Ingresos Filtrados</p>
                             <p class="stat-value" id="report-total-revenue">$0.00</p>
                         </div>
                         <div class="brand-icon"
@@ -411,6 +440,19 @@
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <line x1="12" y1="1" x2="12" y2="23"></line>
                                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <p class="stat-label">Ingreso Proyectado (Mes)</p>
+                            <p class="stat-value" id="report-projected-revenue">$0.00</p>
+                        </div>
+                        <div class="brand-icon"
+                            style="background: var(--color-purple-500); border-radius: 12px; width: 48px; height: 48px;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
                             </svg>
                         </div>
                     </div>
@@ -479,13 +521,6 @@
             <div class="tab-content" id="emails-tab">
                 <div class="actions-bar">
                     <h2 class="section-title">Plantillas de Email</h2>
-                    <button class="btn btn-primary" id="add-template-btn">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Nueva Plantilla
-                    </button>
                 </div>
                 <div class="template-grid" id="templates-list">
                     <!-- Templates will be injected here -->
@@ -561,8 +596,19 @@
                     <p class="footer-text">Phone: (555) 123-4567</p>
                 </div>
             </div>
-            <div class="footer-bottom">
+            <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center;">
                 <p>&copy; 2024 Notary Public CRM. All rights reserved.</p>
+                <button class="btn-icon header-btn" id="lang-toggle" title="Cambiar Idioma"
+                    style="display: flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; min-width: 50px; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                        </path>
+                    </svg>
+                    <span id="current-lang-text" style="font-size: 0.75rem; font-weight: 800;">ES</span>
+                </button>
             </div>
         </div>
     </footer>
@@ -671,56 +717,82 @@
             </div>
             <form class="modal-body" id="client-form">
                 <input type="hidden" name="id" />
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-input" name="name" placeholder="Client name" required>
+
+                <!-- Step Indicator -->
+                <div class="step-indicator" id="client-step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Básico</div>
                     </div>
-                    <div class="form-group flex-1">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-input" name="email" placeholder="client@example.com" required>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Personal</div>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label class="form-label">Phone</label>
-                        <input type="tel" class="form-input" name="phone" placeholder="(555) 123-4567" required>
-                    </div>
-                    <div class="form-group flex-1">
-                        <label class="form-label">Date of Birth</label>
-                        <input type="date" class="form-input" name="birthDate">
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Otros</div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Address</label>
-                    <input type="text" class="form-input" name="address" placeholder="Street address" required>
+
+                <!-- Step 1: Basic Info -->
+                <div class="form-step active" data-step="1">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" name="name" placeholder="Client name" required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" name="email" placeholder="client@example.com"
+                                required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-input mask-phone" name="phone" placeholder="(555) 123-4567"
+                                required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-input" name="address" placeholder="Street address" required>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label class="form-label">ID Type</label>
-                        <select class="form-input" name="idType">
-                            <option value="DNI">DNI / Cédula</option>
-                            <option value="Passport">Pasaporte</option>
-                            <option value="Driver License">Licencia de conducir</option>
-                            <option value="Other">Otro</option>
-                        </select>
+
+                <!-- Step 2: Personal Data -->
+                <div class="form-step" data-step="2">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-input" name="birthDate">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Marital Status</label>
+                            <select class="form-input" name="maritalStatus">
+                                <option value="Single">Soltero(a)</option>
+                                <option value="Married">Casado(a)</option>
+                                <option value="Divorced">Divorciado(a)</option>
+                                <option value="Widowed">Viudo(a)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group flex-1">
-                        <label class="form-label">ID Number</label>
-                        <input type="text" class="form-input" name="idNumber" placeholder="Number">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">ID Type</label>
+                            <select class="form-input" name="idType">
+                                <option value="DNI">DNI / Cédula</option>
+                                <option value="Passport">Pasaporte</option>
+                                <option value="Driver License">Licencia de conducir</option>
+                                <option value="Other">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">ID Number</label>
+                            <input type="text" class="form-input" name="idNumber" placeholder="Number">
+                        </div>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label class="form-label">Marital Status</label>
-                        <select class="form-input" name="maritalStatus">
-                            <option value="Single">Soltero(a)</option>
-                            <option value="Married">Casado(a)</option>
-                            <option value="Divorced">Divorciado(a)</option>
-                            <option value="Widowed">Viudo(a)</option>
-                        </select>
-                    </div>
-                    <div class="form-group flex-1">
+                    <div class="form-group">
                         <label class="form-label">Occupation</label>
                         <select class="form-input" name="occupation">
                             <option value="Empleado">Empleado</option>
@@ -733,23 +805,33 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Notes / Observations</label>
-                    <textarea class="form-input" name="notes" rows="2" placeholder="Additional details..."></textarea>
+
+                <!-- Step 3: Additional -->
+                <div class="form-step" data-step="3">
+                    <div class="form-group">
+                        <label class="form-label">Notes / Observations</label>
+                        <textarea class="form-input" name="notes" rows="3"
+                            placeholder="Additional details..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
+                        <select class="form-input" name="relatedId" id="client-related-select">
+                            <option value="">Ninguna / Sin vínculo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
+                        <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
-                    <select class="form-input" name="relatedId" id="client-related-select">
-                        <option value="">Ninguna / Sin vínculo</option>
-                    </select>
+
+                <!-- Footer Navigation -->
+                <div class="form-navigation">
+                    <button type="button" class="btn" id="prev-client-step" style="visibility: hidden;">Atrás</button>
+                    <button type="button" class="btn btn-primary" id="next-client-step">Siguiente</button>
+                    <button type="submit" class="btn btn-primary" id="submit-client-form" style="display: none;">Save
+                        Client</button>
                 </div>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
-                    <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
-                    <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">Usa comas para separar
-                        múltiples etiquetas.</p>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Save Client</button>
             </form>
         </div>
     </div>
@@ -810,7 +892,7 @@
                 <div class="form-row">
                     <div class="form-group flex-1">
                         <label class="form-label">Notary Fee ($)</label>
-                        <input type="number" class="form-input" name="amount" placeholder="0.00" step="0.01" required>
+                        <input type="text" class="form-input mask-currency" name="amount" placeholder="0.00" required>
                     </div>
                     <div class="form-group flex-1">
                         <label class="form-label">Payment Status</label>
@@ -929,6 +1011,54 @@
         </div>
     </div>
 
+    <!-- Template Modal (for creating/editing email templates) -->
+    <div class="modal" id="template-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('template-modal')"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Gestión de Plantillas</h3>
+                <button class="modal-close" data-modal="template-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="template-form" class="modal-body">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label class="form-label">Nombre de la Plantilla</label>
+                    <input type="text" class="form-input" name="name" placeholder="Ej: Bienvenida" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asunto del Correo</label>
+                    <input type="text" class="form-input" name="subject" placeholder="Hola, {client_name}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cuerpo del Mensaje</label>
+                    <div id="variable-tags-container"
+                        style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="tag variable-tag" data-var="{client_name}"
+                            style="cursor:pointer; border:1px solid #ddd;">{client_name}</span>
+                        <span class="tag variable-tag" data-var="{case_number}"
+                            style="cursor:pointer; border:1px solid #ddd;">{case_number}</span>
+                        <span class="tag variable-tag" data-var="{service_type}"
+                            style="cursor:pointer; border:1px solid #ddd;">{service_type}</span>
+                        <span class="tag variable-tag" data-var="{due_date}"
+                            style="cursor:pointer; border:1px solid #ddd;">{due_date}</span>
+                        <span class="tag variable-tag" data-var="{amount}"
+                            style="cursor:pointer; border:1px solid #ddd;">{amount}</span>
+                        <span class="tag variable-tag" data-var="{company_name}"
+                            style="cursor:pointer; border:1px solid #ddd;">{company_name}</span>
+                    </div>
+                    <textarea class="form-input" name="body" rows="8" required
+                        placeholder="Escribe tu mensaje aquí..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Guardar Plantilla</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Payment Modal -->
     <div class="modal" id="payment-modal">
         <div class="modal-backdrop"></div>
@@ -968,19 +1098,22 @@
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div id="paypal-button-container" style="margin-top: 1rem;"></div>
+
+                <div class="form-row" id="card-details-section">
                     <div class="form-group flex-1">
                         <label class="form-label">Expiración (MM/YY)</label>
-                        <input type="text" class="form-input" placeholder="MM/YY" maxlength="5" required>
+                        <input type="text" class="form-input" placeholder="MM/YY" maxlength="5">
                     </div>
                     <div class="form-group flex-1">
                         <label class="form-label">CVC</label>
-                        <input type="text" class="form-input" placeholder="123" maxlength="4" required>
+                        <input type="text" class="form-input" placeholder="123" maxlength="4">
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" style="height: 50px; font-weight: 600;">
-                    Confirmar y Pagar
+                <button type="submit" class="btn btn-primary btn-block" id="manual-payment-btn"
+                    style="height: 50px; font-weight: 600;">
+                    Confirmar y Pagar (Tarjeta Mock)
                 </button>
                 <p style="text-align: center; font-size: 0.75rem; color: var(--text-light); margin-top: 1rem;">
                     <svg class="icon" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;"
@@ -1033,6 +1166,11 @@
                         <option value="Loan Signing">Firma de Préstamos</option>
                         <option value="Other">Otro</option>
                     </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
+                    <input type="checkbox" name="recurring" id="cal-recurring" style="width: 18px; height: 18px;">
+                    <label for="cal-recurring" class="form-label" style="margin-bottom: 0;">Cita Recurrente (Cada Lunes
+                        por 4 semanas)</label>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Agendar Cita</button>
             </form>
@@ -1134,7 +1272,17 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Contraseña</label>
-                    <input type="password" class="form-input" name="password" placeholder="Contraseña" required>
+                    <input type="password" class="form-input" name="password" id="auth-password"
+                        placeholder="Contraseña" required>
+                    <div id="password-strength-wrapper" style="margin-top: 0.5rem; display: none;">
+                        <div
+                            style="height: 4px; background: var(--color-gray-200); border-radius: 2px; overflow: hidden;">
+                            <div id="password-strength-bar" style="height: 100%; width: 0%; transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <p id="password-strength-text"
+                            style="font-size: 0.7rem; margin-top: 4px; color: var(--text-light);"></p>
+                    </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:1.5rem;">
                     <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
@@ -1147,29 +1295,143 @@
     <!-- Dashboard Customization Modal -->
     <div class="modal" id="customize-dashboard-modal">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Personalizar Dashboard</h3>
-                <button class="modal-close" data-modal="customize-dashboard-modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 2rem;">
+                <div>
+                    <h3 class="modal-title"
+                        style="color: white; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 28px; height: 28px;">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                            <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                            </path>
+                        </svg>
+                        ⚙️ Personalizar Dashboard
+                    </h3>
+                    <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        Configura tu espacio de trabajo a tu medida
+                    </p>
+                </div>
+                <button class="modal-close" data-modal="customize-dashboard-modal" style="color: white; opacity: 0.9;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <p style="color: var(--color-gray-600); margin-bottom: 1.5rem; font-size: 0.9rem;">
-                    Selecciona qué widgets quieres ver en tu dashboard
-                </p>
+            <div class="modal-body" style="padding: 2rem;">
+                <!-- Widgets Section -->
+                <div
+                    style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                    <h4
+                        style="margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--color-primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 20px; height: 20px;">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        📊 Widgets Disponibles
+                    </h4>
+                    <p style="color: var(--color-gray-600); margin: 0 0 1rem 0; font-size: 0.85rem;">
+                        Selecciona los widgets que quieres ver en tu dashboard
+                    </p>
 
-                <div id="widgets-config" class="widgets-config">
-                    <!-- Widget toggles will be dynamically inserted here -->
+                    <div id="widgets-config" class="widgets-config">
+                        <!-- Widget toggles will be dynamically inserted here -->
+                    </div>
                 </div>
 
-                <div
-                    style="display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-gray-200);">
-                    <button class="btn btn-primary" id="save-dashboard-config">Guardar Cambios</button>
-                    <button class="btn" id="reset-dashboard-config">Restaurar Predeterminado</button>
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
+                    <button class="btn btn-primary" id="save-dashboard-config"
+                        style="flex: 1; padding: 0.875rem; font-weight: 600;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 18px; height: 18px;">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Guardar Cambios
+                    </button>
+                    <button class="btn" id="reset-dashboard-config" style="padding: 0.875rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 18px; height: 18px;">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        Restaurar
+                    </button>
+                </div>
+
+                <!-- Privacy & Data Section -->
+                <div style="border-top: 2px solid var(--color-gray-200); padding-top: 2rem;">
+                    <!-- Sync Indicators -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                        <div class="header-badge" id="sync-indicator"
+                            style="background: var(--color-success-light); padding: 0.5rem 1rem; border-radius: 8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 18px; height: 18px; color: var(--color-success);">
+                                <path d="M18 6 7 17l-5-5"></path>
+                            </svg>
+                            <span class="badge-text" id="sync-text"
+                                style="color: var(--color-success); font-weight: 600;">☁️ Cloud Synced</span>
+                        </div>
+                        <div class="header-badge"
+                            style="background: var(--color-primary-light); padding: 0.5rem 1rem; border-radius: 8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 18px; height: 18px; color: var(--color-primary);">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span class="badge-text" style="color: var(--color-primary); font-weight: 600;">🔒
+                                Encrypted</span>
+                        </div>
+                    </div>
+
+                    <!-- GDPR Section -->
+                    <h4
+                        style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 20px; height: 20px;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        🛡️ Privacidad y Datos (GDPR)
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <button class="btn btn-outline btn-block" onclick="NotaryCRM.gdprExport()"
+                            style="text-align: left; padding: 1.25rem; border: 2px solid var(--color-gray-300); border-radius: 10px; transition: all 0.3s;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 20px; height: 20px; color: var(--color-primary);">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <div style="font-weight: 600; font-size: 0.9rem;">📥 Exportar mis Datos</div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-light);">Descarga toda tu información en
+                                formato JSON</div>
+                        </button>
+                        <button class="btn btn-outline btn-danger btn-block" onclick="NotaryCRM.gdprDelete()"
+                            style="text-align: left; padding: 1.25rem; border: 2px solid var(--color-danger); border-radius: 10px; transition: all 0.3s;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 20px; height: 20px; color: var(--color-danger);">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                                <div style="font-weight: 600; font-size: 0.9rem;">🗑️ Borrar mi Cuenta</div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-light);">Eliminación permanente de todos
+                                los datos</div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1181,13 +1443,33 @@
     <!-- jsPDF Library -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
 
     <script type="module" src="firebase-init.js"></script>
+    <script src="draft-manager.js"></script>
+    <script src="smart-autocomplete.js"></script>
+    <script src="screen-reader-manager.js"></script>
+    <script src="file-upload-manager.js"></script>
+    <script src="calendar-enhancements.js"></script>
+    <script src="case-attachments-manager.js"></script>
+    <script src="advanced-calendar-features.js"></script>
+    <script src="interactive-charts.js"></script>
+    <script src="performance-optimizer.js"></script>
+    <script src="advanced-analytics.js"></script>
+    <script src="scroll-and-optimization.js"></script>
+    <script src="communication-manager.js"></script>
+    <script src="payment-manager.js"></script>
+    <script src="security-manager.js"></script>
+    <script src="advanced-features.js"></script>
+    <script src="business-features.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 

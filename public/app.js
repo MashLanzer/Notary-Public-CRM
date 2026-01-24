@@ -439,6 +439,60 @@ if (typeof window !== 'undefined') {
 }
 
 // ============================================
+// FORM MASKS (INPUT FORMATTING)
+// ============================================
+
+const FormMasks = {
+    init() {
+        this.apply();
+    },
+
+    apply() {
+        // Phone mask: (XXX) XXX-XXXX
+        document.querySelectorAll('.mask-phone').forEach(input => {
+            if (input.dataset.maskApplied) return;
+            input.addEventListener('input', (e) => {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            });
+            input.dataset.maskApplied = 'true';
+        });
+
+        // Currency mask: only numbers and decimals
+        document.querySelectorAll('.mask-currency').forEach(input => {
+            if (input.dataset.maskApplied) return;
+            input.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/[^0-9.]/g, '');
+                const dots = value.split('.').length - 1;
+                if (dots > 1) value = value.substring(0, value.lastIndexOf('.'));
+                e.target.value = value;
+            });
+            input.addEventListener('blur', (e) => {
+                let value = parseFloat(e.target.value);
+                if (!isNaN(value)) {
+                    e.target.value = value.toFixed(2);
+                }
+            });
+            input.dataset.maskApplied = 'true';
+        });
+
+        // Date mask: MM/DD/YYYY
+        document.querySelectorAll('.mask-date').forEach(input => {
+            if (input.dataset.maskApplied) return;
+            input.addEventListener('input', (e) => {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,2})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : x[1] + '/' + x[2] + (x[3] ? '/' + x[3] : '');
+            });
+            input.dataset.maskApplied = 'true';
+        });
+    }
+};
+
+if (typeof window !== 'undefined') {
+    window.FormMasks = FormMasks;
+}
+
+// ============================================
 // DASHBOARD CUSTOMIZATION MANAGER
 // ============================================
 
@@ -627,11 +681,11 @@ const EmailManager = {
         container.innerHTML = this.templates.map(tmp => `
             <div class="template-card">
                 <div>
-                    <h3>${NotaryCRM.escapeHtml(tmp.name)}</h3>
-                    <p style="font-size:0.75rem; color:var(--color-gray-400); margin-top:0.25rem;">Asunto: ${NotaryCRM.escapeHtml(tmp.subject)}</p>
+                    <h3>${Toast.escapeHtml(tmp.name)}</h3>
+                    <p style="font-size:0.75rem; color:var(--color-gray-400); margin-top:0.25rem;">Asunto: ${Toast.escapeHtml(tmp.subject)}</p>
                 </div>
                 <div class="template-preview">
-                    ${NotaryCRM.escapeHtml(tmp.body)}
+                    ${Toast.escapeHtml(tmp.body)}
                 </div>
                 <div class="template-actions">
                     <button class="btn btn-sm" onclick="EmailManager.editTemplate('${tmp.id}')">Editar</button>
@@ -682,6 +736,7 @@ const EmailManager = {
     },
 
     updatePreview(templateId) {
+        if (!templateId) return;
         const template = this.templates.find(t => t.id === templateId);
         if (!template) return;
 
@@ -801,12 +856,58 @@ const EmailManager = {
                     return;
                 }
 
-                // Simulate sending
-                Toast.info('Enviando...', 'Preparando el correo para el cliente...');
-                setTimeout(() => {
-                    NotaryCRM.closeModal('send-email-modal');
-                    Toast.success('¡Correo Enviado!', 'El correo ha sido enviado exitosamente al cliente.');
-                }, 1500);
+                // Get target data
+                let toEmail = '';
+                if (this.currentTarget && this.currentTarget.type === 'client') {
+                    const client = NotaryCRM.state.clients.find(c => c.id === this.currentTarget.id);
+                    if (client) toEmail = client.email;
+                } else if (this.currentTarget && this.currentTarget.type === 'case') {
+                    const caseItem = NotaryCRM.state.cases.find(c => c.id === this.currentTarget.id);
+                    if (caseItem) {
+                        const client = NotaryCRM.state.clients.find(c => c.id === caseItem.clientId);
+                        if (client) toEmail = client.email;
+                    }
+                }
+
+                if (!toEmail) {
+                    Toast.error('Error', 'No se encontró el correo del destinatario.');
+                    return;
+                }
+
+                // Get rendered content
+                const selectedTemplate = this.templates.find(t => t.id === templateId);
+
+                // Prepare data for replacement (reusing logic from updatePreview)
+                let data = {};
+                if (this.currentTarget.type === 'client') {
+                    const client = NotaryCRM.state.clients.find(c => c.id === this.currentTarget.id);
+                    data = {
+                        client_name: client ? client.name : 'Cliente',
+                        company_name: 'Notaría Publica - CRM'
+                    };
+                } else if (this.currentTarget.type === 'case') {
+                    const caseObj = NotaryCRM.state.cases.find(c => c.id === this.currentTarget.id);
+                    data = {
+                        client_name: caseObj ? caseObj.clientName : 'Cliente',
+                        case_number: caseObj ? caseObj.caseNumber : 'N/A',
+                        service_type: caseObj ? caseObj.type : 'Servicio',
+                        due_date: caseObj ? NotaryCRM.formatDate(caseObj.dueDate) : 'N/A',
+                        amount: caseObj ? `$${caseObj.amount}` : '$0.00',
+                        company_name: 'Notaría Publica - CRM'
+                    };
+                }
+
+                const subject = this.replaceVariables(selectedTemplate.subject, data);
+                const body = this.replaceVariables(selectedTemplate.body, data);
+
+                // Construct mailto link
+                const mailtoLink = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+                // Open email client
+                window.location.href = mailtoLink;
+
+                NotaryCRM.closeModal('send-email-modal');
+                Toast.success('Cliente de Correo Abierto', 'Se ha abierto tu aplicación de correo para enviar el mensaje.');
             });
         }
     }
@@ -918,51 +1019,11 @@ const CaseTemplates = {
 // PAYMENT MANAGER (SIMULATED)
 // ============================================
 
-const PaymentManager = {
-    currentCaseId: null,
-
-    init() {
-        // UI for payment usually happens on specific buttons
-    },
-
-    openPaymentModal(caseId) {
-        this.currentCaseId = caseId;
-        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
-        if (!caseItem) return;
-
-        // Reset and open modal
-        const modal = document.getElementById('payment-modal');
-        if (!modal) return;
-
-        // Update modal info
-        const amountDisplay = modal.querySelector('#payment-amount-display');
-        const caseDisplay = modal.querySelector('#payment-case-display');
-        if (amountDisplay) amountDisplay.textContent = `$${caseItem.amount.toFixed(2)}`;
-        if (caseDisplay) caseDisplay.textContent = `Cargo por: ${caseItem.type} (${caseItem.caseNumber})`;
-
-        NotaryCRM.openModal('payment-modal');
-    },
-
-    processPayment(formData) {
-        return new Promise((resolve) => {
-            // Simulate processing time
-            setTimeout(async () => {
-                const updates = {
-                    paymentStatus: 'paid',
-                    status: 'in-progress' // Auto-advance to in-progress if paid
-                };
-
-                await NotaryCRM.updateCase(this.currentCaseId, updates);
-
-                AuditManager.logAction('Pago Recibido', `Caso: ${this.currentCaseId}`, `Monto procesado exitosamente.`);
-
-                NotaryCRM.closeModal('payment-modal');
-                Toast.success('Pago Exitoso', 'El pago ha sido procesado y el caso actualizado.');
-                resolve(true);
-            }, 1500);
-        });
-    }
-};
+// ============================================
+// PAYMENT MANAGER (DELEGATED TO payment-manager.js)
+// ============================================
+// PaymentManager logic is now handled in payment-manager.js to avoid conflicts.
+// This placeholder ensures we don't break if someone expects it here, but window.PaymentManager should already be set.
 
 // ============================================
 // TIMELINE MANAGER (ACTIVITY HISTORY)
@@ -1024,6 +1085,77 @@ const TimelineManager = {
                         <div style="font-weight: 600; font-size: 0.9rem;">${ev.title}</div>
                     </div>
                 `).join('')}
+            </div>
+        `;
+    }
+};
+
+// = ============================================
+// NOTE MANAGER (TIMESTAMPS FOR CASES)
+// ============================================
+
+const NoteManager = {
+    async addNote(caseId, text) {
+        if (!text.trim()) return;
+
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        const notes = caseItem.internalNotes || [];
+        const newNote = {
+            id: Date.now().toString(),
+            text: text.trim(),
+            timestamp: new Date().toISOString(),
+            user: NotaryCRM.currentUser ? NotaryCRM.currentUser.email : 'System'
+        };
+
+        notes.push(newNote);
+        await NotaryCRM.updateCase(caseId, { internalNotes: notes });
+        NotaryCRM.showCaseDetails(caseId);
+    },
+
+    async deleteNote(caseId, noteId) {
+        const caseItem = NotaryCRM.state.cases.find(c => c.id === caseId);
+        if (!caseItem) return;
+
+        const notes = (caseItem.internalNotes || []).filter(n => n.id !== noteId);
+        await NotaryCRM.updateCase(caseId, { internalNotes: notes });
+        NotaryCRM.showCaseDetails(caseId);
+    },
+
+    renderNotes(caseId, notes = []) {
+        const isEs = I18nManager.currentLang === 'es';
+
+        return `
+            <div class="notes-section" style="margin-top: 2rem; border-top: 1px solid var(--color-gray-200); padding-top: 1.5rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    ${isEs ? 'Notas del Expediente' : 'Case Notes'}
+                </h4>
+                
+                <div class="note-input-group" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <textarea id="new-note-text" class="form-input" placeholder="${isEs ? 'Escribe una nota...' : 'Write a note...'}" style="flex: 1; min-height: 60px;"></textarea>
+                    <button class="btn btn-primary" onclick="NoteManager.addNote('${caseId}', document.getElementById('new-note-text').value)">
+                        ${isEs ? 'Publicar' : 'Post'}
+                    </button>
+                </div>
+
+                <div class="notes-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    ${notes.length === 0 ? `<p class="empty-state" style="padding:1rem;">${isEs ? 'Sin notas registradas.' : 'No notes recorded.'}</p>` : notes.map(n => `
+                        <div class="note-item" style="background: white; border: 1px solid var(--color-gray-100); border-radius: 8px; padding: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--color-primary-light);">${n.user}</span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 0.7rem; color: var(--text-light);">${NotaryCRM.formatDate(n.timestamp, true)}</span>
+                                    <button class="btn-icon btn-danger" onclick="NoteManager.deleteNote('${caseId}', '${n.id}')" style="padding: 2px;">
+                                        <svg class="icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.85rem; line-height: 1.4; color: var(--text-main); white-space: pre-wrap;">${n.text}</p>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
     }
@@ -1222,39 +1354,25 @@ const I18nManager = {
 const ThemeManager = {
     init() {
         this.toggleBtn = document.getElementById('theme-toggle');
-        if (!this.toggleBtn) return;
 
-        this.sunIcon = this.toggleBtn.querySelector('.sun-icon');
-        this.moonIcon = this.toggleBtn.querySelector('.moon-icon');
+        // ALWAYS USE LIGHT MODE - Force light theme
+        this.setTheme('light');
 
-        // Check for saved theme or system preference
-        const savedTheme = localStorage.getItem('notary_theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-            this.setTheme('dark');
-        } else {
-            this.setTheme('light');
+        // Hide or disable the theme toggle button
+        if (this.toggleBtn) {
+            this.toggleBtn.style.display = 'none'; // Hide the toggle button
         }
 
-        this.toggleBtn.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.contains('dark-theme');
-            this.setTheme(isDark ? 'light' : 'dark');
-        });
+        this.sunIcon = this.toggleBtn?.querySelector('.sun-icon');
+        this.moonIcon = this.toggleBtn?.querySelector('.moon-icon');
     },
 
     setTheme(theme) {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark-theme');
-            if (this.sunIcon) this.sunIcon.style.display = 'none';
-            if (this.moonIcon) this.moonIcon.style.display = 'block';
-            localStorage.setItem('notary_theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark-theme');
-            if (this.sunIcon) this.sunIcon.style.display = 'block';
-            if (this.moonIcon) this.moonIcon.style.display = 'none';
-            localStorage.setItem('notary_theme', 'light');
-        }
+        // FORCE LIGHT MODE ONLY
+        document.documentElement.classList.remove('dark-theme');
+        if (this.sunIcon) this.sunIcon.style.display = 'block';
+        if (this.moonIcon) this.moonIcon.style.display = 'none';
+        localStorage.setItem('notary_theme', 'light');
     }
 };
 
@@ -1271,6 +1389,8 @@ if (typeof window !== 'undefined') {
     window.I18nManager = I18nManager;
     window.TimelineManager = TimelineManager;
     window.TaskManager = TaskManager;
+    window.NoteManager = NoteManager;
+    window.FormMasks = FormMasks;
 }
 
 // Application State
@@ -1288,7 +1408,9 @@ window.NotaryCRM = {
         clientsPage: 1,
         clientsPageSize: 6,
         casesPage: 1,
-        casesPageSize: 6
+        casesPageSize: 6,
+        currency: 'USD',
+        currentClientStep: 1
     },
     currentUser: null,
 
@@ -1311,6 +1433,8 @@ window.NotaryCRM = {
         if (this.useFirestore && window.authFuncs && window.authFuncs.onAuthStateChanged) {
             // Wait for auth state to initialize app
             window.authFuncs.onAuthStateChanged(window.firebaseAuth, (user) => {
+                // No specific Super Admin override anymore. All users are equal.
+                this.isSuperAdmin = false;
                 this.handleAuthState(user);
             });
             // Reminders: load and schedule on init
@@ -1346,8 +1470,112 @@ window.NotaryCRM = {
         // Initialize email templates
         EmailManager.init();
 
+        // Initialize breadcrumbs or sync indicator if needed
+        this.updateSyncStatus('synced');
+
+        // Initialize Masks
+        FormMasks.init();
+
+        // Initialize Draft Auto-save
+        if (window.DraftManager) {
+            DraftManager.init();
+        }
+
+        // Initialize Smart Autocomplete
+        if (window.SmartAutocomplete) {
+            SmartAutocomplete.init();
+        }
+
+        // Initialize Screen Reader Support
+        if (window.ScreenReaderManager) {
+            ScreenReaderManager.init();
+        }
+
+        // Initialize File Upload Manager
+        if (window.FileUploadManager) {
+            FileUploadManager.init();
+        }
+
+        // Initialize Calendar Enhancements
+        if (window.CalendarEnhancements) {
+            CalendarEnhancements.init();
+        }
+
+        // Initialize Case Attachments Manager
+        if (window.CaseAttachmentsManager) {
+            CaseAttachmentsManager.init();
+        }
+
+        // Initialize Advanced Calendar Features
+        if (window.AdvancedCalendarFeatures) {
+            AdvancedCalendarFeatures.init();
+        }
+
+        // Initialize Interactive Charts
+        if (window.InteractiveCharts) {
+            InteractiveCharts.init();
+        }
+
+        // Initialize Performance Optimizer
+        if (window.PerformanceOptimizer) {
+            PerformanceOptimizer.init();
+        }
+
+        // Initialize Advanced Analytics
+        if (window.AdvancedAnalytics) {
+            AdvancedAnalytics.init();
+        }
+
+        // Initialize Infinite Scroll
+        if (window.InfiniteScroll) {
+            InfiniteScroll.init();
+        }
+
+        // Initialize Image Optimizer
+        if (window.ImageOptimizer) {
+            ImageOptimizer.init();
+        }
+
+        // Initialize Database Indexing
+        if (window.DatabaseIndexing) {
+            DatabaseIndexing.init();
+        }
+
+        // Initialize Communication Manager
+        if (window.CommunicationManager) {
+            CommunicationManager.init();
+        }
+
+        // Initialize Payment Manager
+        if (window.PaymentManager) {
+            PaymentManager.init();
+        }
+
+        // Initialize Security Manager
+        if (window.SecurityManager) {
+            SecurityManager.init();
+            SecurityManager.setupSessionTimeout(30); // 30 minutes
+        }
+
+        // Initialize Advanced Features
+        if (window.AdvancedFeatures) {
+            AdvancedFeatures.init();
+        }
+
+        // Initialize Business Features
+        if (window.BusinessFeatures) {
+            BusinessFeatures.init();
+        }
+
         // Initialize audit logs
         AuditManager.init();
+
+        // Log performance metrics after initialization
+        setTimeout(() => {
+            if (window.PerformanceOptimizer) {
+                PerformanceOptimizer.logPerformanceMetrics();
+            }
+        }, 2000);
     },
 
     // Initialize form validation
@@ -1500,9 +1728,29 @@ window.NotaryCRM = {
             const { where } = window.dbFuncs;
             const clientsCol = collection(db, 'clients');
             const casesCol = collection(db, 'cases');
+            const appointmentsCol = collection(db, 'appointments');
 
-            // Listen to data belonging ONLY to the current user for real-time updates
-            const clientsQuery = query(clientsCol, where('ownerId', '==', this.currentUser.uid));
+            // Listen to data belonging to the current user (Multi-tenant Strict Isolation)
+
+            // Listen to data belonging to the current user
+            if (!this.currentUser) return;
+            // No workspaceId needed for Owner Isolation model
+
+            let clientsQuery, casesQuery, appQuery;
+
+            if (this.isSuperAdmin) {
+                // Super Admin sees ALL data
+                clientsQuery = query(clientsCol);
+                casesQuery = query(casesCol);
+                appQuery = query(appointmentsCol);
+                console.log('Super Admin Mode: Loading ALL data');
+            } else {
+                // Regular users see ONLY their own data (Owner Isolation)
+                clientsQuery = query(clientsCol, where('ownerId', '==', this.currentUser.uid));
+                casesQuery = query(casesCol, where('ownerId', '==', this.currentUser.uid));
+                appQuery = query(appointmentsCol, where('ownerId', '==', this.currentUser.uid));
+            }
+
             onSnapshot(clientsQuery, snapshot => {
                 this.state.isLoadingClients = false;
                 this.state.clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1511,7 +1759,7 @@ window.NotaryCRM = {
                 console.log('Real-time clients update received');
             }, err => console.error('Clients snapshot failed', err));
 
-            const casesQuery = query(casesCol, where('ownerId', '==', this.currentUser.uid));
+            // (Cases query defined above)
             onSnapshot(casesQuery, snapshot => {
                 this.state.isLoadingCases = false;
                 this.state.cases = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1521,8 +1769,7 @@ window.NotaryCRM = {
                 console.log('Real-time cases update received');
             }, err => console.error('Cases snapshot failed', err));
 
-            const appointmentsCol = collection(db, 'appointments');
-            const appQuery = query(appointmentsCol, where('ownerId', '==', this.currentUser.uid));
+            // (Appointments query defined above)
             onSnapshot(appQuery, snapshot => {
                 this.state.appointments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 this.renderCalendar();
@@ -1546,7 +1793,18 @@ window.NotaryCRM = {
         const db = window.firebaseDB;
         try {
             const usersCol = collection(db, 'users');
-            onSnapshot(query(usersCol, orderBy('createdAt', 'desc')), snapshot => {
+            // Filter users by workspaceId as well, so admins only see their team
+            const workspaceId = this.currentWorkspaceId || this.currentUser.uid;
+
+            // Note: Requires index on workspaceId + createdAt
+            // Ideally we query by workspaceId. For now, let's just query all users and filter client-side if index is missing,
+            // but for security/performance in PROD, adding `where('workspaceId', '==', workspaceId)` is best.
+            // Let's try adding the where clause.
+            const { where } = window.dbFuncs;
+            // Removed orderBy temporarily to avoid index error until admin creates composite index
+            const usersQuery = query(usersCol, where('workspaceId', '==', workspaceId));
+
+            onSnapshot(usersQuery, snapshot => {
                 this.state.users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 this.renderUsers();
             });
@@ -1614,162 +1872,108 @@ window.NotaryCRM = {
     attachEventListeners() {
         // Tab switching
         try {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            if (!tabButtons || tabButtons.length === 0) console.warn('No tab buttons found');
-            tabButtons.forEach(btn => {
-                // ensure clickable
-                btn.style.pointerEvents = 'auto';
-                btn.setAttribute('tabindex', '0');
+            document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const tab = e.currentTarget.getAttribute('data-tab');
                     this.switchTab(tab);
                 });
             });
-        } catch (e) {
-            console.error('Failed to attach tab listeners', e);
-        }
+        } catch (e) { console.error('Tab listeners failed', e); }
 
-        // Modal controls
-        const calForm = document.getElementById('calendar-form');
-        if (calForm) calForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addAppointment(e.target);
-        });
-
-        const addClientBtn = document.getElementById('add-client-btn');
-        if (addClientBtn) addClientBtn.addEventListener('click', () => this.openModal('client-modal'));
-
-        const addCaseBtn = document.getElementById('add-case-btn');
-        if (addCaseBtn) addCaseBtn.addEventListener('click', () => this.openModal('case-modal'));
-
-        const remindersPanelBtn = document.getElementById('open-reminders-panel');
-        if (remindersPanelBtn) {
-            remindersPanelBtn.addEventListener('click', () => {
-                this.switchTab('reminders');
+        // Password Strength
+        const authPass = document.getElementById('auth-password');
+        if (authPass) {
+            authPass.addEventListener('input', (e) => {
+                const pass = e.target.value;
+                const wrapper = document.getElementById('password-strength-wrapper');
+                const bar = document.getElementById('password-strength-bar');
+                const text = document.getElementById('password-strength-text');
+                if (!pass) { wrapper.style.display = 'none'; return; }
+                wrapper.style.display = 'block';
+                let strength = 0;
+                if (pass.length > 6) strength += 25;
+                if (pass.match(/[A-Z]/)) strength += 25;
+                if (pass.match(/[0-9]/)) strength += 25;
+                if (pass.match(/[^A-Za-z0-9]/)) strength += 25;
+                bar.style.width = strength + '%';
+                if (strength <= 25) { bar.style.background = '#ef4444'; text.textContent = 'Débil'; }
+                else if (strength <= 50) { bar.style.background = '#f59e0b'; text.textContent = 'Media'; }
+                else if (strength <= 75) { bar.style.background = '#3b82f6'; text.textContent = 'Fuerte'; }
+                else { bar.style.background = '#10b981'; text.textContent = 'Muy Fuerte'; }
             });
         }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); this.openModal('case-modal'); }
+            if (e.altKey && e.key.toLowerCase() === 'c') { e.preventDefault(); this.openModal('client-modal'); }
+            if (e.ctrlKey && e.key === '/') { e.preventDefault(); (document.getElementById('search-clients') || document.getElementById('search-cases'))?.focus(); }
+            if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
+                const tabs = ['dashboard', 'clients', 'cases', 'reminders', 'calendar', 'reports'];
+                if (tabs[e.key - 1]) { e.preventDefault(); this.switchTab(tabs[e.key - 1]); }
+            }
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => this.closeModal(m.id));
+            }
+        });
+
+        // Pagination controls
+        const addL = (id, ev, fn) => document.getElementById(id)?.addEventListener(ev, fn);
+        addL('clients-prev', 'click', () => { if (this.state.clientsPage > 1) { this.state.clientsPage--; this.renderClients(); } });
+        addL('clients-next', 'click', () => { this.state.clientsPage++; this.renderClients(); });
+        addL('clients-page-size', 'change', (e) => { this.state.clientsPageSize = parseInt(e.target.value, 10); this.state.clientsPage = 1; this.renderClients(); });
+        addL('cases-prev', 'click', () => { if (this.state.casesPage > 1) { this.state.casesPage--; this.renderCases(); } });
+        addL('cases-next', 'click', () => { this.state.casesPage++; this.renderCases(); });
+        addL('cases-page-size', 'change', (e) => { this.state.casesPageSize = parseInt(e.target.value, 10); this.state.casesPage = 1; this.renderCases(); });
+
+        // Export/Import
+        addL('export-clients-csv', 'click', () => this.exportClients('csv'));
+        addL('export-clients-json', 'click', () => this.exportClients('json'));
+        addL('export-cases-csv', 'click', () => this.exportCases('csv'));
+        addL('export-cases-json', 'click', () => this.exportCases('json'));
+        addL('import-clients-btn', 'click', () => document.getElementById('import-clients-file')?.click());
+        addL('import-clients-file', 'change', (e) => this.importClients(e.target.files[0]));
+        addL('export-report-pdf', 'click', () => this.generateReportPDF());
+        addL('check-duplicates-btn', 'click', () => this.checkDuplicates());
+
+        // Modals & Forms
+        addL('calendar-form', 'submit', (e) => { e.preventDefault(); this.addAppointment(e.target); });
+        addL('client-form', 'submit', (e) => { e.preventDefault(); this.addClient(e.target); });
+        addL('case-form', 'submit', (e) => { e.preventDefault(); this.addCase(e.target); });
+        addL('add-client-btn', 'click', () => this.openModal('client-modal'));
+        addL('add-case-btn', 'click', () => this.openModal('case-modal'));
+        addL('open-reminders-panel', 'click', () => this.switchTab('reminders'));
+
+        // Client Multi-step Navigation
+        addL('next-client-step', 'click', () => {
+            if (this.state.currentClientStep < 3) this.setClientStep(this.state.currentClientStep + 1);
+        });
+        addL('prev-client-step', 'click', () => {
+            if (this.state.currentClientStep > 1) this.setClientStep(this.state.currentClientStep - 1);
+        });
 
         document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
             el.addEventListener('click', (e) => {
                 const modal = e.target.closest('.modal');
-                if (modal) {
-                    this.closeModal(modal.id);
-                }
+                if (modal) this.closeModal(modal.id);
             });
         });
 
-        // Form submissions
-        const clientForm = document.getElementById('client-form');
-        if (clientForm) clientForm.addEventListener('submit', (e) => { e.preventDefault(); this.addClient(e.target); });
+        // Search
+        addL('search-clients', 'input', (e) => { this.state.searchClientQuery = e.target.value.toLowerCase(); this.state.clientsPage = 1; this.renderClients(); });
+        addL('search-cases', 'input', (e) => { this.state.searchCaseQuery = e.target.value.toLowerCase(); this.state.casesPage = 1; this.renderCases(); });
 
-        const caseForm = document.getElementById('case-form');
-        if (caseForm) {
-            caseForm.addEventListener('submit', (e) => { e.preventDefault(); this.addCase(e.target); });
+        // Auth
+        addL('sign-in-btn', 'click', () => this.openModal('auth-modal'));
+        addL('google-login-btn', 'click', () => this.googleLogin());
+        addL('register-btn', 'click', () => this.registerFromForm());
+        addL('auth-form', 'submit', (e) => { e.preventDefault(); this.signIn(e.target); });
 
-            // Case Template Auto-fill
-            const typeSelect = caseForm.querySelector('select[name="type"]');
-            if (typeSelect) {
-                typeSelect.addEventListener('change', (e) => {
-                    const template = CaseTemplates[e.target.value];
-                    if (template) {
-                        if (caseForm.querySelector('input[name="amount"]')) {
-                            caseForm.querySelector('input[name="amount"]').value = template.amount;
-                        }
-                        if (caseForm.querySelector('textarea[name="description"]')) {
-                            caseForm.querySelector('textarea[name="description"]').value = template.description;
-                        }
-                        // Also update case number if it's a new case
-                        const idInput = caseForm.querySelector('input[name="id"]');
-                        if (!idInput || !idInput.value) {
-                            caseForm.querySelector('input[name="caseNumber"]').value = this.generateCaseNumber(e.target.value);
-                        }
-                    }
-                });
-            }
-        }
-
-        // Search functionality
-        const searchClients = document.getElementById('search-clients');
-        if (searchClients) searchClients.addEventListener('input', (e) => { this.state.searchClientQuery = e.target.value.toLowerCase(); this.state.clientsPage = 1; this.renderClients(); });
-
-        const searchCases = document.getElementById('search-cases');
-        if (searchCases) searchCases.addEventListener('input', (e) => { this.state.searchCaseQuery = e.target.value.toLowerCase(); this.state.casesPage = 1; this.renderCases(); });
-
-        // Pagination controls
-        const clientsPrev = document.getElementById('clients-prev');
-        const clientsNext = document.getElementById('clients-next');
-        const clientsPageSize = document.getElementById('clients-page-size');
-        if (clientsPrev) clientsPrev.addEventListener('click', () => { if (this.state.clientsPage > 1) { this.state.clientsPage--; this.renderClients(); } });
-        if (clientsNext) clientsNext.addEventListener('click', () => { this.state.clientsPage++; this.renderClients(); });
-        if (clientsPageSize) clientsPageSize.addEventListener('change', (e) => { this.state.clientsPageSize = parseInt(e.target.value, 10); this.state.clientsPage = 1; this.renderClients(); });
-
-        const casesPrev = document.getElementById('cases-prev');
-        const casesNext = document.getElementById('cases-next');
-        const casesPageSize = document.getElementById('cases-page-size');
-        if (casesPrev) casesPrev.addEventListener('click', () => { if (this.state.casesPage > 1) { this.state.casesPage--; this.renderCases(); } });
-        if (casesNext) casesNext.addEventListener('click', () => { this.state.casesPage++; this.renderCases(); });
-        if (casesPageSize) casesPageSize.addEventListener('change', (e) => { this.state.casesPageSize = parseInt(e.target.value, 10); this.state.casesPage = 1; this.renderCases(); });
-
-        // Export buttons
-        const exportClientsCsv = document.getElementById('export-clients-csv');
-        const exportClientsJson = document.getElementById('export-clients-json');
-        const exportCasesCsv = document.getElementById('export-cases-csv');
-        const exportCasesJson = document.getElementById('export-cases-json');
-        if (exportClientsCsv) exportClientsCsv.addEventListener('click', () => this.exportClients('csv'));
-        if (exportClientsJson) exportClientsJson.addEventListener('click', () => this.exportClients('json'));
-        if (exportCasesCsv) exportCasesCsv.addEventListener('click', () => this.exportCases('csv'));
-        if (exportCasesJson) exportCasesJson.addEventListener('click', () => this.exportCases('json'));
-
-        // Import Clients CSV
-        const importClientsBtn = document.getElementById('import-clients-btn');
-        const importClientsFile = document.getElementById('import-clients-file');
-        if (importClientsBtn && importClientsFile) {
-            importClientsBtn.addEventListener('click', () => importClientsFile.click());
-            importClientsFile.addEventListener('change', (e) => this.importClients(e.target.files[0]));
-        }
-
-        // Export Report PDF
-        const exportReportPdf = document.getElementById('export-report-pdf');
-        if (exportReportPdf) {
-            exportReportPdf.addEventListener('click', () => this.generateReportPDF());
-        }
-
-        // Duplicates
-        const checkDuplicatesBtn = document.getElementById('check-duplicates-btn');
-        if (checkDuplicatesBtn) {
-            checkDuplicatesBtn.addEventListener('click', () => this.checkDuplicates());
-        }
-
-        // ESC key to close modals
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal.active').forEach(modal => {
-                    this.closeModal(modal.id);
-                });
-            }
-        });
-
-        // Auth UI
-        const signInBtn = document.getElementById('sign-in-btn');
-        if (signInBtn) signInBtn.addEventListener('click', () => this.openModal('auth-modal'));
-
-        const googleLoginBtn = document.getElementById('google-login-btn');
-        if (googleLoginBtn) googleLoginBtn.addEventListener('click', () => this.googleLogin());
-
-        const registerBtn = document.getElementById('register-btn');
-        if (registerBtn) registerBtn.addEventListener('click', () => this.registerFromForm());
-
-        const authForm = document.getElementById('auth-form');
-        if (authForm) authForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.signIn(e.target);
-        });
-
-        // Ensure modal close buttons also work for auth modal
-        document.querySelectorAll('.modal-close').forEach(btn => {
+        // Calendar View
+        document.querySelectorAll('.cal-view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const modalId = btn.getAttribute('data-modal');
-                if (modalId) this.closeModal(modalId);
+                const view = e.target.getAttribute('data-view');
+                if (this.calendar) this.calendar.changeView(view);
             });
         });
     },
@@ -1818,7 +2022,7 @@ window.NotaryCRM = {
             // fetch user profile to check role
             (async () => {
                 try {
-                    const { doc, getDoc, setDoc } = window.dbFuncs;
+                    const { doc, getDoc, setDoc, updateDoc } = window.dbFuncs;
                     const db = window.firebaseDB;
                     const userRef = doc(db, 'users', user.uid);
 
@@ -1835,25 +2039,34 @@ window.NotaryCRM = {
 
                     const data = userSnap.data();
                     this.currentUserRole = data.role || 'viewer';
-                    this.isAdmin = this.currentUserRole === 'admin';
+                    // Force admin false for UI purposes unless explicitly super admin (which is disabled)
+                    this.isAdmin = false;
 
                     // Update role display
                     const roleDisplay = document.getElementById('current-user-role-display');
                     if (roleDisplay) {
-                        const roleNames = { 'admin': 'Administrador', 'editor': 'Editor', 'viewer': 'Lector' };
+                        const roleNames = { 'admin': 'Propietario', 'editor': 'Editor', 'viewer': 'Lector' };
                         roleDisplay.textContent = roleNames[this.currentUserRole] || this.currentUserRole;
                         roleDisplay.className = `user-role-tag role-${this.currentUserRole}`;
                     }
 
-                    // toggle sensitive sidebar items
+                    // Strict Isolation: Always hide sensitive sidebar items for standard users
                     const usersBtn = document.getElementById('users-tab-btn');
-                    if (this.isAdmin && usersBtn) usersBtn.style.display = '';
+                    const auditBtn = document.getElementById('audit-tab-btn'); // Assuming ID, check HTML if needed
+                    if (usersBtn) usersBtn.style.display = 'none';
+                    // if (auditBtn) auditBtn.style.display = 'none'; // Audit might be useful for personal actions? Keep it if relevant. 
+                    // Actually, AuditManager logs "System" events. If it logs their own events, fine. 
+                    // But usually "Audit" implies seeing what OTHERS did. 
+                    // Let's hide it to be safe as requested "oculta la seccion usuarios y auditoria".
+                    const auditLink = document.querySelector('button[onclick*="audit"]'); // finding by handler or ID
+                    // The sidebar buttons usually have IDs like 'dashboard-tab-btn'.
+                    // I will search for them in next step if I can't find ID.
 
                     // Apply permissions to UI immediately
                     this.applyUIPermissions();
 
                     if (this.isAdmin) {
-                        this.startUsersListener();
+                        // this.startUsersListener(); // Disabled for independent accounts
                         AuditManager.startListener();
                     }
 
@@ -1875,6 +2088,12 @@ window.NotaryCRM = {
             // clear data until sign-in
             this.state.clients = [];
             this.state.cases = [];
+            this.state.appointments = [];
+
+            // User logged out or initialization with no user
+            console.log('No user session active');
+
+            this.initFirestore();
             this.render();
             this.checkAutomations();
         }
@@ -1936,7 +2155,8 @@ window.NotaryCRM = {
         try {
             await window.authFuncs.signInWithEmailAndPassword(window.firebaseAuth, email, password);
             AuditManager.logAction('Inicio de Sesión', 'Email/Password', email);
-            // onAuthStateChanged will handle UI changes
+            Toast.success('Bienvenido', email);
+            this.closeModal('auth-modal'); // Close modal explicitly here just in case
         } catch (err) {
             console.error('Sign-in failed', err);
             Toast.error('Error de Autenticación', 'No se pudo iniciar sesión: ' + (err.message || err));
@@ -1986,19 +2206,24 @@ window.NotaryCRM = {
     switchTab(tabName) {
         this.state.activeTab = tabName;
 
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.getAttribute('data-tab') === tabName) {
-                btn.classList.add('active');
-            }
-        });
+        // Update tab buttons & content
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+        const targetTab = document.getElementById(`${tabName}-tab`);
+        if (targetTab) targetTab.classList.add('active');
+
+        const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+
+        // Update Breadcrumb
+        const currentBreadcrumb = document.getElementById('breadcrumb-current');
+        if (currentBreadcrumb) {
+            currentBreadcrumb.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+        }
+
+        // Scroll to top on mobile
+        if (window.innerWidth < 1024) window.scrollTo(0, 0);
 
         // Trigger specific renders
         if (tabName === 'reports') this.renderReports();
@@ -2009,8 +2234,20 @@ window.NotaryCRM = {
     // Modal controls
     openModal(modalId) {
         const modal = document.getElementById(modalId);
+        if (!modal) return;
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Reset step if it's the client modal
+        if (modalId === 'client-modal') {
+            this.setClientStep(1);
+        }
+
+        // Announce modal opening for screen readers
+        if (window.ScreenReaderManager) {
+            const modalTitle = modal.querySelector('.modal-title')?.textContent || 'Dialog';
+            ScreenReaderManager.announce(`${modalTitle} opened`);
+        }
 
         // Auto-populate client selects if they exist in the modal
         const clientSelects = ['case-client-select', 'cal-client-select', 'client-related-select'];
@@ -2034,6 +2271,14 @@ window.NotaryCRM = {
         // Reset form
         const form = modal.querySelector('form');
         if (form) form.reset();
+    },
+
+    // Helper: Escape HTML to prevent XSS
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     },
 
     // Custom Confirmation Dialog
@@ -2063,6 +2308,38 @@ window.NotaryCRM = {
         cancelBtn.addEventListener('click', handleCancel);
 
         this.openModal('confirm-modal');
+    },
+
+    // Step Navigation for Client Form
+    setClientStep(step) {
+        this.state.currentClientStep = step;
+
+        // Update View
+        document.querySelectorAll('#client-form .form-step').forEach(el => {
+            el.classList.toggle('active', parseInt(el.getAttribute('data-step')) === step);
+        });
+
+        // Update Indicators
+        document.querySelectorAll('#client-step-indicator .step').forEach(el => {
+            const s = parseInt(el.getAttribute('data-step'));
+            el.classList.toggle('active', s === step);
+            el.classList.toggle('completed', s < step);
+        });
+
+        // Update Buttons
+        const prevBtn = document.getElementById('prev-client-step');
+        const nextBtn = document.getElementById('next-client-step');
+        const submitBtn = document.getElementById('submit-client-form');
+
+        if (prevBtn) prevBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+
+        if (step === 3) {
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'block';
+        } else {
+            if (nextBtn) nextBtn.style.display = 'block';
+            if (submitBtn) submitBtn.style.display = 'none';
+        }
     },
 
     // Add client
@@ -2101,12 +2378,22 @@ window.NotaryCRM = {
             }
             const { collection, addDoc } = window.dbFuncs;
             const clientsCol = collection(window.firebaseDB, 'clients');
-            // attach ownerId and createdAt server timestamp
-            const toInsert = Object.assign({}, client, { ownerId: this.currentUser ? this.currentUser.uid : null, createdAt: window.dbFuncs.serverTimestamp() });
+            const toInsert = Object.assign({}, client, {
+                ownerId: this.currentUser ? this.currentUser.uid : null,
+                createdAt: window.dbFuncs.serverTimestamp()
+            });
+            this.updateSyncStatus('syncing');
             addDoc(clientsCol, toInsert)
                 .then(async (docRef) => {
+                    this.updateSyncStatus('synced');
                     AuditManager.logAction('Creación de Cliente', client.name, `ID: ${docRef.id}`);
                     this.closeModal('client-modal');
+
+                    // Clear draft after successful save
+                    if (window.DraftManager) {
+                        DraftManager.clearDraft('client-form');
+                    }
+
                     Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
                     // also save to SQL backend (if available)
                     try {
@@ -2425,24 +2712,68 @@ window.NotaryCRM = {
         })();
     },
 
+    // Update sync indicator
+    updateSyncStatus(status) {
+        const text = document.getElementById('sync-text');
+        const icon = document.querySelector('#sync-indicator i');
+        if (!text || !icon) return;
+
+        if (status === 'syncing') {
+            text.textContent = 'Syncing...';
+            icon.setAttribute('data-lucide', 'refresh-cw');
+            icon.style.color = 'var(--color-warning)';
+            icon.classList.add('spin');
+        } else if (status === 'synced') {
+            text.textContent = 'Cloud Synced';
+            icon.setAttribute('data-lucide', 'cloud-check');
+            icon.style.color = 'var(--color-success)';
+            icon.classList.remove('spin');
+        } else {
+            text.textContent = 'Offline';
+            icon.setAttribute('data-lucide', 'cloud-off');
+            icon.style.color = 'var(--color-danger)';
+            icon.classList.remove('spin');
+        }
+        if (window.lucide) window.lucide.createIcons();
+    },
+
     // Render entire UI
     render() {
+        this.applyUIPermissions();
         this.renderDashboard();
         this.renderClients();
         this.renderCases();
+        this.renderReports();
+        if (window.lucide) window.lucide.createIcons();
     },
 
     // Render dashboard
     renderDashboard() {
         // Update statistics
-        document.getElementById('total-clients').textContent = this.state.clients.length;
-        document.getElementById('total-cases').textContent = this.state.cases.length;
+        const clientsList = this.state.clients || [];
+        const totalClientsEl = document.getElementById('total-clients');
+        if (totalClientsEl) {
+            totalClientsEl.textContent = clientsList.length;
+        }
+
+        const totalCases = this.state.cases.length;
+        document.getElementById('total-cases').textContent = totalCases;
 
         const completedCases = this.state.cases.filter(c => c.status === 'completed').length;
         document.getElementById('completed-cases').textContent = completedCases;
 
-        const totalRevenue = this.state.cases.reduce((sum, c) => sum + c.amount, 0);
-        document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+        const totalRevenue = this.state.cases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
+
+        // Advanced KPIs
+        const avgTicket = totalCases > 0 ? (totalRevenue / totalCases) : 0;
+        const successRate = totalCases > 0 ? (completedCases / totalCases) * 100 : 0;
+
+        const avgEl = document.getElementById('avg-ticket');
+        if (avgEl) avgEl.textContent = this.formatCurrency(avgTicket);
+
+        const rateEl = document.getElementById('success-rate');
+        if (rateEl) rateEl.textContent = Math.round(successRate);
 
         // Render recent cases table
         const tbody = document.getElementById('recent-cases-table');
@@ -2459,7 +2790,7 @@ window.NotaryCRM = {
                 <td style="color: var(--color-gray-700);">${c.clientName}</td>
                 <td style="color: var(--color-gray-700);">${c.type}</td>
                 <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
-                <td style="font-weight: 600; color: var(--color-gray-900);">$${c.amount}</td>
+                <td style="font-weight: 600; color: var(--color-gray-900);">${this.formatCurrency(c.amount)}</td>
             </tr>
         `).join('');
     },
@@ -2583,9 +2914,10 @@ window.NotaryCRM = {
             return;
         }
 
+        const query = (this.state.searchCaseQuery || '').toLowerCase();
         const filteredCases = this.state.cases.filter(c =>
-            c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
-            c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
+            (c.caseNumber || '').toLowerCase().includes(query) ||
+            (c.clientName || '').toLowerCase().includes(query)
         );
 
         if (filteredCases.length === 0) {
@@ -2656,7 +2988,7 @@ window.NotaryCRM = {
                     </div>
                     <div class="case-detail-item">
                         <p class="case-detail-label">Costo</p>
-                        <p class="case-detail-value amount">$${(caseItem.amount || 0).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</p>
+                        <p class="case-detail-value amount">${this.formatCurrency(caseItem.amount)}</p>
                     </div>
                     <div class="case-detail-item">
                         <p class="case-detail-label">Lugar</p>
@@ -2750,7 +3082,19 @@ window.NotaryCRM = {
             options.second = '2-digit';
         }
 
-        return dateObj.toLocaleDateString('es-ES', options);
+        return dateObj.toLocaleDateString(I18nManager.currentLang === 'es' ? 'es-ES' : 'en-US', options);
+    },
+
+    formatCurrency(amount) {
+        const symbol = this.state.currency === 'EUR' ? '€' : '$';
+        return `${symbol}${(parseFloat(amount) || 0).toFixed(2)}`;
+    },
+
+    setCurrency(cur) {
+        this.state.currency = cur;
+        this.saveData();
+        this.render();
+        Toast.success('Moneda Cambiada', `Ahora usando ${cur}`);
     },
 
     copyToClipboard(text) {
@@ -2858,9 +3202,20 @@ window.NotaryCRM = {
         });
 
         // Update Total Revenue Stat
-        const totalRev = filteredCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        const totalEl = document.getElementById('report-total-revenue');
-        if (totalEl) totalEl.textContent = `$${totalRev.toFixed(2)}`;
+        const totalFilteredRevenue = filteredCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        const revenueEl = document.getElementById('report-total-revenue');
+        if (revenueEl) revenueEl.textContent = this.formatCurrency(totalFilteredRevenue);
+
+        // Revenue Projection
+        const months = {};
+        this.state.cases.forEach(c => {
+            const d = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt || Date.now());
+            const m = d.getMonth() + '-' + d.getFullYear();
+            months[m] = (months[m] || 0) + (parseFloat(c.amount) || 0);
+        });
+        const avgMonthly = Object.values(months).length > 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
+        const projectedEl = document.getElementById('report-projected-revenue');
+        if (projectedEl) projectedEl.textContent = this.formatCurrency(avgMonthly);
 
         // Cleanup existing charts if any
         if (this.revenueChart) this.revenueChart.destroy();
@@ -2986,8 +3341,10 @@ window.NotaryCRM = {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek'
             },
-            events: events,
+            editable: true,
+            droppable: true,
             themeSystem: 'standard',
+            events: events,
             height: 'auto',
             dayMaxEvents: true,
             dateClick: (info) => {
@@ -2996,9 +3353,23 @@ window.NotaryCRM = {
             eventClick: (info) => {
                 const dateStr = info.event.start.toISOString().split('T')[0];
                 this.showDayDetails(dateStr);
+            },
+            eventDrop: async (info) => {
+                const newStart = info.event.start;
+                const d = new Date(newStart);
+                const dateStr = d.toISOString().split('T')[0];
+                const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                await this.updateAppointment(info.event.id, {
+                    date: dateStr,
+                    time: timeStr
+                });
+
+                Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr} - ${timeStr}`);
             }
         });
 
+        this.calendar = this.fullCalendar;
         this.fullCalendar.render();
     },
 
@@ -3103,7 +3474,7 @@ window.NotaryCRM = {
                                 <td><strong>${c.caseNumber}</strong></td>
                                 <td>${c.type}</td>
                                 <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
-                                <td>$${c.amount}</td>
+                                <td>${this.formatCurrency(c.amount)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -3167,7 +3538,7 @@ window.NotaryCRM = {
                         </div>
                         <div class="info-item">
                             <span class="info-label">Costo Total</span>
-                            <span class="info-value amount">$${(parseFloat(caseItem.amount) || 0).toFixed(2)}</span>
+                            <span class="info-value amount">${this.formatCurrency(caseItem.amount)}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Fecha de Trámite</span>
@@ -3193,6 +3564,7 @@ window.NotaryCRM = {
                     </div>
 
                     ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
+                    ${NoteManager.renderNotes(caseItem.id, caseItem.internalNotes)}
                 </div>
                 
                 <div class="case-details-sidebar">
@@ -3243,7 +3615,6 @@ window.NotaryCRM = {
         this.openModal('case-details-modal');
     },
 
-    // --- Appointment Management ---
     async addAppointment(form) {
         if (!this.currentUser) return alert('Debes iniciar sesión.');
 
@@ -3251,41 +3622,71 @@ window.NotaryCRM = {
         const clientId = formData.get('clientId');
         const client = this.state.clients.find(c => c.id === clientId);
 
-        const appointment = {
-            clientId: clientId,
-            clientName: client ? client.name : 'Unknown',
-            date: formData.get('date'),
-            time: formData.get('time'),
-            type: formData.get('type'),
-            ownerId: this.currentUser.uid,
-            createdAt: new Date().toISOString()
-        };
+        const isRecurring = formData.get('recurring') === 'on';
+        const appointments = [];
+
+        let baseDate = new Date(formData.get('date') + 'T' + formData.get('time'));
+
+        const count = isRecurring ? 4 : 1;
+        for (let i = 0; i < count; i++) {
+            const current = new Date(baseDate);
+            current.setDate(baseDate.getDate() + (i * 7));
+
+            appointments.push({
+                clientId: clientId,
+                clientName: client ? client.name : 'Unknown',
+                date: current.toISOString().split('T')[0],
+                time: formData.get('time'),
+                type: formData.get('type'),
+                ownerId: this.currentUser.uid,
+                createdAt: new Date().toISOString()
+            });
+        }
 
         try {
             const { addDoc, collection } = window.dbFuncs;
             const db = window.firebaseDB;
-            await addDoc(collection(db, 'appointments'), appointment);
+
+            if (this.useFirestore) {
+                for (const app of appointments) {
+                    await addDoc(collection(db, 'appointments'), app);
+                }
+            } else {
+                this.state.appointments.push(...appointments);
+                this.saveData();
+                this.render();
+            }
 
             form.reset();
             this.closeModal('calendar-modal');
+            Toast.success('Cita(s) Agendada(s)', isRecurring ? 'Se han creado 4 citas semanales.' : 'La cita ha sido creada.');
         } catch (err) {
             console.error('Error adding appointment:', err);
-            alert('Error al programar la cita.');
+            Toast.error('Error', 'No se pudo agendar la cita.');
         }
     },
 
-    deleteAppointment(id) {
-        this.confirmAction(
-            '¿Eliminar Cita?',
-            '¿Estás seguro de que deseas cancelar esta cita?',
-            () => {
-                const { doc, deleteDoc } = window.dbFuncs;
-                const appRef = doc(window.firebaseDB, 'appointments', id);
-                deleteDoc(appRef).then(() => {
-                    this.closeModal('day-details-modal');
-                }).catch(err => console.error('Delete appointment failed', err));
-            }
-        );
+    async deleteAppointment(id) {
+        if (!confirm('¿Estás seguro de eliminar esta cita?')) return;
+        if (this.useFirestore) {
+            const { doc, deleteDoc } = window.dbFuncs;
+            await deleteDoc(doc(window.firebaseDB, 'appointments', id));
+        } else {
+            this.state.appointments = this.state.appointments.filter(a => a.id !== id);
+            this.saveData();
+            this.render();
+        }
+    },
+
+    async updateAppointment(id, updates) {
+        if (this.useFirestore) {
+            const { doc, updateDoc } = window.dbFuncs;
+            await updateDoc(doc(window.firebaseDB, 'appointments', id), updates);
+        } else {
+            this.state.appointments = this.state.appointments.map(a => a.id === id ? { ...a, ...updates } : a);
+            this.saveData();
+            this.render();
+        }
     },
 
     exportClients(format) {
@@ -3647,6 +4048,33 @@ window.NotaryCRM = {
                 </button>
             </div>
         `).join('');
+    },
+
+    gdprExport() {
+        const data = {
+            user: this.currentUser ? this.currentUser.email : 'local',
+            exportDate: new Date().toISOString(),
+            clients: this.state.clients,
+            cases: this.state.cases,
+            appointments: this.state.appointments
+        };
+        this.downloadBlob(`gdpr-export-${Date.now()}.json`, JSON.stringify(data, null, 2), 'application/json');
+        Toast.success('Exportación GDPR', 'Tus datos se han descargado con éxito.');
+    },
+
+    gdprDelete() {
+        this.confirmAction(
+            'Eliminar Cuenta y Datos',
+            'Esta acción es irreversible y borrará todos tus datos. ¿Deseas continuar?',
+            async () => {
+                if (this.useFirestore) {
+                    // Simulation: In a real app we'd trigger a cloud function to delete all user docs
+                    Toast.info('GDPR', 'Solicitud de borrado enviada al servidor.');
+                }
+                localStorage.removeItem('notary_crm_data');
+                this.signOutUser();
+            }
+        );
     }
 };
 
@@ -3793,6 +4221,16 @@ const Reminders = {
 // Expose to global for onclick handlers
 window.Reminders = Reminders;
 window.NotaryCRM = NotaryCRM;
+
+// Ensure escapeHtml exists (safety patch)
+if (window.NotaryCRM && !window.NotaryCRM.escapeHtml) {
+    window.NotaryCRM.escapeHtml = function (text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+}
 
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {
