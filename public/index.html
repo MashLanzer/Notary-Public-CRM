@@ -1517,137 +1517,157 @@
                 <div style="flex: 1; padding: 2rem; overflow-y: auto; background: #fff;" id="help-content-area">
 
                     <!-- FAQ Tab -->
+                    <!-- FAQ Tab -->
                     <div id="help-tab-faq" class="help-tab-content active">
                         <h3 class="tab-title">Preguntas Frecuentes</h3>
-                        <div class="accordion">
-                            <div class="accordion-item">
-                                <button class="accordion-header"
-                                    onclick="this.parentElement.classList.toggle('active')">
-                                    ¿Cómo gestiono los pagos?
-                                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </button>
-                                <div class="accordion-body">
-                                    Ve a la sección de "Casos", selecciona un caso y busca la insignia de estado de
-                                    pago. Si está pendiente, puedes hacer clic en el botón de "Pagar Ahora" (si estás
-                                    habilitado) o generar una factura PDF desde el menú de acciones.
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <button class="accordion-header"
-                                    onclick="this.parentElement.classList.toggle('active')">
-                                    ¿Cómo cambio el estado de un caso?
-                                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </button>
-                                <div class="accordion-body">
-                                    Dentro del detalle de un caso, verás el estado actual. Al hacer clic puede
-                                    actualizarlo a "En Proceso", "Completado", etc. También puede arrastrar casos en la
-                                    vista de tablero (Kanban).
-                                </div>
-                            </div>
-                            <!-- More FAQs... -->
+
+                        <!-- Categories -->
+                        <div class="faq-categories"
+                            style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1rem; -ms-overflow-style: none; scrollbar-width: none;">
+                            <button class="faq-cat-btn active" onclick="NotaryCRM.filterFAQs('all')"
+                                data-cat="all">Todas</button>
+                            <button class="faq-cat-btn" onclick="NotaryCRM.filterFAQs('general')"
+                                data-cat="general">General</button>
+                            <button class="faq-cat-btn" onclick="NotaryCRM.filterFAQs('cases')"
+                                data-cat="cases">Casos</button>
+                            <button class="faq-cat-btn" onclick="NotaryCRM.filterFAQs('payments')"
+                                data-cat="payments">Pagos</button>
+                            <button class="faq-cat-btn" onclick="NotaryCRM.filterFAQs('technical')"
+                                data-cat="technical">Técnico</button>
                         </div>
+
+                        <div class="accordion" id="faq-accordion-container">
+                            <!-- Loaded via JS -->
+                            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                Cargando preguntas...
+                            </div>
+                        </div>
+
+                        <style>
+                            .faq-cat-btn {
+                                padding: 0.4rem 1rem;
+                                border-radius: 20px;
+                                border: 1px solid #e2e8f0;
+                                background: #fff;
+                                cursor: pointer;
+                                font-size: 0.85rem;
+                                font-weight: 500;
+                                color: #64748b;
+                                white-space: nowrap;
+                                transition: all 0.2s;
+                            }
+
+                            .faq-cat-btn:hover {
+                                background: #f8fafc;
+                                color: #334155;
+                            }
+
+                            .faq-cat-btn.active {
+                                background: #eff6ff;
+                                color: #2563eb;
+                                border-color: #bfdbfe;
+                                font-weight: 600;
+                                box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+                            }
+
+                            .faq-categories::-webkit-scrollbar {
+                                display: none;
+                            }
+                        </style>
                     </div>
-                </div>
-            </div>
-            <style>
-                .help-nav-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    width: 100%;
-                    padding: 0.75rem 1.5rem;
-                    border: none;
-                    background: none;
-                    text-align: left;
-                    cursor: pointer;
-                    color: #64748b;
-                    font-weight: 500;
-                    font-size: 0.95rem;
-                    transition: all 0.2s;
-                    border-left: 3px solid transparent;
-                }
+    <style>
+        .help-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
 
-                .help-nav-item:hover {
-                    background: #f1f5f9;
-                    color: #0f172a;
-                }
+        .help-nav-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
 
-                .help-nav-item.active {
-                    background: white;
-                    color: #2563eb;
-                    border-left-color: #2563eb;
-                    font-weight: 600;
-                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                }
+        .help-nav-item.active {
+            background: white;
+            color: #2563eb;
+            border-left-color: #2563eb;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
 
-                .accordion-item {
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    margin-bottom: 0.75rem;
-                    overflow: hidden;
-                }
+        .accordion-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
 
-                .accordion-header {
-                    width: 100%;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    border: none;
-                    background: #fff;
-                    text-align: left;
-                    font-weight: 600;
-                    color: #334155;
-                    cursor: pointer;
-                }
+        .accordion-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: none;
+            background: #fff;
+            text-align: left;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+        }
 
-                .accordion-header:hover {
-                    background: #f8fafc;
-                }
+        .accordion-header:hover {
+            background: #f8fafc;
+        }
 
-                .accordion-body {
-                    padding: 0 1rem 1rem;
-                    color: #64748b;
-                    font-size: 0.95rem;
-                    display: none;
-                    line-height: 1.5;
-                    border-top: 1px solid #f1f5f9;
-                    background: #fdfdfd;
-                    padding-top: 1rem;
-                }
+        .accordion-body {
+            padding: 0 1rem 1rem;
+            color: #64748b;
+            font-size: 0.95rem;
+            display: none;
+            line-height: 1.5;
+            border-top: 1px solid #f1f5f9;
+            background: #fdfdfd;
+            padding-top: 1rem;
+        }
 
-                .accordion-item.active .accordion-body {
-                    display: block;
-                }
+        .accordion-item.active .accordion-body {
+            display: block;
+        }
 
-                .accordion-item.active .chevron {
-                    transform: rotate(180deg);
-                    transition: transform 0.2s;
-                }
+        .accordion-item.active .chevron {
+            transform: rotate(180deg);
+            transition: transform 0.2s;
+        }
 
-                .tab-title {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #0f172a;
-                    margin-bottom: 1.5rem;
-                    padding-bottom: 0.5rem;
-                    border-bottom: 1px solid #e2e8f0;
-                }
+        .tab-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-                .resource-card:hover {
-                    border-color: #cbd5e1 !important;
-                    background: #f8fafc;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                }
-            </style>
-        </div>
+        .resource-card:hover {
+            border-color: #cbd5e1 !important;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    </div>
     </div>
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -1673,6 +1693,7 @@
     <script src="security-manager.js"></script>
     <script src="advanced-features.js"></script>
     <script src="business-features.js"></script>
+    <script src="faq-data.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 

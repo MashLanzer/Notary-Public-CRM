@@ -2354,6 +2354,11 @@ window.NotaryCRM = {
                     this.state.clients.map(c => `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.name}</option>`).join('');
             }
         });
+
+        // Init FAQs if opening help center
+        if (modalId === 'help-center-modal') {
+            this.filterFAQs('all');
+        }
     },
 
     closeModal(modalId) {
@@ -2387,6 +2392,48 @@ window.NotaryCRM = {
             activeContent.style.display = 'block';
             setTimeout(() => activeContent.classList.add('active'), 10);
         }
+
+        // If switching to FAQ, maybe refresh/init
+        if (tabName === 'faq') {
+            this.filterFAQs('all');
+        }
+    },
+
+    filterFAQs(category) {
+        // Update styling
+        document.querySelectorAll('.faq-cat-btn').forEach(btn => {
+            if (btn.dataset.cat === category) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        const container = document.getElementById('faq-accordion-container');
+        if (!container || !window.FAQ_DATABASE) return;
+
+        let faqs = [];
+        if (category === 'all') {
+            // Merge all arrays
+            Object.values(window.FAQ_DATABASE).forEach(arr => faqs.push(...arr));
+        } else {
+            faqs = window.FAQ_DATABASE[category] || [];
+        }
+
+        if (faqs.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:2rem; color:#94a3b8;">No se encontraron preguntas.</div>';
+            return;
+        }
+
+        // Generate HTML
+        container.innerHTML = faqs.map((item) => `
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                    ${this.escapeHtml(item.q)}
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="accordion-body">
+                    ${this.escapeHtml(item.a)}
+                </div>
+            </div>
+        `).join('');
     },
 
     // Helper: Escape HTML to prevent XSS
