@@ -2072,6 +2072,11 @@ window.NotaryCRM = {
 
                     this.render(); // Re-render everything with new permissions
                     this.checkAutomations();
+
+                    // Reload reminders for the authenticated user
+                    if (window.Reminders) {
+                        Reminders.load().then(() => Reminders.render());
+                    }
                 } catch (e) {
                     console.error('Failed to fetch user profile', e);
                     this.currentUserRole = 'viewer';
@@ -2089,6 +2094,12 @@ window.NotaryCRM = {
             this.state.clients = [];
             this.state.cases = [];
             this.state.appointments = [];
+
+            // Clear reminders when user logs out
+            if (window.Reminders) {
+                Reminders.state.items = [];
+                Reminders.render();
+            }
 
             // User logged out or initialization with no user
             console.log('No user session active');
