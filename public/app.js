@@ -1965,6 +1965,7 @@ window.NotaryCRM = {
 
         // Auth
         addL('sign-in-btn', 'click', () => this.openModal('auth-modal'));
+        addL('email-login-btn', 'click', () => this.openModal('auth-modal')); // Nuevo botón en landing
         addL('google-login-btn', 'click', () => this.googleLogin());
         addL('register-btn', 'click', () => this.registerFromForm());
         addL('auth-form', 'submit', (e) => { e.preventDefault(); this.signIn(e.target); });
