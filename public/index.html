@@ -1575,126 +1575,297 @@
                             }
                         </style>
                     </div>
-    <style>
-        .help-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
-            color: #64748b;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
 
-        .help-nav-item:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-        }
+                    <!-- Contact Tab -->
+                    <div id="help-tab-contact" class="help-tab-content" style="display: none;">
+                        <h3 class="tab-title">Contactar Soporte</h3>
 
-        .help-nav-item.active {
-            background: white;
-            color: #2563eb;
-            border-left-color: #2563eb;
-            font-weight: 600;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <!-- Formulario -->
+                            <div>
+                                <p style="color: #64748b; margin-bottom: 1.5rem;">Respuesta garantizada en menos de 24h
+                                    laborables.</p>
+                                <form
+                                    onsubmit="event.preventDefault(); Toast.success('Ticket Creado', 'Su solicitud #8291 ha sido enviada.'); NotaryCRM.closeModal('help-center-modal');">
+                                    <div class="form-group">
+                                        <label class="form-label">Tipo de Solicitud</label>
+                                        <select class="form-input" required>
+                                            <option>Soporte Técnico</option>
+                                            <option>Facturación</option>
+                                            <option>Reportar Error</option>
+                                            <option>Sugerencia</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Prioridad</label>
+                                        <select class="form-input">
+                                            <option>Normal</option>
+                                            <option>Alta</option>
+                                            <option>Crítica (Sistema Caído)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Mensaje</label>
+                                        <textarea class="form-input" rows="5" placeholder="Describa el problema..."
+                                            required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar
+                                        Ticket</button>
+                                </form>
+                            </div>
 
-        .accordion-item {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-            overflow: hidden;
-        }
+                            <!-- Info Lateral -->
+                            <div
+                                style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; height: fit-content;">
+                                <h4 style="margin-top: 0; color: #334155; margin-bottom: 1rem;">Canales Directos</h4>
 
-        .accordion-header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border: none;
-            background: #fff;
-            text-align: left;
-            font-weight: 600;
-            color: #334155;
-            cursor: pointer;
-        }
+                                <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center;">
+                                    <div
+                                        style="width: 36px; height: 36px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #0f172a;">Línea Directa</div>
+                                        <div style="font-size: 0.9rem; color: #64748b;">+1 (555) 123-4567</div>
+                                    </div>
+                                </div>
 
-        .accordion-header:hover {
-            background: #f8fafc;
-        }
+                                <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center;">
+                                    <div
+                                        style="width: 36px; height: 36px; background: #e0f2fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0284c7;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                            </path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #0f172a;">Correo Electrónico</div>
+                                        <div style="font-size: 0.9rem; color: #64748b;">support@notaryomni.com</div>
+                                    </div>
+                                </div>
 
-        .accordion-body {
-            padding: 0 1rem 1rem;
-            color: #64748b;
-            font-size: 0.95rem;
-            display: none;
-            line-height: 1.5;
-            border-top: 1px solid #f1f5f9;
-            background: #fdfdfd;
-            padding-top: 1rem;
-        }
+                                <div style="border-top: 1px solid #e2e8f0; margin: 1rem 0;"></div>
 
-        .accordion-item.active .accordion-body {
-            display: block;
-        }
+                                <h4 style="font-size: 0.9rem; color: #64748b; margin-bottom: 0.5rem;">Horario de
+                                    Atención</h4>
+                                <div style="font-size: 0.9rem; color: #334155;">
+                                    <strong>Lun - Vie:</strong> 9:00 AM - 6:00 PM<br>
+                                    <strong>Sáb:</strong> 10:00 AM - 2:00 PM<br>
+                                    <strong>Dom:</strong> Cerrado
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        .accordion-item.active .chevron {
-            transform: rotate(180deg);
-            transition: transform 0.2s;
-        }
+                    <!-- Resources Tab -->
+                    <div id="help-tab-resources" class="help-tab-content" style="display: none;">
+                        <h3 class="tab-title">Recursos y Descargas</h3>
 
-        .tab-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
+                        <div class="resource-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <!-- Items -->
+                            <a href="#" class="resource-card"
+                                style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                                <div style="background: #eff6ff; padding: 0.75rem; border-radius: 8px; color: #2563eb;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z">
+                                        </path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Manual de Usuario</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">PDF v2.1 • Actualizado
+                                        Enero 2026</p>
+                                </div>
+                            </a>
 
-        .resource-card:hover {
-            border-color: #cbd5e1 !important;
-            background: #f8fafc;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-    </style>
-    </div>
-    </div>
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+                            <a href="#" class="resource-card"
+                                style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                                <div style="background: #fdf2f8; padding: 0.75rem; border-radius: 8px; color: #db2777;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Video Tutoriales</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Playlist de YouTube (12
+                                        videos)</p>
+                                </div>
+                            </a>
 
-    <!-- FullCalendar -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
+                            <a href="#" class="resource-card"
+                                style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                                <div style="background: #f0fdf4; padding: 0.75rem; border-radius: 8px; color: #16a34a;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <path d="M16 13H8"></path>
+                                        <path d="M16 17H8"></path>
+                                        <path d="M10 9H8"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Plantillas Legales</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Pack de inicio .DOCX</p>
+                                </div>
+                            </a>
 
-    <script type="module" src="firebase-init.js"></script>
-    <script src="draft-manager.js"></script>
-    <script src="smart-autocomplete.js"></script>
-    <script src="screen-reader-manager.js"></script>
-    <script src="file-upload-manager.js"></script>
-    <script src="calendar-enhancements.js"></script>
-    <script src="case-attachments-manager.js"></script>
-    <script src="advanced-calendar-features.js"></script>
-    <script src="interactive-charts.js"></script>
-    <script src="performance-optimizer.js"></script>
-    <script src="advanced-analytics.js"></script>
-    <script src="scroll-and-optimization.js"></script>
-    <script src="communication-manager.js"></script>
-    <script src="payment-manager.js"></script>
-    <script src="security-manager.js"></script>
-    <script src="advanced-features.js"></script>
-    <script src="business-features.js"></script>
-    <script src="faq-data.js"></script>
-    <script type="module" src="app.js"></script>
+                            <a href="#" class="resource-card"
+                                style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                                <div style="background: #fffbeb; padding: 0.75rem; border-radius: 8px; color: #d97706;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">Estado del Sistema</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Verificar operatividad</p>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div
+                            style="margin-top: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px dashed #cbd5e1; text-align: center;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #475569;">¿Necesitas una integración a medida?</h4>
+                            <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #64748b;">Ofrecemos API y webhooks
+                                para planes Enterprise.</p>
+                            <button class="btn btn-outline" style="font-size: 0.9rem;">Contactar Ventas</button>
+                        </div>
+                    </div>
+                    <style>
+                        .help-nav-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            width: 100%;
+                            padding: 0.75rem 1.5rem;
+                            border: none;
+                            background: none;
+                            text-align: left;
+                            cursor: pointer;
+                            color: #64748b;
+                            font-weight: 500;
+                            font-size: 0.95rem;
+                            transition: all 0.2s;
+                            border-left: 3px solid transparent;
+                        }
+
+                        .help-nav-item:hover {
+                            background: #f1f5f9;
+                            color: #0f172a;
+                        }
+
+                        .help-nav-item.active {
+                            background: white;
+                            color: #2563eb;
+                            border-left-color: #2563eb;
+                            font-weight: 600;
+                            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                        }
+
+                        .accordion-item {
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            margin-bottom: 0.75rem;
+                            overflow: hidden;
+                        }
+
+                        .accordion-header {
+                            width: 100%;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 1rem;
+                            border: none;
+                            background: #fff;
+                            text-align: left;
+                            font-weight: 600;
+                            color: #334155;
+                            cursor: pointer;
+                        }
+
+                        .accordion-header:hover {
+                            background: #f8fafc;
+                        }
+
+                        .accordion-body {
+                            padding: 0 1rem 1rem;
+                            color: #64748b;
+                            font-size: 0.95rem;
+                            display: none;
+                            line-height: 1.5;
+                            border-top: 1px solid #f1f5f9;
+                            background: #fdfdfd;
+                            padding-top: 1rem;
+                        }
+
+                        .accordion-item.active .accordion-body {
+                            display: block;
+                        }
+
+                        .accordion-item.active .chevron {
+                            transform: rotate(180deg);
+                            transition: transform 0.2s;
+                        }
+
+                        .tab-title {
+                            font-size: 1.25rem;
+                            font-weight: 700;
+                            color: #0f172a;
+                            margin-bottom: 1.5rem;
+                            padding-bottom: 0.5rem;
+                            border-bottom: 1px solid #e2e8f0;
+                        }
+
+                        .resource-card:hover {
+                            border-color: #cbd5e1 !important;
+                            background: #f8fafc;
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                        }
+                    </style>
+                </div>
+            </div>
+            <!-- Scripts -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+            <!-- FullCalendar -->
+            <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
+
+            <script type="module" src="firebase-init.js"></script>
+            <script src="draft-manager.js"></script>
+            <script src="smart-autocomplete.js"></script>
+            <script src="screen-reader-manager.js"></script>
+            <script src="file-upload-manager.js"></script>
+            <script src="calendar-enhancements.js"></script>
+            <script src="case-attachments-manager.js"></script>
+            <script src="advanced-calendar-features.js"></script>
+            <script src="interactive-charts.js"></script>
+            <script src="performance-optimizer.js"></script>
+            <script src="advanced-analytics.js"></script>
+            <script src="scroll-and-optimization.js"></script>
+            <script src="communication-manager.js"></script>
+            <script src="payment-manager.js"></script>
+            <script src="security-manager.js"></script>
+            <script src="advanced-features.js"></script>
+            <script src="business-features.js"></script>
+            <script src="faq-data.js"></script>
+            <script type="module" src="app.js"></script>
 </body>
 
 </html>
