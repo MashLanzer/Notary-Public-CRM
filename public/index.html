@@ -270,6 +270,37 @@
                             </svg>
                         </div>
                     </div>
+
+                    <!-- Nuevos Widgets Vitales -->
+                    <div class="stat-card" data-widget-id="today-appointments">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Citas Hoy</p>
+                                <p class="stat-value" id="today-appointments-count">0</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="color: var(--color-primary);">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" data-widget-id="pending-payments">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Por Cobrar</p>
+                                <p class="stat-value" id="pending-payments-amount" style="color: var(--color-danger);">
+                                    $0.00</p>
+                            </div>
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="color: var(--color-danger);">
+                                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Recent Cases -->
@@ -476,6 +507,36 @@
                         <canvas id="locationChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Transaction History Table -->
+                <div class="card" style="margin-top: 2rem; padding: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3>Historial de Pagos</h3>
+                        <button class="btn btn-sm"
+                            onclick="PaymentManager.exportTaxReport(new Date().getFullYear())">Exportar Reporte
+                            Fiscal</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>ID Transacción</th>
+                                    <th>Caso</th>
+                                    <th>Pagador</th>
+                                    <th>Método</th>
+                                    <th>Estado</th>
+                                    <th style="text-align:right;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-history-table">
+                                <tr>
+                                    <td colspan="7" class="empty-state">No hay pagos registrados aún</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Cases Tab -->
@@ -581,30 +642,39 @@
     </main>
 
     <!-- Footer -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
                 <div>
-                    <h4 class="footer-title">Notary Public CRM</h4>
-                    <p class="footer-text">Professional client and case management system for notary services.</p>
+                    <h4 class="footer-title">Notary Omni</h4>
+                    <p class="footer-text">Solución integral para la gestión notarial moderna. Seguridad, eficiencia y
+                        control total de su práctica profesional.</p>
                 </div>
                 <div>
-                    <h4 class="footer-heading">Features</h4>
+                    <h4 class="footer-heading">Plataforma</h4>
                     <ul class="footer-list">
-                        <li>Client Management</li>
-                        <li>Case Tracking</li>
-                        <li>Revenue Analytics</li>
-                        <li>Document Management</li>
+                        <li><a href="#" onclick="NotaryCRM.switchTab('clients')">Gestión de Clientes</a></li>
+                        <li><a href="#" onclick="NotaryCRM.switchTab('cases')">Seguimiento de Casos</a></li>
+                        <li><a href="#" onclick="NotaryCRM.switchTab('reports')">Analítica Financiera</a></li>
+                        <li><a href="#" onclick="NotaryCRM.switchTab('calendar')">Agenda Inteligente</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="footer-heading">Contact</h4>
-                    <p class="footer-text">Email: info@notarycrm.com</p>
-                    <p class="footer-text">Phone: (555) 123-4567</p>
+                    <h4 class="footer-heading">Recursos Legales</h4>
+                    <ul class="footer-list">
+                        <li><a href="https://www.dos.ny.gov/licensing/notary/notary.html" target="_blank"
+                                rel="noopener">NY Div. of Licensing</a></li>
+                        <li><a href="https://www.nationalnotary.org/" target="_blank" rel="noopener">National Notary
+                                Assoc.</a></li>
+                        <li><a href="#" onclick="NotaryCRM.openModal('template-modal')">Plantillas de Contratos</a></li>
+                        <li><a href="#" onclick="NotaryCRM.openModal('help-center-modal')">Centro de Ayuda</a></li>
+                    </ul>
                 </div>
             </div>
-            <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center;">
-                <p>&copy; 2024 Notary Public CRM. All rights reserved.</p>
+            <div class="footer-bottom"
+                style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p>&copy; <span id="current-year"></span> Notary Omni Systems. Todos los derechos reservados.</p>
                 <button class="btn-icon header-btn" id="lang-toggle" title="Cambiar Idioma"
                     style="display: flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; min-width: 50px; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2);">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -618,6 +688,7 @@
                 </button>
             </div>
         </div>
+        <script>document.getElementById('current-year').textContent = new Date().getFullYear();</script>
     </footer>
 
     <!-- Email Template Modal -->
@@ -1067,72 +1138,7 @@
     </div>
 
     <!-- Payment Modal -->
-    <div class="modal" id="payment-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Procesar Pago</h3>
-                <button class="modal-close" data-modal="payment-modal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <form class="modal-body" id="payment-form"
-                onsubmit="event.preventDefault(); PaymentManager.processPayment(this);">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <p id="payment-case-display"
-                        style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 0.5rem;"></p>
-                    <h2 id="payment-amount-display"
-                        style="font-size: 2.5rem; color: var(--color-primary); font-weight: 800;">$0.00</h2>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">Nombre en la tarjeta</label>
-                    <input type="text" class="form-input" placeholder="Nombre completo" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Número de tarjeta</label>
-                    <div style="position: relative;">
-                        <input type="text" class="form-input" placeholder="0000 0000 0000 0000" maxlength="19" required>
-                        <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
-                            <svg width="32" height="20" viewBox="0 0 32 20">
-                                <rect width="32" height="20" rx="4" fill="#1e293b" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="paypal-button-container" style="margin-top: 1rem;"></div>
-
-                <div class="form-row" id="card-details-section">
-                    <div class="form-group flex-1">
-                        <label class="form-label">Expiración (MM/YY)</label>
-                        <input type="text" class="form-input" placeholder="MM/YY" maxlength="5">
-                    </div>
-                    <div class="form-group flex-1">
-                        <label class="form-label">CVC</label>
-                        <input type="text" class="form-input" placeholder="123" maxlength="4">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block" id="manual-payment-btn"
-                    style="height: 50px; font-weight: 600;">
-                    Confirmar y Pagar (Tarjeta Mock)
-                </button>
-                <p style="text-align: center; font-size: 0.75rem; color: var(--text-light); margin-top: 1rem;">
-                    <svg class="icon" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                    Pagos seguros procesados por NotaryPay
-                </p>
-            </form>
-        </div>
-    </div>
 
     <!-- Appointment/Calendar Modal -->
     <div class="modal" id="calendar-modal">
@@ -1453,8 +1459,198 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Help Center Modal -->
+    <div class="modal" id="help-center-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content"
+            style="max-width: 800px; padding: 0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
+
+            <!-- Header -->
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 2rem 2.5rem; color: white; border: none;">
+                <div>
+                    <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; color:white;">Centro de
+                        Ayuda</h2>
+                    <p style="opacity: 0.9; font-size: 0.95rem;">¿Cómo podemos ayudarte hoy?</p>
+                </div>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('help-center-modal')"
+                    style="background: rgba(255,255,255,0.2); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; top: 1.5rem; right: 1.5rem;">&times;</button>
+            </div>
+
+            <div class="modal-body" style="padding: 0; display: flex; flex: 1; overflow: hidden;">
+                <!-- Sidebar Navigation -->
+                <div
+                    style="width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 1.5rem 0; flex-shrink: 0;">
+                    <nav class="help-nav">
+                        <button class="help-nav-item active" onclick="NotaryCRM.switchHelpTab('faq')" data-tab="faq">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            FAQs
+                        </button>
+                        <button class="help-nav-item" onclick="NotaryCRM.switchHelpTab('contact')" data-tab="contact">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            Soporte
+                        </button>
+                        <button class="help-nav-item" onclick="NotaryCRM.switchHelpTab('resources')"
+                            data-tab="resources">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Recursos
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Content Area -->
+                <div style="flex: 1; padding: 2rem; overflow-y: auto; background: #fff;" id="help-content-area">
+
+                    <!-- FAQ Tab -->
+                    <div id="help-tab-faq" class="help-tab-content active">
+                        <h3 class="tab-title">Preguntas Frecuentes</h3>
+                        <div class="accordion">
+                            <div class="accordion-item">
+                                <button class="accordion-header"
+                                    onclick="this.parentElement.classList.toggle('active')">
+                                    ¿Cómo gestiono los pagos?
+                                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="accordion-body">
+                                    Ve a la sección de "Casos", selecciona un caso y busca la insignia de estado de
+                                    pago. Si está pendiente, puedes hacer clic en el botón de "Pagar Ahora" (si estás
+                                    habilitado) o generar una factura PDF desde el menú de acciones.
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <button class="accordion-header"
+                                    onclick="this.parentElement.classList.toggle('active')">
+                                    ¿Cómo cambio el estado de un caso?
+                                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="accordion-body">
+                                    Dentro del detalle de un caso, verás el estado actual. Al hacer clic puede
+                                    actualizarlo a "En Proceso", "Completado", etc. También puede arrastrar casos en la
+                                    vista de tablero (Kanban).
+                                </div>
+                            </div>
+                            <!-- More FAQs... -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .help-nav-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    width: 100%;
+                    padding: 0.75rem 1.5rem;
+                    border: none;
+                    background: none;
+                    text-align: left;
+                    cursor: pointer;
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                    transition: all 0.2s;
+                    border-left: 3px solid transparent;
+                }
+
+                .help-nav-item:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+
+                .help-nav-item.active {
+                    background: white;
+                    color: #2563eb;
+                    border-left-color: #2563eb;
+                    font-weight: 600;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                }
+
+                .accordion-item {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    margin-bottom: 0.75rem;
+                    overflow: hidden;
+                }
+
+                .accordion-header {
+                    width: 100%;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1rem;
+                    border: none;
+                    background: #fff;
+                    text-align: left;
+                    font-weight: 600;
+                    color: #334155;
+                    cursor: pointer;
+                }
+
+                .accordion-header:hover {
+                    background: #f8fafc;
+                }
+
+                .accordion-body {
+                    padding: 0 1rem 1rem;
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    display: none;
+                    line-height: 1.5;
+                    border-top: 1px solid #f1f5f9;
+                    background: #fdfdfd;
+                    padding-top: 1rem;
+                }
+
+                .accordion-item.active .accordion-body {
+                    display: block;
+                }
+
+                .accordion-item.active .chevron {
+                    transform: rotate(180deg);
+                    transition: transform 0.2s;
+                }
+
+                .tab-title {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin-bottom: 1.5rem;
+                    padding-bottom: 0.5rem;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+
+                .resource-card:hover {
+                    border-color: #cbd5e1 !important;
+                    background: #f8fafc;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                }
+            </style>
+        </div>
+    </div>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>

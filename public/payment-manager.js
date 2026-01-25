@@ -13,13 +13,30 @@ const PaymentManager = {
         this.setupDiscounts();
     },
 
-    setupPayPalConfig() {
-        // Load from storage
-        const savedId = localStorage.getItem('paypal_client_id');
+    async setupPayPalConfig() {
+        // Load from storage first
+        let savedId = localStorage.getItem('paypal_client_id');
+
+        // Try load from Firestore if logged in (for persistence)
+        if (window.NotaryCRM?.currentUser && window.dbFuncs) {
+            try {
+                const { doc, getDoc } = window.dbFuncs;
+                const db = window.firebaseDB;
+                const ref = doc(db, 'users', window.NotaryCRM.currentUser.uid, 'settings', 'billing');
+                const snap = await getDoc(ref);
+                if (snap.exists() && snap.data().paypalClientId) {
+                    savedId = snap.data().paypalClientId;
+                    // Sync local storage
+                    localStorage.setItem('paypal_client_id', savedId);
+                }
+            } catch (e) {
+                console.error('Error loading billing settings:', e);
+            }
+        }
 
         // Si no hay Client ID configurado, mostrar advertencia
         if (!savedId) {
-            console.warn('⚠️ PayPal Client ID no configurado. Configure su cuenta de PayPal para recibir pagos.');
+            console.warn('⚠️ PayPal Client ID no configurado.');
             this.paypalClientId = null;
         } else {
             this.paypalClientId = savedId;
@@ -33,14 +50,15 @@ const PaymentManager = {
 
     loadPayPalSDK() {
         const script = document.createElement('script');
-        // Cargar SDK de PayPal con soporte para tarjetas de crédito/débito
-        script.src = `https://www.paypal.com/sdk/js?client-id=${this.paypalClientId}&currency=USD&components=buttons,card-fields&enable-funding=venmo,paylater`;
+        // Configuración ROBUSTA: intent=capture fuerza el cobro inmediato.
+        // components=buttons es suficiente para Smart Payment Buttons (incluye Tarjetas).
+        script.src = `https://www.paypal.com/sdk/js?client-id=${this.paypalClientId}&currency=USD&intent=capture&commit=true&components=buttons&enable-funding=card&disable-funding=paylater,venmo`;
         script.async = true;
         script.onload = () => {
-            console.log('✅ PayPal SDK cargado correctamente - Modo PRODUCCIÓN');
+            console.log('✅ PayPal SDK cargado en modo CAPTURE (Cobro Inmediato)');
         };
         script.onerror = () => {
-            console.error('❌ Error al cargar PayPal SDK. Verifique su Client ID.');
+            console.error('❌ Error al cargar PayPal SDK.');
             Toast.error('Error de Configuración', 'No se pudo cargar el sistema de pagos. Verifique su configuración de PayPal.');
         };
         document.head.appendChild(script);
@@ -54,6 +72,17 @@ const PaymentManager = {
 
         this.paypalClientId = clientId;
         localStorage.setItem('paypal_client_id', clientId);
+
+        // Save to Firestore for persistence across devices/sessions
+        if (window.NotaryCRM?.currentUser && window.dbFuncs) {
+            const { doc, setDoc } = window.dbFuncs;
+            const db = window.firebaseDB;
+            const ref = doc(db, 'users', window.NotaryCRM.currentUser.uid, 'settings', 'billing');
+            setDoc(ref, { paypalClientId: clientId }, { merge: true })
+                .then(() => console.log('✅ Billing settings saved to Firestore'))
+                .catch(err => console.error('Error saving billing settings:', err));
+        }
+
         Toast.success('Configuración Guardada', 'Su cuenta de PayPal ha sido configurada. Recarga la página para aplicar los cambios.');
     },
 
@@ -91,27 +120,62 @@ const PaymentManager = {
             modal.className = 'modal';
             modal.innerHTML = `
                 <div class="modal-backdrop"></div>
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">
-                            💳 Procesar Pago Real
-                            <button onclick="PaymentManager.promptPayPalConfig()" style="background:none; border:none; cursor:pointer; color:#ccc; margin-left: 8px;" title="Configurar Cuenta de PayPal">⚙️</button>
-                        </h3>
-                        <button class="modal-close" onclick="NotaryCRM.closeModal('payment-modal')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
+                <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 0; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+                    
+                    <!-- Header Seguro -->
+                    <div class="modal-header" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 1.25rem 1.5rem; position: sticky; top: 0; z-index: 10;">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <div style="background:#dcfce7; padding:0.5rem; border-radius:50%; color:#16a34a;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="modal-title" style="font-size:1.1rem; color:#0f172a; margin:0;">Checkout Seguro</h3>
+                                <p style="font-size:0.8rem; color:#64748b; margin:0;">Transacción encriptada de 256-bit</p>
+                            </div>
+                        </div>
+                        <button class="modal-close" onclick="NotaryCRM.closeModal('payment-modal')" style="top: 1.25rem; right: 1.25rem;">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <div id="payment-case-display" style="margin-bottom:1rem; font-weight:600;"></div>
-                        <div id="payment-amount-display" style="font-size:2rem; font-weight:700; color:var(--color-success); margin-bottom:1rem;"></div>
+
+                    <div class="modal-body" style="padding: 1.5rem;">
                         
-                        <div style="background: var(--color-blue-50); border-left: 4px solid var(--color-primary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                            <p style="color:var(--text-primary); font-size:0.9rem; margin: 0; line-height: 1.5;">
-                                <strong>🔒 Pago Seguro:</strong> Este es un sistema de pagos real. El dinero será transferido directamente a su cuenta de PayPal configurada. Acepta PayPal, Tarjetas de Crédito y Débito.
-                            </p>
+                        <!-- Resumen de Orden -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <p style="font-size:0.85rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Resumen de la Orden</p>
+                            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                                    <span id="payment-case-display" style="color:#334155; font-weight:500;">Servicio Notarial</span>
+                                    <span id="payment-amount-display" style="font-weight:700; color:#0f172a;">$0.00</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#64748b; margin-bottom:0.5rem;">
+                                    <span>Impuestos y Tarifas</span>
+                                    <span>$0.00</span>
+                                </div>
+                                <div style="border-top:1px dashed #cbd5e1; margin:0.75rem 0;"></div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-weight:700; color:#0f172a;">Total a Pagar</span>
+                                    <span id="payment-total-display" style="font-size:1.25rem; font-weight:800; color:#2563eb;">$0.00</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="paypal-button-container"></div>
+                        <!-- Selector de Método -->
+                        <div style="margin-bottom: 1.5rem;">
+                             <p style="font-size:0.85rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Método de Pago</p>
+                             
+                             <!-- Contenedor PayPal (Incluye Tarjetas) -->
+                             <div id="paypal-button-container" style="min-height: 150px;"></div>
+                             
+                             <div style="text-align:center; margin-top:1rem; display:flex; justify-content:center; gap:0.5rem; opacity:0.6;">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" height="20" alt="Visa">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" height="20" alt="Mastercard">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" height="20" alt="PayPal">
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="background:#f1f5f9; padding:0.75rem; text-align:center; font-size:0.75rem; color:#64748b; border-top:1px solid #e2e8f0;">
+                         <button onclick="PaymentManager.promptPayPalConfig()" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:0.7rem;" title="Configurar Cuenta">⚙️ Configuración del Vendedor</button>
                     </div>
                 </div>
             `;
@@ -121,8 +185,11 @@ const PaymentManager = {
         // Update modal info
         const amountDisplay = modal.querySelector('#payment-amount-display');
         const caseDisplay = modal.querySelector('#payment-case-display');
+        const totalDisplay = modal.querySelector('#payment-total-display');
+
         if (amountDisplay) amountDisplay.textContent = `$${caseItem.amount.toFixed(2)}`;
-        if (caseDisplay) caseDisplay.textContent = `Cargo por: ${caseItem.type} (${caseItem.caseNumber})`;
+        if (totalDisplay) totalDisplay.textContent = `$${caseItem.amount.toFixed(2)}`;
+        if (caseDisplay) caseDisplay.textContent = `${caseItem.type} #${caseItem.caseNumber}`;
 
         // Render PayPal Buttons
         this.renderPayPalButtons(caseItem.amount);
@@ -133,45 +200,112 @@ const PaymentManager = {
 
     renderPayPalButtons(amount) {
         const container = document.getElementById('paypal-button-container');
-        if (!container || !window.paypal) return;
+        if (!container) return;
 
-        container.innerHTML = ''; // Clear previous buttons
+        // Wait for PayPal SDK to be ready if it's loading
+        if (!window.paypal) {
+            container.innerHTML = '<div style="text-align:center; padding: 20px; color: #64748b;">Cargando sistema de pagos seguros...</div>';
+            setTimeout(() => this.renderPayPalButtons(amount), 500);
+            return;
+        }
+
+        container.innerHTML = ''; // Clean slate
 
         try {
             window.paypal.Buttons({
+                style: {
+                    layout: 'vertical',
+                    color: 'gold',
+                    shape: 'rect',
+                    label: 'pay'
+                },
                 createOrder: (data, actions) => {
+                    const value = amount.toFixed(2);
                     return actions.order.create({
+                        intent: 'CAPTURE',
                         purchase_units: [{
                             amount: {
-                                value: amount.toFixed(2)
+                                value: value,
+                                currency_code: 'USD'
                             },
                             description: `Servicio Notarial - Caso ${this.currentCaseId}`
-                        }]
+                        }],
+                        application_context: {
+                            shipping_preference: 'NO_SHIPPING'
+                        }
                     });
                 },
                 onApprove: (data, actions) => {
+                    console.log('Autorizado, intentando captura...');
+                    // This is the CRITICAL step that moves the money
                     return actions.order.capture().then((details) => {
-                        console.log('✅ Pago Real Completado:', details);
-                        console.log('Pagador:', details.payer.name.given_name);
-                        console.log('ID de Transacción:', details.id);
-                        console.log('Monto:', details.purchase_units[0].amount.value, details.purchase_units[0].amount.currency_code);
+                        console.log('✅ PayPal Transaction Details:', details);
 
-                        this.processPayment(amount, 'PayPal', this.currentCaseId, details);
-                        if (window.NotaryCRM) window.NotaryCRM.closeModal('payment-modal');
-                        Toast.success('💰 Pago Recibido', `Pago de $${amount.toFixed(2)} procesado exitosamente. ID: ${details.id}`);
+                        // Strict validation
+                        if (details.status === 'COMPLETED') {
+                            const txId = details.id;
+
+                            // 1. Process internal logic
+                            this.processPayment(amount, 'PayPal', this.currentCaseId, details);
+
+                            // 2. Close modal
+                            if (window.NotaryCRM) window.NotaryCRM.closeModal('payment-modal');
+
+                            // 3. Show Fancy Success Modal
+                            this.showPaymentSuccess(txId);
+
+                        } else {
+                            console.warn('⚠️ Payment not completed:', details.status);
+                            Toast.warning('Pago Incompleto', `El estado del pago es: ${details.status}`);
+                        }
+                    }).catch(err => {
+                        console.error('CAPTURE ERROR:', err);
+                        Toast.error('Error de Cobro', 'Autorizado, pero falló la captura final de fondos.');
                     });
                 },
+                onCancel: (data) => {
+                    console.log('Pago cancelado por el usuario');
+                    Toast.info('Cancelado', 'El proceso de pago fue cancelado.');
+                },
                 onError: (err) => {
-                    console.error('❌ Error en PayPal:', err);
-                    Toast.error('Error de Pago', 'No se pudo completar la transacción. Por favor intente nuevamente.');
+                    console.error('❌ PayPal Error:', err);
+                    Toast.error('Error de Sistema', 'No se pudo iniciar el proceso de pago. Verifique su conexión.');
                 }
             }).render('#paypal-button-container');
         } catch (e) {
-            console.warn('⚠️ Error al renderizar botones de PayPal:', e);
-            Toast.error('Error', 'No se pudieron cargar los botones de pago. Verifique su configuración.');
+            console.error('⚠️ Critical PayPal Error:', e);
+            container.innerHTML = '<p style="color:red; text-align:center;">Error cargando botones. Verifique su conexión y configuración.</p>';
         }
     },
 
+    showPaymentSuccess(txId) {
+        // Create fancy modal dynamically
+        const modal = document.createElement('div');
+        modal.className = 'modal active'; // Force active class
+        modal.style.zIndex = '99999'; // Ensure top of everything
+        modal.innerHTML = `
+            <div class="modal-backdrop"></div>
+            <div class="modal-content" style="text-align: center; max-width: 400px; padding: 2rem; border-radius: 16px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <div style="width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <h2 style="color: #166534; font-size: 1.5rem; margin-bottom: 0.5rem;">¡Pago Exitoso!</h2>
+                <p style="color: #64748b; margin-bottom: 2rem;">Los fondos han sido capturados correctamente.</p>
+                
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 2rem; text-align: left;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; margin-bottom: 4px;">ID de Transacción</div>
+                    <div style="font-family: monospace; font-size: 1.1rem; font-weight: 700; color: #334155;">${txId}</div>
+                    <div style="font-size: 0.8rem; color: #16a34a; margin-top: 4px;">✓ Verificado por PayPal</div>
+                </div>
+
+                <button class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1rem;" onclick="this.closest('.modal').remove()">Aceptar y Continuar</button>
+            </div>
+            <style>
+                @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+            </style>
+        `;
+        document.body.appendChild(modal);
+    },
 
 
 
@@ -206,7 +340,7 @@ const PaymentManager = {
         };
 
         // Update case payment status
-        this.updateCasePaymentStatus(caseId, 'Paid', payment);
+        this.updateCasePaymentStatus(caseId, 'paid', payment);
 
         // Generate receipt
         this.generateDigitalReceipt(payment);
@@ -222,16 +356,71 @@ const PaymentManager = {
     },
 
 
-    updateCasePaymentStatus(caseId, status, paymentData) {
+    async updateCasePaymentStatus(caseId, status, paymentData) {
         if (!window.NotaryCRM) return;
 
+        // 1. Update Local State
         const cases = window.NotaryCRM.state.cases || [];
         const caseIndex = cases.findIndex(c => c.id === caseId);
 
         if (caseIndex !== -1) {
             cases[caseIndex].paymentStatus = status;
+            // Merge new payment data with existing if needed, or array logic
+            // For now, simpler: store the latest payment
             cases[caseIndex].paymentData = paymentData;
-            window.NotaryCRM.state.cases = cases;
+
+            // Force Reactivity/Render if needed
+            if (window.NotaryCRM.renderCases) window.NotaryCRM.renderCases();
+        }
+
+        // 2. Persist to Firestore (CRITICAL)
+        if (window.dbFuncs && window.NotaryCRM.currentUser) {
+            try {
+                const { doc, updateDoc } = window.dbFuncs;
+                const db = window.firebaseDB;
+                const caseRef = doc(db, 'cases', caseId);
+
+                await updateDoc(caseRef, {
+                    paymentStatus: status,
+                    paymentData: paymentData,
+                    lastUpdated: new Date().toISOString()
+                });
+
+                console.log('✅ Case Payment Status saved to Firestore:', status);
+
+                // FORCE UI REFRESH
+                if (window.NotaryCRM) {
+                    // Update global state directly to ensure immediate feedback
+                    const localCase = window.NotaryCRM.state.cases.find(c => c.id === caseId);
+                    if (localCase) {
+                        localCase.paymentStatus = status;
+                        localCase.paymentData = paymentData;
+                    }
+
+                    // Render ALL relevant sections
+                    if (window.NotaryCRM.renderCases) window.NotaryCRM.renderCases();
+                    if (window.NotaryCRM.renderDashboard) window.NotaryCRM.renderDashboard();
+
+                    // If we are in reports tab, refresh it too
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab && activeTab.dataset.tab === 'reports' && window.NotaryCRM.renderReports) {
+                        window.NotaryCRM.renderReports();
+                    }
+
+                    // Refresh Case Details Modal if open
+                    const detailsModal = document.getElementById('case-details-modal');
+                    if (detailsModal && detailsModal.classList.contains('active')) {
+                        // Re-render the details content to show new payment status
+                        if (window.NotaryCRM.showCaseDetails) {
+                            window.NotaryCRM.showCaseDetails(caseId);
+                        }
+                    }
+                }
+
+            } catch (err) {
+                console.error('❌ Error saving payment status to DB:', err);
+                Toast.error('Error de Guardado', 'El pago se procesó pero hubo un error guardando el estado. Verifique su conexión.');
+            }
         }
     },
 

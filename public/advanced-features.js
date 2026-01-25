@@ -69,7 +69,7 @@ const AdvancedFeatures = {
                     color: white;
                     font-weight: 600;
                 " title="${user.name}">
-                    ${user.name.charAt(0).toUpperCase()}
+                    ${(user.name || '?').charAt(0).toUpperCase()}
                 </div>
             `).join('');
         }

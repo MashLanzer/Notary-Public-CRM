@@ -498,11 +498,15 @@ if (typeof window !== 'undefined') {
 
 const DashboardManager = {
     defaultConfig: {
-        'total-clients': { visible: true, title: 'Total Clientes', description: 'Número total de clientes registrados' },
-        'total-cases': { visible: true, title: 'Total Casos', description: 'Número total de expedientes' },
-        'completed-cases': { visible: true, title: 'Casos Completados', description: 'Total de servicios finalizados' },
-        'total-revenue': { visible: true, title: 'Ingresos Totales', description: 'Recaudación total confirmada' },
-        'recent-cases': { visible: true, title: 'Casos Recientes', description: 'Tabla de los últimos movimientos' }
+        'total-clients': { visible: true, order: 1, title: 'Total Clientes', description: 'Número total de clientes registrados' },
+        'total-cases': { visible: true, order: 2, title: 'Total Casos', description: 'Número total de expedientes' },
+        'completed-cases': { visible: true, order: 3, title: 'Casos Completados', description: 'Total de servicios finalizados' },
+        'today-appointments': { visible: true, order: 4, title: 'Citas de Hoy', description: 'Citas programadas para hoy' },
+        'pending-payments': { visible: true, order: 5, title: 'Por Cobrar', description: 'Total pendiente de cobro' },
+        'total-revenue': { visible: true, order: 6, title: 'Ingresos Totales', description: 'Recaudación total confirmada' },
+        'avg-ticket': { visible: true, order: 7, title: 'Ticket Promedio', description: 'Valor promedio por caso' },
+        'success-rate': { visible: true, order: 8, title: 'Tasa de Éxito', description: 'Porcentaje de casos exitosos' },
+        'recent-cases': { visible: true, order: 9, title: 'Casos Recientes', description: 'Tabla de los últimos movimientos' }
     },
 
     config: {},
@@ -517,10 +521,13 @@ const DashboardManager = {
         const saved = localStorage.getItem('notary_dashboard_config');
         if (saved) {
             this.config = JSON.parse(saved);
-            // Merge with defaults to ensure new widgets are included
             Object.keys(this.defaultConfig).forEach(id => {
                 if (this.config[id] === undefined) {
                     this.config[id] = { ...this.defaultConfig[id] };
+                }
+                // Ensure order propery exists for legacy configs
+                if (this.config[id].order === undefined) {
+                    this.config[id].order = this.defaultConfig[id].order;
                 }
             });
         } else {
@@ -530,24 +537,35 @@ const DashboardManager = {
 
     saveConfig() {
         localStorage.setItem('notary_dashboard_config', JSON.stringify(this.config));
-
-        // If logged in, save to Firestore too
         if (NotaryCRM.currentUser && NotaryCRM.useFirestore) {
             const { doc, setDoc } = window.dbFuncs;
             const db = window.firebaseDB;
             const ref = doc(db, 'users', NotaryCRM.currentUser.uid, 'settings', 'dashboard');
-            setDoc(ref, this.config).catch(err => console.error('Error saving dashboard to Firestore:', err));
+            setDoc(ref, this.config).catch(console.error);
         }
     },
 
     applyConfig() {
-        Object.keys(this.config).forEach(id => {
+        // Sort items by order
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+
+        const grid = document.getElementById('dashboard-stats-grid');
+
+        sortedIds.forEach(id => {
             const element = document.querySelector(`[data-widget-id="${id}"]`);
             if (element) {
+                // Visibility
                 if (this.config[id].visible) {
                     element.classList.remove('widget-hidden');
+                    element.style.display = ''; // Reset display
                 } else {
                     element.classList.add('widget-hidden');
+                    element.style.display = 'none'; // Force hide
+                }
+
+                // Reorder in DOM
+                if (id !== 'recent-cases' && grid && grid.contains(element)) {
+                    grid.appendChild(element); // Appending moves it to the end, effectively sorting
                 }
             }
         });
@@ -557,19 +575,34 @@ const DashboardManager = {
         const container = document.getElementById('widgets-config');
         if (!container) return;
 
-        container.innerHTML = Object.keys(this.config).map(id => {
+        // Sort for display in modal
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+
+        container.innerHTML = sortedIds.map((id, index) => {
             const widget = this.config[id];
+            const isFirst = index === 0;
+            const isLast = index === sortedIds.length - 1;
+
             return `
-                <div class="widget-toggle" data-id="${id}">
-                    <div class="widget-toggle-info">
-                        <div class="widget-toggle-icon">
-                            ${this.getWidgetIcon(id)}
-                        </div>
-                        <div class="widget-toggle-text">
-                            <h4>${widget.title}</h4>
-                            <p>${widget.description}</p>
-                        </div>
+                <div class="widget-toggle" data-id="${id}" style="display:flex; align-items:center; gap:1rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:0.5rem; margin-bottom:0.5rem;">
+                    
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <button type="button" class="btn-icon btn-sm" onclick="DashboardManager.moveWidget('${id}', -1)" ${isFirst ? 'disabled' : ''} title="Subir">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <button type="button" class="btn-icon btn-sm" onclick="DashboardManager.moveWidget('${id}', 1)" ${isLast ? 'disabled' : ''} title="Bajar">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
                     </div>
+
+                    <div class="widget-toggle-info" style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                             <div class="widget-toggle-icon" style="color:var(--color-primary);">${this.getWidgetIcon(id)}</div>
+                             <h4 style="margin:0; font-size:0.9rem;">${widget.title}</h4>
+                        </div>
+                        <p style="margin:2px 0 0 0; font-size:0.75rem; color:#6b7280;">${widget.description}</p>
+                    </div>
+                    
                     <div class="toggle-switch ${widget.visible ? 'active' : ''}" onclick="DashboardManager.toggleWidget('${id}', this)"></div>
                 </div>
             `;
@@ -578,18 +611,42 @@ const DashboardManager = {
         NotaryCRM.openModal('customize-dashboard-modal');
     },
 
+    moveWidget(id, direction) {
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+        const currentIndex = sortedIds.indexOf(id);
+        if (currentIndex === -1) return;
+
+        const newIndex = currentIndex + direction;
+        if (newIndex < 0 || newIndex >= sortedIds.length) return;
+
+        const swapId = sortedIds[newIndex];
+
+        // Swap orders
+        const tempOrder = this.config[id].order;
+        this.config[id].order = this.config[swapId].order;
+        this.config[swapId].order = tempOrder;
+
+        this.applyConfig();
+        this.openCustomization(); // Re-render modal
+    },
+
     toggleWidget(id, element) {
         element.classList.toggle('active');
         this.config[id].visible = element.classList.contains('active');
+        this.applyConfig(); // Apply immediately for preview effect
     },
 
     getWidgetIcon(id) {
         const icons = {
-            'total-clients': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
-            'total-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
-            'completed-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
-            'total-revenue': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
-            'recent-cases': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>'
+            'total-clients': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+            'total-cases': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+            'completed-cases': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+            'total-revenue': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+            'recent-cases': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
+            'avg-ticket': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+            'success-rate': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+            'today-appointments': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+            'pending-payments': '<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>'
         };
         return icons[id] || icons['total-cases'];
     },
@@ -2078,6 +2135,11 @@ window.NotaryCRM = {
                     if (window.Reminders) {
                         Reminders.load().then(() => Reminders.render());
                     }
+
+                    // Reload Payment Config (Billing Settings)
+                    if (window.PaymentManager) {
+                        PaymentManager.setupPayPalConfig();
+                    }
                 } catch (e) {
                     console.error('Failed to fetch user profile', e);
                     this.currentUserRole = 'viewer';
@@ -2230,7 +2292,7 @@ window.NotaryCRM = {
 
         // Update Breadcrumb
         const currentBreadcrumb = document.getElementById('breadcrumb-current');
-        if (currentBreadcrumb) {
+        if (currentBreadcrumb && tabName) {
             currentBreadcrumb.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
         }
 
@@ -2241,6 +2303,26 @@ window.NotaryCRM = {
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
         if (tabName === 'emails') EmailManager.renderTemplates();
+    },
+
+    switchHelpTab(tab) {
+        // Toggle Buttons
+        const buttons = document.querySelectorAll('.help-tabs .tab-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('onclick').includes(tab)) {
+                btn.classList.add('active');
+                btn.style.borderBottom = '2px solid var(--color-primary)';
+                btn.style.color = 'inherit';
+            } else {
+                btn.classList.remove('active');
+                btn.style.borderBottom = 'none';
+                btn.style.color = '#6b7280';
+            }
+        });
+
+        // Toggle Content
+        document.getElementById('help-faq-content').style.display = tab === 'faq' ? 'block' : 'none';
+        document.getElementById('help-contact-content').style.display = tab === 'contact' ? 'block' : 'none';
     },
 
     // Modal controls
@@ -2283,6 +2365,28 @@ window.NotaryCRM = {
         // Reset form
         const form = modal.querySelector('form');
         if (form) form.reset();
+    },
+
+    switchHelpTab(tabName) {
+        // Nav buttons
+        const btns = document.querySelectorAll('.help-nav-item');
+        btns.forEach(btn => {
+            if (btn.dataset.tab === tabName) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        // Content areas
+        const contents = document.querySelectorAll('.help-tab-content');
+        contents.forEach(content => {
+            content.style.display = 'none';
+            content.classList.remove('active');
+        });
+
+        const activeContent = document.getElementById(`help-tab-${tabName}`);
+        if (activeContent) {
+            activeContent.style.display = 'block';
+            setTimeout(() => activeContent.classList.add('active'), 10);
+        }
     },
 
     // Helper: Escape HTML to prevent XSS
@@ -2787,6 +2891,21 @@ window.NotaryCRM = {
         const rateEl = document.getElementById('success-rate');
         if (rateEl) rateEl.textContent = Math.round(successRate);
 
+        // Vital Stats: Today's Appointments
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayApps = this.state.appointments.filter(a => a.date === todayStr).length;
+        const todayAppsEl = document.getElementById('today-appointments-count');
+        if (todayAppsEl) todayAppsEl.textContent = todayApps;
+
+        // Vital Stats: Pending Payments
+        // Pending payments for all active or completed cases
+        const pendingValue = this.state.cases
+            .filter(c => (c.paymentStatus || '').toLowerCase() !== 'paid')
+            .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+
+        const pendingEl = document.getElementById('pending-payments-amount');
+        if (pendingEl) pendingEl.textContent = this.formatCurrency(pendingValue);
+
         // Render recent cases table
         const tbody = document.getElementById('recent-cases-table');
 
@@ -3213,14 +3332,18 @@ window.NotaryCRM = {
             return true;
         });
 
-        // Update Total Revenue Stat
-        const totalFilteredRevenue = filteredCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        // Update Total Revenue Stat - ONLY PAID CASES
+        const totalFilteredRevenue = filteredCases.reduce((sum, c) => {
+            if (c.paymentStatus !== 'paid') return sum;
+            return sum + (parseFloat(c.amount) || 0);
+        }, 0);
         const revenueEl = document.getElementById('report-total-revenue');
         if (revenueEl) revenueEl.textContent = this.formatCurrency(totalFilteredRevenue);
 
-        // Revenue Projection
+        // Revenue Projection (Based on PAID history)
         const months = {};
         this.state.cases.forEach(c => {
+            if (c.paymentStatus !== 'paid') return; // Skip unpaid for projection
             const d = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt || Date.now());
             const m = d.getMonth() + '-' + d.getFullYear();
             months[m] = (months[m] || 0) + (parseFloat(c.amount) || 0);
@@ -3235,9 +3358,10 @@ window.NotaryCRM = {
         if (this.statusChart) this.statusChart.destroy();
         if (this.locationChart) this.locationChart.destroy();
 
-        // 1. Revenue by Month
+        // 1. Revenue by Month - ONLY PAID
         const monthlyRevenue = {};
         filteredCases.forEach(c => {
+            if (c.paymentStatus !== 'paid') return; // Skip unpaid
             let date;
             if (c.createdAt && typeof c.createdAt.toDate === 'function') {
                 date = c.createdAt.toDate();
@@ -3255,10 +3379,10 @@ window.NotaryCRM = {
             data: {
                 labels: Object.keys(monthlyRevenue),
                 datasets: [{
-                    label: 'Ingresos ($)',
+                    label: 'Ingresos Efectivos ($)',
                     data: Object.values(monthlyRevenue),
-                    borderColor: '#1e3a8a',
-                    backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                    borderColor: '#10b981', // Green for real money
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     fill: true,
                     tension: 0.4
                 }]
@@ -3266,7 +3390,7 @@ window.NotaryCRM = {
             options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
-        // 2. Most Requested Services
+        // 2. Most Requested Services (All cases counts)
         const serviceCounts = {};
         filteredCases.forEach(c => {
             serviceCounts[c.type] = (serviceCounts[c.type] || 0) + 1;
@@ -3284,7 +3408,7 @@ window.NotaryCRM = {
             options: { responsive: true }
         });
 
-        // 3. Case Status Distribution
+        // 3. Case Status Distribution (All cases counts)
         const statusCounts = { 'pending': 0, 'in-progress': 0, 'completed': 0 };
         filteredCases.forEach(c => {
             const s = c.status || 'pending';
@@ -3305,9 +3429,10 @@ window.NotaryCRM = {
             options: { responsive: true }
         });
 
-        // 4. Revenue by Location
+        // 4. Revenue by Location - ONLY PAID
         const locationRevenue = { 'Oficina': 0, 'Casa': 0, 'Online': 0 };
         filteredCases.forEach(c => {
+            if (c.paymentStatus !== 'paid') return; // Skip unpaid
             const loc = c.location || 'Oficina';
             if (locationRevenue[loc] !== undefined) {
                 locationRevenue[loc] += (parseFloat(c.amount) || 0);
@@ -3321,7 +3446,7 @@ window.NotaryCRM = {
                 datasets: [{
                     label: 'Ingresos por Ubicación',
                     data: Object.values(locationRevenue),
-                    backgroundColor: ['#1e3a8a', '#3b82f6', '#93c5fd']
+                    backgroundColor: ['#10b981', '#34d399', '#6ee7b7'] // Green theme
                 }]
             },
             options: {
@@ -3330,6 +3455,62 @@ window.NotaryCRM = {
                 scales: { y: { beginAtZero: true } }
             }
         });
+
+        // 5. Render Transaction History Table
+        const paymentsTable = document.getElementById('payments-history-table');
+        if (paymentsTable) {
+            const allPayments = [];
+
+            this.state.cases.forEach(c => {
+                if (c.paymentData) {
+                    // Modern format
+                    allPayments.push({
+                        date: c.paymentData.timestamp || c.lastUpdated || new Date().toISOString(),
+                        txId: c.paymentData.transactionId || c.paymentData.id || 'N/A',
+                        caseNum: c.caseNumber,
+                        payer: c.paymentData.payerName || c.clientName || 'Desconocido',
+                        method: c.paymentData.method || 'PayPal',
+                        status: 'Completado', // If paymentData exists, it is likely paid
+                        amount: parseFloat(c.paymentData.amount || c.amount || 0)
+                    });
+                } else if (c.paymentStatus && (c.paymentStatus.toLowerCase() === 'paid')) {
+                    // Legacy/Manual format
+                    allPayments.push({
+                        date: c.lastUpdated || c.createdAt || new Date().toISOString(),
+                        txId: 'MANUAL-' + c.id.substring(0, 6),
+                        caseNum: c.caseNumber,
+                        payer: c.clientName,
+                        method: 'Manual',
+                        status: 'Completado',
+                        amount: parseFloat(c.amount || 0)
+                    });
+                }
+            });
+
+            // Sort by date desc
+            allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (allPayments.length === 0) {
+                paymentsTable.innerHTML = '<tr><td colspan="7" class="empty-state">No hay pagos registrados aún</td></tr>';
+            } else {
+                paymentsTable.innerHTML = allPayments.map(p => {
+                    let dateStr;
+                    try { dateStr = new Date(p.date).toLocaleDateString() + ' ' + new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+                    catch (e) { dateStr = 'Fecha inválida'; }
+
+                    return `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td style="font-family:monospace; font-size:0.9em;">${p.txId}</td>
+                        <td style="font-weight:500;">${p.caseNum}</td>
+                        <td>${p.payer}</td>
+                        <td><span class="tag tag-blue">${p.method}</span></td>
+                        <td><span class="tag tag-green">${p.status}</span></td>
+                        <td style="text-align:right; font-weight:bold;">${this.formatCurrency(p.amount)}</td>
+                    </tr>
+                `}).join('');
+            }
+        }
     },
 
     // --- Calendar Rendering (FullCalendar) ---
