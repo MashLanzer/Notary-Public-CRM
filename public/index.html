@@ -666,198 +666,290 @@
 
                     <!-- 1. Document Generator Workspace (Now First & Full Width) -->
                     <div class="card" style="padding: 2rem; width: 100%;">
-                        <h3
-                            style="margin-bottom: 1.5rem; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: var(--color-primary);">
-                            Generador de Documentos Legales</h3>
-
-                        <!-- Generator Controls -->
-                        <div class="doc-controls"
-                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label class="form-label">Tipo de Documento</label>
-                                <select id="doc-template-select" class="form-input">
-                                    <option value="affidavit">Declaración Jurada (Affidavit)</option>
-                                    <option value="bill_of_sale">Factura de Venta (Bill of Sale)</option>
-                                    <option value="promissory_note">Pagaré (Promissory Note)</option>
-                                    <option value="last_will">Última Voluntad y Testamento</option>
-                                    <option value="child_travel_consent">Consentimiento de Viaje para Menores</option>
-                                    <option value="power_of_attorney">Poder Notarial General (Power of Attorney)
-                                    </option>
-                                    <option value="medical_poa">Poder Médico (Medical POA)</option>
-                                    <option value="living_will">Testamento Vital (Living Will)</option>
-                                    <option value="contractor_agreement">Contrato de Contratista Indep.</option>
-                                    <option value="hold_harmless">Exención de Responsabilidad (Hold Harmless)</option>
-                                    <option value="quitclaim_deed">Escritura de Renuncia (Quitclaim Deed)</option>
-                                    <option value="residential_lease">Contrato de Alquiler Residencial</option>
-                                    <option value="lease_termination">Terminación de Alquiler</option>
-                                    <option value="residency_affidavit">Prueba de Residencia (Residency Affidavit)
-                                    </option>
-                                    <option value="cease_desist">Carta de Cese y Desistimiento (Cease & Desist)</option>
-                                    <option value="partnership_agreement">Acuerdo de Asociación (Partnership)</option>
-                                    <option value="employment_contract">Contrato de Empleo</option>
-                                    <option value="eviction_notice">Aviso de Desalojo (Eviction Notice)</option>
-                                    <option value="prenuptial_agreement">Acuerdo Prenupcial (Prenup)</option>
-                                    <option value="media_release">Autorización de Uso de Imagen (Media Release)</option>
-                                    <option value="contract_amendment">Enmienda a Contrato (Contract Amendment)</option>
-                                    <option value="payment_agreement">Plan de Pago (Payment Agreement)</option>
-                                    <option value="sublease_agreement">Contrato de Subarriendo</option>
-                                    <option value="equipment_lease">Alquiler de Equipo (Equipment Lease)</option>
-                                    <option value="commercial_lease">Contrato de Alquiler Comercial</option>
-                                    <option value="real_estate_purchase">Compraventa de Bienes Raíces</option>
-                                    <option value="non_compete">Acuerdo de No Competencia (Non-Compete)</option>
-                                    <option value="consulting_agreement">Contrato de Consultoría</option>
-                                    <option value="loi_agreement">Carta de Intención (LOI)</option>
-                                    <option value="mou_agreement">Memorándum de Entendimiento (MOU)</option>
-                                    <option value="affidavit_heirship">Declaración de Herederos (Heirship)</option>
-                                    <option value="affidavit_identity">Declaración de Identidad</option>
-                                    <option value="lease_renewal">Renovación de Contrato de Alquiler</option>
-                                    <option value="waiver_liability">Renuncia de Responsabilidad (Waiver)</option>
-                                    <option value="codicil_will">Codicilo a Testamento (Enmienda)</option>
-                                    <option value="custody_agreement">Acuerdo de Custodia (Parenting Plan)</option>
-                                    <option value="affidavit_service">Declaración de Servicio (Proof of Service)
-                                    </option>
-                                    <option value="translator_affidavit">Certificación de Traductor</option>
-                                    <option value="gift_deed">Escritura de Donación (Gift Deed)</option>
-                                    <option value="board_resolution">Resolución de Junta Directiva</option>
-                                    <option value="meeting_minutes">Acta de Reunión (Minutes)</option>
-                                    <option value="rental_application">Solicitud de Alquiler</option>
-                                    <option value="roommate_agreement">Acuerdo de Compañeros de Cuarto</option>
-                                    <option value="pet_addendum">Anexo de Mascotas</option>
-                                    <option value="lien_waiver">Renuncia de Gravamen (Lien Waiver)</option>
-                                    <option value="separation_agreement">Acuerdo de Separación Matrimonial</option>
-                                    <option value="cohabitation_agreement">Acuerdo de Cohabitación</option>
-                                    <option value="invitation_letter">Carta de Invitación para Visa</option>
-                                    <option value="debt_settlement">Acuerdo de Liquidación de Deuda</option>
-                                    <option value="indemnification_agreement">Acuerdo de Indemnización (Hold Harmless)
-                                    </option>
-                                    <option value="llc_operating_agreement">Acuerdo Operativo LLC</option>
-                                    <option value="corporate_bylaws">Estatutos Corporativos (Bylaws)</option>
-                                    <option value="proxy_form">Formulario de Representación (Proxy Vote)</option>
-                                    <option value="land_contract">Contrato de Tierra/Venta a Plazos</option>
-                                    <option value="notice_enter">Aviso de Entrada a Propiedad (Landlord)</option>
-                                    <option value="rent_increase">Aviso de Aumento de Alquiler</option>
-                                    <option value="employee_termination">Carta de Despido/Terminación</option>
-                                    <option value="employee_warning">Amonestación Laboral Escrita</option>
-                                    <option value="general_service_agreement">Contrato General de Servicios</option>
-                                    <option value="mechanics_lien">Gravamen de Mecánico (Claim of Lien)</option>
-                                    <option value="release_mechanics_lien">Liberación de Gravamen de Mecánico</option>
-                                    <option value="minor_photo_release">Autorización de Uso de Imagen (Menores)</option>
-                                    <option value="demand_letter">Carta de Demanda de Pago/Acción</option>
-                                    <option value="resignation_letter">Carta de Renuncia Laboral</option>
-                                    <option value="recommendation_letter">Carta de Recomendación Profesional</option>
-                                    <option value="offer_letter">Carta de Oferta de Empleo</option>
-                                    <option value="joint_venture">Acuerdo de Empresa Conjunta (Joint Venture)</option>
-                                    <option value="shareholder_agreement">Acuerdo de Accionistas</option>
-                                    <option value="stock_purchase">Compraventa de Acciones</option>
-                                    <option value="asset_purchase">Compraventa de Activos Empresariales</option>
-                                    <option value="ip_assignment">Cesión de Propiedad Intelectual</option>
-                                    <option value="construction_contract">Contrato de Construcción/Remodelación</option>
-                                    <option value="subcontractor_agreement">Acuerdo de Subcontratista</option>
-                                    <option value="loan_agreement">Contrato de Préstamo (Detallado)</option>
-                                    <option value="personal_guarantee">Garantía Personal</option>
-                                    <option value="security_agreement">Acuerdo de Seguridad (Colateral)</option>
-                                    <option value="warranty_deed">Escritura de Garantía (Warranty Deed)</option>
-                                    <option value="copyright_assignment">Cesión de Derechos de Autor</option>
-                                    <option value="trademark_assignment">Cesión de Marca Registrada</option>
-                                    <option value="patent_assignment">Cesión de Patente</option>
-                                    <option value="domain_assignment">Transferencia de Nombre de Dominio</option>
-                                    <option value="privacy_policy">Política de Privacidad (Sitio Web)</option>
-                                    <option value="terms_service">Términos y Condiciones (Sitio Web)</option>
-                                    <option value="influencer_agreement">Contrato de Influencer</option>
-                                    <option value="sponsorship_agreement">Acuerdo de Patrocinio</option>
-                                    <option value="referral_agreement">Acuerdo de Referidos</option>
-                                    <option value="commission_agreement">Acuerdo de Comisión</option>
-                                    <option value="distributor_agreement">Contrato de Distribución</option>
-                                    <option value="manufacturing_agreement">Contrato de Manufactura</option>
-                                    <option value="supply_agreement">Contrato de Suministro</option>
-                                    <option value="agency_agreement">Contrato de Agencia/Representación</option>
-                                    <option value="vehicle_lease">Arrendamiento de Vehículo</option>
-                                    <option value="internship_agreement">Acuerdo de Pasantía/Internship</option>
-                                    <option value="volunteer_agreement">Acuerdo de Voluntariado</option>
-                                    <option value="remote_work_agreement">Acuerdo de Trabajo Remoto</option>
-                                    <option value="employee_handbook_ack">Acuse de Recibo de Manual del Empleado
-                                    </option>
-                                    <option value="property_management">Contrato de Administración de Propiedades
-                                    </option>
-                                    <option value="storage_lease">Alquiler de Espacio de Almacenamiento</option>
-                                    <option value="parking_lease">Alquiler de Estacionamiento</option>
-                                    <option value="lease_violation">Aviso de Violación de Contrato (Alquiler)</option>
-                                    <option value="rent_receipt">Recibo de Renta</option>
-                                    <option value="photography_contract">Contrato de Servicios de Fotografía</option>
-                                    <option value="venue_rental">Contrato de Alquiler de Eventos/Salón</option>
-                                    <option value="catering_agreement">Contrato de Catering</option>
-                                    <option value="dj_contract">Contrato de Servicios de DJ</option>
-                                    <option value="model_release_adult">Autorización de Uso de Imagen (Adulto)</option>
-                                    <option value="consignment_agreement">Acuerdo de Consignación</option>
-                                    <option value="purchase_order">Orden de Compra (Purchase Order)</option>
-                                    <option value="invoice_template">Factura de Servicios (Invoice)</option>
-                                    <option value="hipaa_release">Autorización HIPAA (Historial Médico)</option>
-                                    <option value="medical_consent_caregiver">Consentimiento Médico para Cuidador
-                                    </option>
-                                    <option value="equipment_rental_personal">Alquiler de Equipo Personal</option>
-                                    <option value="music_license">Licencia de Uso Musical</option>
-                                    <option value="artwork_commission">Comisión de Obra de Arte</option>
-                                    <option value="video_production">Contrato de Producción de Video</option>
-                                    <option value="podcast_guest">Acuerdo de Invitado a Podcast</option>
-                                    <option value="house_sitting">Acuerdo de Cuidado de Casa (House Sitting)</option>
-                                    <option value="pet_sitting">Acuerdo de Cuidado de Mascotas (Pet Sitting)</option>
-                                    <option value="tutoring_contract">Contrato de Tutoría Privada</option>
-                                    <option value="personal_trainer">Contrato de Entrenador Personal</option>
-                                    <option value="cleaning_services">Contrato de Servicios de Limpieza</option>
-                                    <option value="gardening_contract">Contrato de Jardinería</option>
-                                    <option value="general_contractor">Contrato General de Obra</option>
-                                    <option value="hvac_service">Contrato de Servicio HVAC</option>
-                                    <option value="plumbing_contract">Contrato de Plomería</option>
-                                    <option value="electrical_service">Contrato de Servicios Eléctricos</option>
-                                    <option value="roofing_contract">Contrato de Techado (Roofing)</option>
-                                </select>
+                        <!-- Generator Header & Info -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;">
+                            <div>
+                                <h3
+                                    style="margin: 0; font-size: 1.5rem; color: var(--color-primary); font-weight: 700;">
+                                    Generador de Documentos Legales</h3>
+                                <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Crea documentos
+                                    profesionales con firmas digitales integradas.</p>
                             </div>
-                            <div class="form-group" style="position: relative;">
-                                <label class="form-label">Cliente (Autocompletar)</label>
-                                <input type="text" id="doc-client-search" class="form-input"
-                                    placeholder="Buscar cliente por nombre..." autocomplete="off">
-                                <input type="hidden" id="doc-client-id">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Fecha del Documento</label>
-                                <input type="date" id="doc-date" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Ubicación (Estado/Condado)</label>
-                                <input type="text" id="doc-location" class="form-input"
-                                    placeholder="Ej: Miami, Florida">
+                            <div style="display: flex; gap: 0.75rem;">
+                                <button class="btn btn-sm btn-outline" id="btn-fill-demo"
+                                    title="Rellenar con datos de prueba">
+                                    <span style="margin-right: 5px;">🪄</span> Ejemplo
+                                </button>
+                                <button class="btn btn-sm btn-outline" id="btn-clear-fields"
+                                    title="Borrar todos los campos" style="color: #ef4444; border-color: #fee2e2;">
+                                    <span style="margin-right: 5px;">🗑️</span> Limpiar
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Helper Actions -->
-                        <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: flex-end;">
-                            <button class="btn btn-sm btn-outline" id="btn-fill-demo"
-                                title="Rellenar con datos de prueba">🪄 Ejemplo</button>
-                            <button class="btn btn-sm btn-outline" id="btn-clear-fields"
-                                title="Borrar todos los campos">🗑️ Limpiar</button>
+                        <!-- Main Configuration Grid -->
+                        <div
+                            style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                            <h4
+                                style="margin: 0 0 1.25rem 0; font-size: 0.95rem; color: #475569; display: flex; align-items: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                </svg>
+                                Configuración del Documento
+                            </h4>
+                            <div class="doc-controls"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+                                <div class="form-group">
+                                    <label class="form-label">Tipo de Documento</label>
+                                    <div style="position: relative;">
+                                        <select id="doc-template-select" class="form-input"
+                                            style="padding-left: 2.5rem;">
+                                            <option value="affidavit">Declaración Jurada (Affidavit)</option>
+                                            <option value="bill_of_sale">Factura de Venta (Bill of Sale)</option>
+                                            <option value="promissory_note">Pagaré (Promissory Note)</option>
+                                            <option value="last_will">Última Voluntad y Testamento</option>
+                                            <option value="child_travel_consent">Consentimiento de Viaje para Menores
+                                            </option>
+                                            <option value="power_of_attorney">Poder Notarial General (Power of Attorney)
+                                            </option>
+                                            <option value="medical_poa">Poder Médico (Medical POA)</option>
+                                            <option value="living_will">Testamento Vital (Living Will)</option>
+                                            <option value="contractor_agreement">Contrato de Contratista Indep.</option>
+                                            <option value="hold_harmless">Exención de Responsabilidad (Hold Harmless)
+                                            </option>
+                                            <option value="quitclaim_deed">Escritura de Renuncia (Quitclaim Deed)
+                                            </option>
+                                            <option value="residential_lease">Contrato de Alquiler Residencial</option>
+                                            <option value="lease_termination">Terminación de Alquiler</option>
+                                            <option value="residency_affidavit">Prueba de Residencia (Residency
+                                                Affidavit)</option>
+                                            <option value="cease_desist">Carta de Cese y Desistimiento (Cease & Desist)
+                                            </option>
+                                            <option value="partnership_agreement">Acuerdo de Asociación (Partnership)
+                                            </option>
+                                            <option value="employment_contract">Contrato de Empleo</option>
+                                            <option value="eviction_notice">Aviso de Desalojo (Eviction Notice)</option>
+                                            <option value="prenuptial_agreement">Acuerdo Prenupcial (Prenup)</option>
+                                            <option value="media_release">Autorización de Uso de Imagen (Media Release)
+                                            </option>
+                                            <option value="contract_amendment">Enmienda a Contrato (Contract Amendment)
+                                            </option>
+                                            <option value="payment_agreement">Plan de Pago (Payment Agreement)</option>
+                                            <option value="sublease_agreement">Contrato de Subarriendo</option>
+                                            <option value="equipment_lease">Alquiler de Equipo (Equipment Lease)
+                                            </option>
+                                            <option value="commercial_lease">Contrato de Alquiler Comercial</option>
+                                            <option value="real_estate_purchase">Compraventa de Bienes Raíces</option>
+                                            <option value="non_compete">Acuerdo de No Competencia (Non-Compete)</option>
+                                            <option value="consulting_agreement">Contrato de Consultoría</option>
+                                            <option value="loi_agreement">Carta de Intención (LOI)</option>
+                                            <option value="mou_agreement">Memorándum de Entendimiento (MOU)</option>
+                                            <option value="affidavit_heirship">Declaración de Herederos (Heirship)
+                                            </option>
+                                            <option value="affidavit_identity">Declaración de Identidad</option>
+                                            <option value="lease_renewal">Renovación de Contrato de Alquiler</option>
+                                            <option value="waiver_liability">Renuncia de Responsabilidad (Waiver)
+                                            </option>
+                                            <option value="codicil_will">Codicilo a Testamento (Enmienda)</option>
+                                            <option value="custody_agreement">Acuerdo de Custodia (Parenting Plan)
+                                            </option>
+                                            <option value="affidavit_service">Declaración de Servicio (Proof of Service)
+                                            </option>
+                                            <option value="translator_affidavit">Certificación de Traductor</option>
+                                            <option value="gift_deed">Escritura de Donación (Gift Deed)</option>
+                                            <option value="board_resolution">Resolución de Junta Directiva</option>
+                                            <option value="meeting_minutes">Acta de Reunión (Minutes)</option>
+                                            <option value="rental_application">Solicitud de Alquiler</option>
+                                            <option value="roommate_agreement">Acuerdo de Compañeros de Cuarto</option>
+                                            <option value="pet_addendum">Anexo de Mascotas</option>
+                                            <option value="lien_waiver">Renuncia de Gravamen (Lien Waiver)</option>
+                                            <option value="separation_agreement">Acuerdo de Separación Matrimonial
+                                            </option>
+                                            <option value="cohabitation_agreement">Acuerdo de Cohabitación</option>
+                                            <option value="invitation_letter">Carta de Invitación para Visa</option>
+                                            <option value="debt_settlement">Acuerdo de Liquidación de Deuda</option>
+                                            <option value="indemnification_agreement">Acuerdo de Indemnización (Hold
+                                                Harmless)</option>
+                                            <option value="llc_operating_agreement">Acuerdo Operativo LLC</option>
+                                            <option value="corporate_bylaws">Estatutos Corporativos (Bylaws)</option>
+                                            <option value="proxy_form">Formulario de Representación (Proxy Vote)
+                                            </option>
+                                            <option value="land_contract">Contrato de Tierra/Venta a Plazos</option>
+                                            <option value="notice_enter">Aviso de Entrada a Propiedad (Landlord)
+                                            </option>
+                                            <option value="rent_increase">Aviso de Aumento de Alquiler</option>
+                                            <option value="employee_termination">Carta de Despido/Terminación</option>
+                                            <option value="employee_warning">Amonestación Laboral Escrita</option>
+                                            <option value="general_service_agreement">Contrato General de Servicios
+                                            </option>
+                                            <option value="mechanics_lien">Gravamen de Mecánico (Claim of Lien)</option>
+                                            <option value="release_mechanics_lien">Liberación de Gravamen de Mecánico
+                                            </option>
+                                            <option value="minor_photo_release">Autorización de Uso de Imagen (Menores)
+                                            </option>
+                                            <option value="demand_letter">Carta de Demanda de Pago/Acción</option>
+                                            <option value="resignation_letter">Carta de Renuncia Laboral</option>
+                                            <option value="recommendation_letter">Carta de Recomendación Profesional
+                                            </option>
+                                            <option value="offer_letter">Carta de Oferta de Empleo</option>
+                                            <option value="joint_venture">Acuerdo de Empresa Conjunta (Joint Venture)
+                                            </option>
+                                            <option value="shareholder_agreement">Acuerdo de Accionistas</option>
+                                            <option value="stock_purchase">Compraventa de Acciones</option>
+                                            <option value="asset_purchase">Compraventa de Activos Empresariales</option>
+                                            <option value="ip_assignment">Cesión de Propiedad Intelectual</option>
+                                            <option value="construction_contract">Contrato de Construcción/Remodelación
+                                            </option>
+                                            <option value="subcontractor_agreement">Acuerdo de Subcontratista</option>
+                                            <option value="loan_agreement">Contrato de Préstamo (Detallado)</option>
+                                            <option value="personal_guarantee">Garantía Personal</option>
+                                            <option value="security_agreement">Acuerdo de Seguridad (Colateral)</option>
+                                            <option value="warranty_deed">Escritura de Garantía (Warranty Deed)</option>
+                                            <option value="copyright_assignment">Cesión de Derechos de Autor</option>
+                                            <option value="trademark_assignment">Cesión de Marca Registrada</option>
+                                            <option value="patent_assignment">Cesión de Patente</option>
+                                            <option value="domain_assignment">Transferencia de Nombre de Dominio
+                                            </option>
+                                            <option value="privacy_policy">Política de Privacidad (Sitio Web)</option>
+                                            <option value="terms_service">Términos y Condiciones (Sitio Web)</option>
+                                            <option value="influencer_agreement">Contrato de Influencer</option>
+                                            <option value="sponsorship_agreement">Acuerdo de Patrocinio</option>
+                                            <option value="referral_agreement">Acuerdo de Referidos</option>
+                                            <option value="commission_agreement">Acuerdo de Comisión</option>
+                                            <option value="distributor_agreement">Contrato de Distribución</option>
+                                            <option value="manufacturing_agreement">Contrato de Manufactura</option>
+                                            <option value="supply_agreement">Contrato de Suministro</option>
+                                            <option value="agency_agreement">Contrato de Agencia/Representación</option>
+                                            <option value="vehicle_lease">Arrendamiento de Vehículo</option>
+                                            <option value="internship_agreement">Acuerdo de Pasantía/Internship</option>
+                                            <option value="volunteer_agreement">Acuerdo de Voluntariado</option>
+                                            <option value="remote_work_agreement">Acuerdo de Trabajo Remoto</option>
+                                            <option value="employee_handbook_ack">Acuse de Recibo de Manual del Empleado
+                                            </option>
+                                            <option value="property_management">Contrato de Administración de
+                                                Propiedades</option>
+                                            <option value="storage_lease">Alquiler de Espacio de Almacenamiento</option>
+                                            <option value="parking_lease">Alquiler de Estacionamiento</option>
+                                            <option value="lease_violation">Aviso de Violación de Contrato (Alquiler)
+                                            </option>
+                                            <option value="rent_receipt">Recibo de Renta</option>
+                                            <option value="photography_contract">Contrato de Servicios de Fotografía
+                                            </option>
+                                            <option value="venue_rental">Contrato de Alquiler de Eventos/Salón</option>
+                                            <option value="catering_agreement">Contrato de Catering</option>
+                                            <option value="dj_contract">Contrato de Servicios de DJ</option>
+                                            <option value="model_release_adult">Autorización de Uso de Imagen (Adulto)
+                                            </option>
+                                            <option value="consignment_agreement">Acuerdo de Consignación</option>
+                                            <option value="purchase_order">Orden de Compra (Purchase Order)</option>
+                                            <option value="invoice_template">Factura de Servicios (Invoice)</option>
+                                            <option value="hipaa_release">Autorización HIPAA (Historial Médico)</option>
+                                            <option value="medical_consent_caregiver">Consentimiento Médico para
+                                                Cuidador</option>
+                                            <option value="equipment_rental_personal">Alquiler de Equipo Personal
+                                            </option>
+                                            <option value="music_license">Licencia de Uso Musical</option>
+                                            <option value="artwork_commission">Comisión de Obra de Arte</option>
+                                            <option value="video_production">Contrato de Producción de Video</option>
+                                            <option value="podcast_guest">Acuerdo de Invitado a Podcast</option>
+                                            <option value="house_sitting">Acuerdo de Cuidado de Casa (House Sitting)
+                                            </option>
+                                            <option value="pet_sitting">Acuerdo de Cuidado de Mascotas (Pet Sitting)
+                                            </option>
+                                            <option value="tutoring_contract">Contrato de Tutoría Privada</option>
+                                            <option value="personal_trainer">Contrato de Entrenador Personal</option>
+                                            <option value="cleaning_services">Contrato de Servicios de Limpieza</option>
+                                            <option value="gardening_contract">Contrato de Jardinería</option>
+                                            <option value="general_contractor">Contrato General de Obra</option>
+                                            <option value="hvac_service">Contrato de Servicio HVAC</option>
+                                            <option value="plumbing_contract">Contrato de Plomería</option>
+                                            <option value="electrical_service">Contrato de Servicios Eléctricos</option>
+                                            <option value="roofing_contract">Contrato de Techado (Roofing)</option>
+                                        </select>
+                                        <div
+                                            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-primary); pointer-events: none;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                </path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="position: relative;">
+                                    <label class="form-label">Cliente (Autocompletar)</label>
+                                    <div style="position: relative;">
+                                        <input type="text" id="doc-client-search" class="form-input"
+                                            style="padding-left: 2.5rem;" placeholder="Buscar cliente por nombre..."
+                                            autocomplete="off">
+                                        <div
+                                            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-primary); pointer-events: none;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="doc-client-id">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Fecha del Documento</label>
+                                    <input type="date" id="doc-date" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Ubicación (Estado/Condado)</label>
+                                    <div style="position: relative;">
+                                        <input type="text" id="doc-location" class="form-input"
+                                            style="padding-left: 2.5rem;" placeholder="Ej: Miami, Florida">
+                                        <div
+                                            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-primary); pointer-events: none;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Fields Header -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+                            <div style="height: 2px; flex: 1; background: #e2e8f0;"></div>
+                            <span
+                                style="text-transform: uppercase; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em;">Información
+                                Variable</span>
+                            <div style="height: 2px; flex: 1; background: #e2e8f0;"></div>
                         </div>
 
                         <!-- Dynamic Fields Container -->
-                        <div id="doc-dynamic-fields"
-                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div id="doc-dynamic-fields" style="margin-bottom: 2rem;">
+                            <!-- Injected by JS -->
                         </div>
 
-                        <div class="form-group" id="doc-body-container">
-                            <label class="form-label">Contenido Específico (Cuerpo de la Declaración/Contrato)</label>
+                        <div class="form-group" id="doc-body-container" style="display: none;">
+                            <label class="form-label">Contenido Específico</label>
                             <textarea id="doc-body" class="form-input" rows="5"
-                                placeholder="Ingrese aquí los detalles específicos, términos de la declaración o cláusulas adicionales..."></textarea>
+                                placeholder="Ingrese aquí los detalles específicos..."></textarea>
                         </div>
 
-                        <!-- Live Preview Frame -->
+                        <!-- Live Preview Frame Header -->
                         <div
-                            style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 2rem; margin: 1.5rem 0; min-height: 500px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto;">
-                            <div id="doc-preview"
-                                style="background: white; padding: 3rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 750px; margin: 0 auto; color: black; font-family: 'Times New Roman', serif; min-height: 800px; position: relative;">
-                                <!-- Preview content injected by JS -->
-                                <div
-                                    style="display:flex; height: 100%; align-items: center; justify-content: center; color: #94a3b8;">
-                                    <p>Vista previa del documento</p>
-                                </div>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b;">Vista Previa en Tiempo Real</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
                             </div>
                         </div>
 

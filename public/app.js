@@ -5070,39 +5070,57 @@ const NoteGenerator = {
                 },
                 {
                     group: 'Detalles de la Declaración', fields: [
-                        { id: 'statement', label: 'Hechos Declarados', type: 'textarea', rows: 6, placeholder: 'Detalle punto por punto los hechos...' }
+                        { id: 'statement', label: 'Hechos Declarados', type: 'textarea', rows: 8, placeholder: 'Detalle punto por punto los hechos...' }
                     ]
                 }
             ],
             content: (data) => `
                 <div class="legal-doc" contenteditable="true">
-                    <h2 class="doc-title">DECLARACIÓN JURADA</h2>
-                    <p class="doc-text">
-                        Estado de <strong>${data.location ? data.location.split(',')[1] || '_______' : '_______'}</strong><br>
-                        Condado de <strong>${data.location ? data.location.split(',')[0] || '_______' : '_______'}</strong>
-                    </p>
-                    <p class="doc-text">
-                        YO, <strong>${data.affiantName || data.clientName}</strong>, mayor de edad (${data.age || '__'} años), de ocupación ${data.occupation || '_______'}, con domicilio en ${data.address || '____________________'}, siendo debidamente juramentado, DECLARO BAJO PENA DE PERJURIO:
-                    </p>
-                    <div class="doc-body-text">
-                        ${(data.statement || '[Escriba aquí los hechos...]').replace(/\n/g, '<br>')}
+                    <h2 class="doc-title">DECLARACIÓN JURADA (AFFIDAVIT)</h2>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 25pt; border-bottom: 2px solid #000; padding-bottom: 10pt;">
+                        <p style="margin: 0; line-height: 1.5;">
+                            ESTADO DE: <strong>${data.location ? (data.location.split(',')[1] || data.location).trim().toUpperCase() : '__________'}</strong><br>
+                            CONDADO DE: <strong>${data.location ? (data.location.split(',')[0] || data.location).trim().toUpperCase() : '__________'}</strong>
+                        </p>
+                        <p style="margin: 0; text-align: right;">
+                            FECHA: <strong>${data.date}</strong>
+                        </p>
                     </div>
-                    <p class="doc-text">
-                        LA INFORMACIÓN ANTERIOR es verdadera y correcta según mi leal saber y entender.
+
+                    <p class="doc-text" style="text-indent: 30pt; margin-bottom: 20pt;">
+                        ANTE MÍ, el Notario Público abajo firmante, compareció personalmente <strong>${data.affiantName || data.clientName}</strong>, mayor de edad (${data.age || '__'} años), de ocupación ${data.occupation || '__________'}, con domicilio legal en ${data.address || '______________________________'}, quien después de haber sido debidamente juramentado de acuerdo con la ley, declara bajo pena de perjurio:
                     </p>
+
+                    <div class="doc-body-text" style="min-height: 200pt; border: 1px double #eee; padding: 15pt; margin: 15pt 0;">
+                        ${(data.statement || '[Detalle aquí los hechos declarados, enumerándolos si es posible.]').replace(/\n/g, '<br>')}
+                    </div>
+
+                    <p class="doc-text" style="margin-top: 25pt;">
+                        EL DECLARANTE CERTIFICA que ha leído o se le ha leído la declaración anterior y que cada uno de los hechos allí expuestos es verdadero y correcto según su leal saber y entender.
+                    </p>
+
                     <br><br>
                     <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-label">_________________________________</div>
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
-                            <div class="sig-label">${data.affiantName || data.clientName}</div>
+                            <div class="sig-label"><strong>${data.affiantName || data.clientName}</strong><br>Declarante</div>
                         </div>
                     </div>
-                    <div class="notary-block" contenteditable="false">
-                        <p class="doc-center-bold">JURAT</p>
-                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
-                        <div class="notary-seal-placeholder">SELLO</div>
-                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+
+                    <div class="notary-block" contenteditable="false" style="margin-top: 40pt; border-top: 1px dashed #ccc; padding-top: 20pt;">
+                        <p class="doc-center-bold">CERTIFICACIÓN NOTARIAL</p>
+                        <p class="doc-text">
+                            Suscrito y jurado (o afirmado) ante mí este día <strong>${data.date}</strong> por <strong>${data.affiantName || data.clientName}</strong>, a quien se le identificó mediante [ ] conocimiento personal [ ] presentación de identificación ____________________.
+                        </p>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20pt;">
+                            <div class="notary-seal-placeholder" style="margin: 0;">SELLO</div>
+                            <div class="sig-block" style="text-align: center;">
+                                <div class="sig-label">_________________________________</div>
+                                <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                                <div class="sig-label">NOTARIO PÚBLICO</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `
@@ -9227,7 +9245,10 @@ const NoteGenerator = {
         if (!container || !bodyContainer) return;
 
         container.innerHTML = '';
-        container.style.display = 'block';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '1.5rem';
+
         bodyContainer.style.display = 'none';
 
         const template = this.templates[templateKey];
@@ -9239,35 +9260,59 @@ const NoteGenerator = {
 
             groups.forEach(group => {
                 const groupDiv = document.createElement('div');
-                groupDiv.style.marginBottom = '1.5rem';
-                groupDiv.style.border = '1px solid #e2e8f0';
-                groupDiv.style.borderRadius = '8px';
-                groupDiv.style.padding = '1rem';
-                groupDiv.style.backgroundColor = '#f8fafc';
+                groupDiv.style.backgroundColor = 'var(--color-bg, #ffffff)';
+                groupDiv.style.border = '1px solid #e5e7eb';
+                groupDiv.style.borderRadius = '12px';
+                groupDiv.style.padding = '1.5rem';
+                groupDiv.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.05)';
+                groupDiv.style.transition = 'all 0.2s ease';
+
+                const header = document.createElement('div');
+                header.style.display = 'flex';
+                header.style.alignItems = 'center';
+                header.style.gap = '0.75rem';
+                header.style.marginBottom = '1.25rem';
+                header.style.paddingBottom = '0.75rem';
+                header.style.borderBottom = '1px solid #f3f4f6';
+
+                const icon = document.createElement('div');
+                icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+                header.appendChild(icon);
 
                 const title = document.createElement('h5');
                 title.textContent = group.group;
-                title.style.marginBottom = '1rem';
-                title.style.color = '#475569';
-                title.style.borderBottom = '1px solid #e2e8f0';
-                title.style.paddingBottom = '0.5rem';
-                groupDiv.appendChild(title);
+                title.style.margin = '0';
+                title.style.fontSize = '1rem';
+                title.style.fontWeight = '600';
+                title.style.color = '#1f2937';
+                header.appendChild(title);
+
+                groupDiv.appendChild(header);
 
                 const grid = document.createElement('div');
                 grid.style.display = 'grid';
                 grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-                grid.style.gap = '1rem';
+                grid.style.gap = '1.25rem';
 
                 group.fields.forEach(field => {
                     const wrapper = document.createElement('div');
                     if (field.width === 'full') wrapper.style.gridColumn = 'span 2';
 
-                    wrapper.innerHTML = `<label class="form-label" style="font-size:0.85rem;">${field.label}</label>`;
+                    const label = document.createElement('label');
+                    label.className = 'form-label';
+                    label.style.display = 'block';
+                    label.style.marginBottom = '0.5rem';
+                    label.style.fontSize = '0.875rem';
+                    label.style.fontWeight = '500';
+                    label.style.color = '#4b5563';
+                    label.textContent = field.label;
+                    wrapper.appendChild(label);
 
                     let input;
                     if (field.type === 'select') {
                         input = document.createElement('select');
                         input.className = 'form-input dynamic-doc-field';
+                        input.style.width = '100%';
                         field.options.forEach(opt => {
                             const option = document.createElement('option');
                             option.value = opt;
@@ -9277,16 +9322,29 @@ const NoteGenerator = {
                     } else if (field.type === 'textarea') {
                         input = document.createElement('textarea');
                         input.className = 'form-input dynamic-doc-field';
+                        input.style.width = '100%';
+                        input.style.minHeight = '100px';
                         input.rows = field.rows || 3;
                     } else {
                         input = document.createElement('input');
                         input.type = field.type || 'text';
                         input.className = 'form-input dynamic-doc-field';
+                        input.style.width = '100%';
                     }
 
                     input.dataset.key = field.id;
                     if (field.placeholder) input.placeholder = field.placeholder;
                     input.id = 'field-' + field.id;
+
+                    // Hover/Focus effect via JS since it's dynamic
+                    input.addEventListener('focus', () => {
+                        groupDiv.style.borderColor = 'var(--color-primary-light, #bfdbfe)';
+                        groupDiv.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
+                    });
+                    input.addEventListener('blur', () => {
+                        groupDiv.style.borderColor = '#e5e7eb';
+                        groupDiv.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.05)';
+                    });
 
                     input.addEventListener('input', () => this.updatePreview());
                     wrapper.appendChild(input);
