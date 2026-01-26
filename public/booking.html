@@ -479,8 +479,9 @@
                 }));
 
                 // Success UI
+                // Success UI
                 document.querySelector('.booking-container').innerHTML = `
-                    <div style="padding: 4rem; text-align: center; color: #1e3a8a;">
+                    <div style="padding: 4rem; text-align: center; color: #1e3a8a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; margin-bottom: 1.5rem; color: #10b981;">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
@@ -490,7 +491,7 @@
                             Hemos agendado tu cita para el <strong>${selectedDate}</strong> a las <strong>${selectedTime}</strong>.<br>
                             Se ha enviado un detalle a <strong>${email}</strong>.
                         </p>
-                        <a href="index.html" class="btn btn-primary">Volver al Inicio</a>
+                        <a href="landing.html" class="btn btn-primary">Volver al Inicio</a>
                     </div>
                 `;
 

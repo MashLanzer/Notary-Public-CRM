@@ -23,6 +23,72 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* FAQ Accordion */
+        .faq-accordion {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .faq-item {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-item summary {
+            padding: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #111827;
+        }
+
+        .faq-item summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .faq-item summary::after {
+            content: '+';
+            font-size: 1.5rem;
+            color: #1e3a8a;
+            font-weight: 400;
+        }
+
+        .faq-item[open] summary::after {
+            content: '-';
+        }
+
+        .faq-item[open] {
+            background: #f9fafb;
+        }
+
+        .faq-item p {
+            padding: 0 1.25rem 1.25rem;
+            margin: 0;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .landing-nav {
             padding: 1rem 0;
             position: sticky;
@@ -408,83 +474,149 @@
                     <h3>Constitución de Empresas</h3>
                     <p class="text-muted">Formalización de sociedades civiles y mercantiles (S.A., S. de R.L.).</p>
                 </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <h3>Apostilla y Legalización</h3>
+                    <p class="text-muted">Certificación de documentos para su validez en el extranjero (Convención de La
+                        Haya).</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3>Celebración de Matrimonios</h3>
+                    <p class="text-muted">Capitulaciones matrimoniales y celebración de bodas civiles con validez
+                        oficial.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- About Section -->
-    <section class="about-section">
+    <section class="about-section fade-in">
         <div class="container">
-            <div class="hero-content">
-                <div>
-                    <h2 class="section-title">Experiencia y Compromiso</h2>
-                    <p class="text-lg text-muted">Con más de 15 años de experiencia, nuestra notaría se ha consolidado
-                        como un referente de confianza y profesionalismo. Nos dedicamos a brindar certeza jurídica en
-                        cada uno de sus trámites.</p>
-                    <ul
-                        style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; list-style: none;">
-                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="color: #1e3a8a;">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span>Atención personalizada</span>
-                        </li>
-                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="color: #1e3a8a;">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span>Tecnología avanzada para gestión</span>
-                        </li>
-                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="color: #1e3a8a;">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span>Transparencia en honorarios</span>
-                        </li>
-                    </ul>
+            <div class="hero-content" style="align-items: center; gap: 4rem;">
+                <div style="flex: 1;">
+                    <h2 class="section-title">Sobre Mí</h2>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #1f2937;">Tu Notario de Confianza en Tampa
+                    </h3>
+                    <p class="text-lg text-muted" style="margin-bottom: 1.5rem; line-height: 1.6;">
+                        Con una sólida trayectoria y un firme compromiso con la ética profesional, me dedico a brindar
+                        seguridad
+                        y certeza jurídica a cada uno de mis clientes. Mi objetivo principal es simplificar procesos
+                        complejos,
+                        ofreciendo siempre un trato cercano, soluciones eficientes y atención personalizada en cada
+                        trámite.
+                    </p>
+
+                    <div
+                        style="background: white; border-left: 4px solid var(--color-primary); padding: 1.5rem; border-radius: 0 0.5rem 0.5rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <p style="font-style: italic; color: #4b5563; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                            "La excelencia no es un acto, sino un hábito. En cada firma y en cada documento, garantizo
+                            la máxima diligencia y confidencialidad."
+                        </p>
+                        <p style="font-weight: 700; color: #1e3a8a;">— Lic. Notario Público</p>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: center;">
-                    <!-- Simple graphic for "Trust" -->
-                    <svg viewBox="0 0 200 200" style="width: 100%; max-width: 300px;">
-                        <circle cx="100" cy="100" r="80" fill="#dbeafe" opacity="0.3" />
-                        <path d="M60 100 L90 130 L140 70" stroke="#1e3a8a" stroke-width="12" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
+
+                <div style="display: flex; justify-content: center; position: relative; flex: 1;">
+                    <!-- Photo Container -->
+                    <div style="width: 300px; height: 380px; position: relative;">
+                        <!-- Background Pattern -->
+                        <div
+                            style="position: absolute; top: -15px; right: -15px; width: 100%; height: 100%; border: 3px solid #dbeafe; border-radius: 1rem; z-index: 0;">
+                        </div>
+                        <div
+                            style="position: absolute; bottom: -15px; left: -15px; width: 50%; height: 50%; background: #eff6ff; border-radius: 1rem; z-index: 0;">
+                        </div>
+
+                        <!-- Image -->
+                        <img src="notary-photo.png" alt="Foto del Notario"
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 1rem; position: relative; z-index: 1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- FAQ Section -->
-    <section id="faq" class="services-section">
-        <div class="container">
-            <h2 class="section-title text-center">Preguntas Frecuentes</h2>
-            <div class="services-grid" style="grid-template-columns: 1fr 1fr; margin-top: 2rem; align-items: start;">
-                <div>
-                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Qué necesito para un testamento?</h4>
-                    <p class="text-muted">Solo necesita una identificación oficial vigente y agendar una cita para
-                        asesoría. Nosotros le guiaremos.</p>
-                </div>
-                <div>
-                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Cuánto tarda una certificación?</h4>
-                    <p class="text-muted">Dependiendo del documento, el proceso puede tomar desde 24 a 48 horas hábiles.
-                    </p>
-                </div>
-                <div>
-                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Pueden acudir a domicilio?</h4>
-                    <p class="text-muted">Sí, ofrecemos servicio a domicilio para personas con movilidad reducida
-                        (aplica cargo extra).</p>
-                </div>
-                <div>
-                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Cómo agendo una cita?</h4>
-                    <p class="text-muted">Puede utilizar nuestro botón de "Iniciar Trámite" o contactarnos por teléfono
-                        o email.</p>
-                </div>
+    <section id="faq" class="services-section fade-in" style="padding: 3rem 0; background: #fff;">
+        <div class="container" style="max-width: 800px;">
+            <h2 class="section-title text-center" style="margin-bottom: 2rem;">Preguntas Frecuentes</h2>
+
+            <div class="faq-accordion">
+                <details class="faq-item">
+                    <summary>¿Qué necesito para un testamento?</summary>
+                    <p>Solo necesita una identificación oficial vigente. Agende una cita de asesoría y nosotros le
+                        guiaremos en el proceso de designación de herederos y albaceas de forma clara y sencilla.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>¿Cuánto tarda una certificación?</summary>
+                    <p>Dependiendo del tipo de documento, el proceso puede tomar desde 24 a 48 horas hábiles. Contamos
+                        con opciones de trámite urgente bajo solicitud previa.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>¿Ofrecen servicio a domicilio?</summary>
+                    <p>Sí. Ofrecemos servicio notarial móvil ("Mobile Notary") para personas con movilidad reducida,
+                        hospitales, oficinas o domicilios particulares (aplica tarifa adicional por desplazamiento).</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>¿Cómo agendo una cita?</summary>
+                    <p>La forma más rápida es a través de nuestro botón "Agendar Cita Ahora" en esta página. También
+                        puede contactarnos directamente por teléfono o correo electrónico.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>¿Qué métodos de pago aceptan?</summary>
+                    <p>Aceptamos efectivo, transferencias bancarias (Zelle) y tarjetas de crédito/débito. Para ciertos
+                        trámites legales extensos puede requerirse un anticipo.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>¿Realizan trámites urgentes fuera de horario?</summary>
+                    <p>Entendemos que hay emergencias. Contáctenos directamente para verificar disponibilidad fuera de
+                        horario laboral (sujeto a recargo).</p>
+                </details>
             </div>
         </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section"
+        style="background: var(--color-primary); color: white; padding: 4rem 0; text-align: center;">
+        <div class="container fade-in">
+            <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: white;">¿Listo para asegurar su tranquilidad?</h2>
+            <p
+                style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.9; max-width: 700px; margin-left: auto; margin-right: auto;">
+                No deje sus trámites legales para después. Agende su cita hoy mismo y reciba la atención profesional que
+                merece.
+            </p>
+            <a href="booking.html" class="btn"
+                style="background: white; color: var(--color-primary); padding: 1rem 2.5rem; font-size: 1.1rem; border: none; font-weight: 700;">
+                Agendar Cita Ahora
+            </a>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section" style="height: 400px; background: #f3f4f6; position: relative;">
+        <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3523.557434524855!2d-82.3846660236086!3d27.977056213567026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88c2c544d081075d%3A0xe5a3c0c325c3474d!2s3803%20Romano%20Busciglio%20St%2C%20Tampa%2C%20FL%2033619!5e0!3m2!1sen!2sus!4v1706227200000!5m2!1sen!2sus"
+            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+        </iframe>
     </section>
 
     <footer class="landing-footer">
@@ -493,30 +625,46 @@
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-bottom: 3rem; text-align: left;">
                 <div>
                     <h3>Notaría Pública</h3>
-                    <p>Su aliado legal de confianza.</p>
+                    <p>Su aliado legal de confianza, brindando seguridad jurídica y profesionalismo en cada trámite.</p>
                 </div>
                 <div>
-                    <h3>Enlaces</h3>
+                    <h3>Enlaces Rápidos</h3>
                     <ul>
                         <li><a href="#inicio">Inicio</a></li>
-                        <li><a href="#servicios">Servicios</a></li>
-                        <li><a href="status.html">Acceso Clientes</a></li>
+                        <li><a href="#servicios">Servicios Notariales</a></li>
+                        <li><a href="#faq">Preguntas Frecuentes</a></li>
+                        <li><a href="booking.html">Agendar Cita</a></li>
+                        <li><a href="status.html">Consultar Estado</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3>Contacto</h3>
+                    <h3>Contacto y Ubicación</h3>
                     <ul>
-                        <li>contacto@notaria.com</li>
-                        <li>(555) 123-4567</li>
-                        <li>Calle Principal #123</li>
+                        <li><a href="mailto:contacto@notaria.com">contacto@notaria.com</a></li>
+                        <li><a href="tel:+15551234567">(555) 123-4567</a></li>
+                        <li><a href="#">Calle Principal #123, Ciudad</a></li>
+                        <li>Horario: Lun-Vie 9:00 - 18:00</li>
                     </ul>
                 </div>
             </div>
             <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; text-align: center;">
-                <p>&copy; 2024 Notaría Pública. Todos los derechos reservados.</p>
+                <p>&copy; 2026 Notaría Pública. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Intersection Observer for Fade In Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
 </body>
 
 </html>
