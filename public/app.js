@@ -5072,6 +5072,21 @@ const NoteGenerator = {
                     group: 'Detalles de la Declaración', fields: [
                         { id: 'statement', label: 'Hechos Declarados', type: 'textarea', rows: 8, placeholder: 'Detalle punto por punto los hechos...' }
                     ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        {
+                            id: 'idType',
+                            label: 'Método de Identificación',
+                            type: 'select',
+                            options: [
+                                'Presentación de identificación',
+                                'Conocimiento personal'
+                            ],
+                            width: 'half'
+                        },
+                        { id: 'idDetails', label: 'Especifique ID (P. ej: NY Driver License #...)', type: 'text', width: 'half' }
+                    ]
                 }
             ],
             content: (data) => `
@@ -5111,7 +5126,11 @@ const NoteGenerator = {
                     <div class="notary-block" contenteditable="false" style="margin-top: 40pt; border-top: 1px dashed #ccc; padding-top: 20pt;">
                         <p class="doc-center-bold">CERTIFICACIÓN NOTARIAL</p>
                         <p class="doc-text">
-                            Suscrito y jurado (o afirmado) ante mí este día <strong>${data.date}</strong> por <strong>${data.affiantName || data.clientName}</strong>, a quien se le identificó mediante [ ] conocimiento personal [ ] presentación de identificación ____________________.
+                            Suscrito y jurado (o afirmado) ante mí este día <strong>${data.date}</strong> por <strong>${data.affiantName || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
                         </p>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20pt;">
                             <div class="notary-seal-placeholder" style="margin: 0;">SELLO</div>
@@ -5156,6 +5175,12 @@ const NoteGenerator = {
                         { id: 'saleDate', label: 'Fecha Venta', type: 'date', width: 'half' },
                         { id: 'gift', label: '¿Es regalo?', type: 'select', options: ['No', 'Sí'], width: 'full' }
                     ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
+                    ]
                 }
             ],
             content: (data) => `
@@ -5193,10 +5218,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.sellerName}</strong> y <strong>${data.buyerName}</strong>, a quienes se les identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5219,9 +5250,9 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Pagos', fields: [
-                        { id: 'frequency', label: 'Frecuencia', type: 'select', options: ['Mensual', 'Semanal', 'Al Vencimiento'], width: 'half' },
-                        { id: 'installment', label: 'Cuota ($)', type: 'number', width: 'half' }
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5251,10 +5282,16 @@ const NoteGenerator = {
                          </div>
                      </div>
                      <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.borrower}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                  </div>
              `
@@ -5270,11 +5307,9 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Viaje', fields: [
-                        { id: 'guardian', label: 'Viaja con (Nombre)', type: 'text', width: 'full' },
-                        { id: 'relation', label: 'Relación', type: 'text', width: 'full' },
-                        { id: 'dest', label: 'Destino', type: 'text', width: 'half' },
-                        { id: 'dates', label: 'Fechas del Viaje', type: 'text', width: 'half' }
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5302,11 +5337,17 @@ const NoteGenerator = {
                             <div class="sig-label">Padre/Madre/Tutor</div>
                         </div>
                     </div>
-                    <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido y jurado ante mí el <strong>${data.date}</strong>.</p>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">
+                            Suscrito y jurado (o afirmado) ante mí el <strong>${data.date}</strong> por <strong>${data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5326,6 +5367,12 @@ const NoteGenerator = {
                         { id: 'effectiveDate', label: 'Fecha de Efectividad', type: 'date', width: 'half' },
                         { id: 'expirationDate', label: 'Fecha de Expiración (Opcional)', type: 'date', width: 'half' },
                         { id: 'powers', label: 'Poderes Otorgados', type: 'textarea', rows: 4, placeholder: 'Describa los poderes (Bancarios, Bienes Raíces, etc.)' }
+                    ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5358,10 +5405,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.principalName || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5376,10 +5429,9 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Directivas', fields: [
-                        { id: 'lifeSupport', label: 'Soporte Vital', type: 'select', options: ['Retirar si es terminal', 'Mantener artificialmente'], width: 'full' },
-                        { id: 'organDonation', label: 'Donación de Órganos', type: 'select', options: ['No autorizo', 'Autorizo cualquier órgano', 'Solo fines de investigación'], width: 'full' },
-                        { id: 'specialRequests', label: 'Peticiones Especiales', type: 'textarea', rows: 3 }
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5417,10 +5469,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Suscrito y jurado ante mí el <strong>${data.date}</strong> por <strong>${data.declarantName || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5436,9 +5494,9 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Propiedad', fields: [
-                        { id: 'parcelId', label: 'Parcel ID / Folio', type: 'text', width: 'half' },
-                        { id: 'propertyDesc', label: 'Descripción Legal Completa', type: 'textarea', rows: 4 }
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5468,10 +5526,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.grantor}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5538,8 +5602,9 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Propietario/Testigo (Opcional)', fields: [
-                        { id: 'landlordName', label: 'Nombre Dueño/Testigo', type: 'text', width: 'full' }
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5571,10 +5636,16 @@ const NoteGenerator = {
                     </div>
                     ` : ''}
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Suscrito y jurado ante mí el <strong>${data.date}</strong> por <strong>${data.residentName || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5593,6 +5664,12 @@ const NoteGenerator = {
                     group: 'Instrucciones', fields: [
                         { id: 'effectiveCondition', label: 'Efectivo cuando', type: 'select', options: ['Inmediatamente', 'Cuando sea incapaz de decidir'], width: 'full' },
                         { id: 'specialInstructions', label: 'Limitaciones o Instrucciones', type: 'textarea', rows: 4 }
+                    ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5627,10 +5704,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.principalName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5649,6 +5732,12 @@ const NoteGenerator = {
                         { id: 'beneficiary1', label: 'Beneficiario Principal', type: 'text', width: 'full' },
                         { id: 'assets1', label: 'Bienes para Principal', type: 'textarea', rows: 2 },
                         { id: 'beneficiary2', label: 'Beneficiario Secundario', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -5688,10 +5777,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Suscrito y jurado ante mí el <strong>${data.date}</strong> por <strong>${data.testatorName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5761,6 +5856,12 @@ const NoteGenerator = {
                     group: 'Evento', fields: [
                         { id: 'activity', label: 'Actividad/Evento', type: 'textarea', rows: 3 }
                     ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
+                    ]
                 }
             ],
             content: (data) => `
@@ -5786,10 +5887,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.indemnifier}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5857,6 +5964,12 @@ const NoteGenerator = {
                         { id: 'dueDate', label: 'Fecha Límite Pago', type: 'date', width: 'full' },
                         { id: 'paymentPlan', label: 'Plan de Pago', type: 'textarea', rows: 2, placeholder: 'Ej: Pagos mensuales de $200 comenzando el 1 de enero...' }
                     ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
+                    ]
                 }
             ],
             content: (data) => `
@@ -5892,10 +6005,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                         <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
-                         <div class="notary-seal-placeholder">SELLO</div>
-                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                         <div class="sig-label">Notario Público</div>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.lender}</strong> y <strong>${data.borrower}</strong>, a quienes se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -5962,6 +6081,12 @@ const NoteGenerator = {
                         { id: 'agent', label: 'Agente a Remover', type: 'text', width: 'full' },
                         { id: 'originalDate', label: 'Fecha del Poder Original', type: 'date', width: 'full' }
                     ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
+                    ]
                 }
             ],
             content: (data) => `
@@ -5988,10 +6113,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.principal}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -6010,6 +6141,12 @@ const NoteGenerator = {
                         { id: 'guardianName', label: 'Nombre del Guardián', type: 'text', width: 'full' },
                         { id: 'guardianAddress', label: 'Dirección Guardián', type: 'text', width: 'full' },
                         { id: 'endDate', label: 'Válido Hasta', type: 'date', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -6038,10 +6175,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Jurado y suscrito ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Jurado y suscrito ante mí el <strong>${data.date}</strong> por <strong>${data.parentName || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -6059,6 +6202,12 @@ const NoteGenerator = {
                     group: 'Apoderado', fields: [
                         { id: 'owner', label: 'Dueño (Poderdante)', type: 'text', width: 'full' },
                         { id: 'agent', label: 'Apoderado (Persona Autorizada)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Verificación de Identidad', fields: [
+                        { id: 'idType', label: 'Método de Identificación', type: 'select', options: ['Presentación de identificación', 'Conocimiento personal'], width: 'half' },
+                        { id: 'idDetails', label: 'Especifique ID', type: 'text', width: 'half' }
                     ]
                 }
             ],
@@ -6083,10 +6232,16 @@ const NoteGenerator = {
                         </div>
                     </div>
                     <div class="notary-block" contenteditable="false">
-                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <p class="doc-text">
+                            Reconocido ante mí el <strong>${data.date}</strong> por <strong>${data.owner || data.clientName}</strong>, a quien se le identificó mediante:
+                            <br><br>
+                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
+                            <br>
+                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                        </p>
                         <div class="notary-seal-placeholder">SELLO</div>
                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                        <div class="sig-label">Notario Público</div>
+                        <div class="sig-label">NOTARIO PÚBLICO</div>
                     </div>
                 </div>
             `
@@ -9552,6 +9707,8 @@ const NoteGenerator = {
             age: '45',
             occupation: 'Ingeniero de Software',
             statement: '1. Que he residido en la dirección mencionada por los últimos 5 años consecutivos.\n2. Que soy ciudadano respetuoso de la ley y no poseo antecedentes penales.\n3. Que realizo esta declaración voluntariamente para fines administrativos.',
+            idType: 'Presentación de identificación',
+            idDetails: 'FL Driver License #P123-456-78-900-0',
 
             sellerName: 'Concesionario AutoPremium LLC',
             sellerAddress: '500 Brickell Ave, Miami, FL',
@@ -9565,10 +9722,11 @@ const NoteGenerator = {
             odometer: '32,500 millas',
 
             amount: '10000.00',
-            rate: '4.5',
+            interest: '4.5',
             lender: 'Inversiones Rápidas S.A.',
             borrower: 'Empresa StartUp Inc.',
-            installment: '450.00',
+            paymentPlan: 'Pagos mensuales de $450 comenzando en Septiembre 2024.',
+            dueDate: '2026-12-31',
 
             childName: 'Sofía Martínez',
             passport: 'P987654321',
@@ -9577,8 +9735,33 @@ const NoteGenerator = {
             relation: 'Madre',
             dates: '10 de Julio al 25 de Agosto, 2024',
 
-            granteeName: 'Inmobiliaria Futuro Corp.',
-            propertyDesc: 'Lote 4, Manzana 12, de la subdivisión Coral Gables Section A, según consta en el Libro de Plats 45, Página 12, de los Registros Públicos del Condado de Miami-Dade, Florida. Dirección conocida como: 555 Miracle Mile.'
+            grantee: 'Inmobiliaria Futuro Corp.',
+            grantor: 'Roberto Vendedor',
+            consideration: '10.00',
+            propertyDesc: 'Lote 4, Manzana 12, de la subdivisión Coral Gables Section A, según consta en el Libro de Plats 45, Página 12, de los Registros Públicos del Condado de Miami-Dade, Florida.',
+            parcelId: '01-3142-001-0010',
+
+            testatorName: 'Ricardo Testador',
+            executorName: 'Lic. Elena Albacea',
+            beneficiary1: 'Juliana Hija',
+            assets1: 'Mi residencia principal y todas mis cuentas bancarias personales.',
+
+            principalName: 'Abuela María Mercedes',
+            agentName: 'Juan Nieto',
+            effectiveCondition: 'Cuando sea incapaz de decidir',
+            specialInstructions: 'No deseo RCP si hay daño cerebral irreversible.',
+
+            residentName: 'Carlos Residente',
+            currAddress: '789 Brickell Way, Suite 101, Miami, FL 33131',
+            yearsResiding: '12',
+
+            indemnifier: 'Empresa Organizadora Eventos S.A.',
+            indemnitee: 'Centro de Convenciones Miami',
+            activity: 'Concierto de Verano 2024 y logística asociada.',
+
+            owner: 'Luis Propietario',
+            agent: 'Ana Representante',
+            makeModel: 'Tesla Model 3, 2023, Gris',
         };
 
         const groups = template.fields[0].group ? template.fields : [{ fields: template.fields }];
@@ -9796,52 +9979,79 @@ const NoteGenerator = {
 
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'pt', 'a4');
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'pt',
+                format: 'a4'
+            });
 
             const source = document.getElementById('doc-preview');
             const clone = source.cloneNode(true);
 
-            // Fix styles for PDF - Ensure High Quality
-            clone.style.width = '595pt';
-            clone.style.minHeight = '842pt'; // A4 height
-            clone.style.height = 'auto';
-            clone.style.padding = '40pt';
+            // Set fixed dimensions for the clone to match A4 proportions at 96dpi
+            // 794px is the standard pixel width for A4
+            const printWidth = 794;
+
+            // Force strict styling on the clone to prevent layout shifts
+            clone.style.width = printWidth + 'px';
+            clone.style.minHeight = '1123px';
+            clone.style.padding = '0';
+            clone.style.boxSizing = 'border-box';
             clone.style.margin = '0';
+            clone.style.background = '#ffffff';
             clone.style.overflow = 'visible';
-            clone.style.background = 'white';
-            clone.style.border = 'none';
             clone.style.boxShadow = 'none';
-            clone.style.fontSize = '12pt'; // Normalized font size
-            clone.style.fontFamily = "'Times New Roman', serif";
+            clone.style.border = 'none';
+            clone.style.position = 'relative';
+
+            // Ensure consistent typography and visibility
+            clone.querySelectorAll('*').forEach(el => {
+                el.style.boxSizing = 'border-box';
+                el.style.maxWidth = '100%'; // Prevent any child from overflowing
+                if (el.classList.contains('sig-zone')) {
+                    el.style.background = '#f8fafc'; // Keep it light but visible
+                    el.style.border = '1px dashed #cbd5e1';
+                }
+                if (el.classList.contains('notary-seal-placeholder')) {
+                    el.style.border = '1px solid #cbd5e1';
+                }
+            });
 
             const container = document.createElement('div');
-            container.style.position = 'absolute';
-            container.style.left = '-9999px';
+            container.style.position = 'fixed';
+            container.style.left = '0';
             container.style.top = '0';
+            container.style.zIndex = '-1';
+            container.style.opacity = '0';
+            container.style.pointerEvents = 'none';
+            container.style.width = printWidth + 'px';
             container.appendChild(clone);
             document.body.appendChild(container);
 
             await doc.html(clone, {
                 callback: function (pdf) {
                     const clientName = document.getElementById('doc-client-search').value || 'Document';
-                    pdf.save(`LegalDoc_${clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+                    pdf.save(`Doc_${clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
                     document.body.removeChild(container);
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                     try { Toast.success('PDF Generado', 'Documento listo para imprimir/enviar.'); } catch (e) { }
                 },
+                margin: [30, 30, 30, 30], // Standard PDF margins in pt
+                autoPaging: 'text', // Changed back to 'text' for better multi-page support
                 x: 0,
                 y: 0,
+                width: 535, // A4 points (595) minus margins (60)
+                windowWidth: printWidth,
                 html2canvas: {
-                    scale: 2, // High resolution (300dpi approx effect)
+                    scale: 2,
                     useCORS: true,
-                    logging: false,
-                    letterRendering: true,
-                    windowWidth: 800
-                },
-                autoPaging: 'text',
-                width: 595,
-                windowWidth: 800
+                    allowTaint: true,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: printWidth,
+                    backgroundColor: '#ffffff'
+                }
             });
 
         } catch (err) {
