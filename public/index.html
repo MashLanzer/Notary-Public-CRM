@@ -1047,7 +1047,7 @@
 
     <!-- Confirmation Modal -->
     <div class="modal" id="confirm-modal">
-        <div class="modal-backdrop"></div>
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('confirm-modal')"></div>
         <div class="modal-content modal-confirm">
             <div class="confirm-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1191,12 +1191,12 @@
     </div>
 
     <!-- Day Details Modal -->
-    <div class="modal" id="day-details-modal">
-        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('day-details-modal')"></div>
+    <div class="modal" id="calendar-day-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('calendar-day-modal')"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="day-details-title">Citas del día</h3>
-                <button class="modal-close" data-modal="day-details-modal">
+                <h3 class="modal-title" id="calendar-day-date">Citas del día</h3>
+                <button class="modal-close" data-modal="calendar-day-modal">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1207,7 +1207,8 @@
                 <div id="day-appointments-list" class="reminders-timeline" style="margin-top: 0;">
                     <!-- Appointed items will be injected here -->
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                <div id="calendar-day-actions"
+                    style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
                     <button class="btn btn-primary" id="add-from-day-btn">Nueva Cita</button>
                     <button class="btn" onclick="NotaryCRM.shareDayAgenda()" style="background:#e0f2fe; color:#0369a1;">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1217,6 +1218,7 @@
                         </svg>
                         Compartir
                     </button>
+                    <!-- More options injected by JS -->
                 </div>
             </div>
         </div>

@@ -266,6 +266,7 @@
         let selectedDate = null;
         let selectedTime = null;
         let appointments = [];
+        let blockedDates = [];
 
         // Load appointments for the current month view
         async function loadAppointments() {
@@ -276,12 +277,24 @@
             try {
                 const { collection, getDocs } = window.dbFuncs;
                 const db = window.firebaseDB;
-                // Ideally filter by date range, but for now fetch all (protoype)
+
+                // Fetch appointments
                 const snapshot = await getDocs(collection(db, 'appointments'));
                 appointments = snapshot.docs.map(doc => doc.data());
+
+                // Fetch blocked dates
+                try {
+                    const blockedSnapshot = await getDocs(collection(db, 'blocked_dates'));
+                    blockedDates = blockedSnapshot.docs.map(doc => doc.data().date);
+                } catch (e) {
+                    console.warn("Could not load blocked dates or collection empty", e);
+                }
+
                 renderCalendar();
             } catch (err) {
-                console.error("Error loading appointments", err);
+                console.error("Error loading data", err);
+                // Fallback to render with what we have
+                renderCalendar();
             }
         }
 
@@ -322,17 +335,23 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                if (checkDate < today || checkDate.getDay() === 0 || checkDate.getDay() === 6) { // Disable weekends/past
+                const isBlocked = blockedDates.includes(dateStr);
+
+                if (checkDate < today || checkDate.getDay() === 0 || checkDate.getDay() === 6 || isBlocked) {
                     dayDiv.classList.add('disabled');
+                    if (isBlocked) {
+                        dayDiv.style.backgroundColor = '#fee2e2';
+                        dayDiv.title = 'Día no disponible por el Notario';
+                    }
                 } else {
                     dayDiv.onclick = () => selectDate(dateStr, dayDiv);
                 }
 
                 if (selectedDate === dateStr) dayDiv.classList.add('selected');
 
-                // Check if fully booked (simplified logic: if > 5 appts)
+                // Check if fully booked
                 const daysAppts = appointments.filter(a => a.date === dateStr);
-                if (daysAppts.length >= 8) dayDiv.classList.add('disabled'); // Max slots reached
+                if (daysAppts.length >= 8) dayDiv.classList.add('disabled');
 
                 grid.appendChild(dayDiv);
             }
@@ -480,8 +499,14 @@
 
                 // Success UI
                 // Success UI
-                document.querySelector('.booking-container').innerHTML = `
-                    <div style="padding: 4rem; text-align: center; color: #1e3a8a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                const container = document.querySelector('.booking-container');
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+                container.style.justifyContent = 'center';
+
+                container.innerHTML = `
+                    <div style="padding: 4rem; text-align: center; color: #1e3a8a; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; margin-bottom: 1.5rem; color: #10b981;">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>

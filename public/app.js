@@ -1858,6 +1858,14 @@ window.NotaryCRM = {
                 console.log('Private apps synced:', this.state.appointmentsPrivate.length);
             }, err => console.error('Appointments snapshot failed', err));
 
+            // Blocked Dates Listener
+            const blockedCol = collection(db, 'blocked_dates');
+            onSnapshot(blockedCol, snapshot => {
+                this.state.blockedDates = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log('Blocked dates synced:', this.state.blockedDates.length);
+                this.renderCalendar();
+            });
+
             // Users listener is only attached for admins
             this.state.users = this.state.users || [];
         } catch (err) {
@@ -2470,30 +2478,50 @@ window.NotaryCRM = {
     },
 
     // Custom Confirmation Dialog
-    confirmAction(title, message, onProceed) {
+    confirmAction(title, message, onProceed, options = {}) {
+        const {
+            type = 'danger',
+            confirmText = 'Continuar',
+            cancelText = 'Cancelar',
+            icon = null
+        } = options;
+
         const modal = document.getElementById('confirm-modal');
+        const content = modal.querySelector('.modal-confirm');
         const titleEl = document.getElementById('confirm-title');
         const messageEl = document.getElementById('confirm-message');
         const proceedBtn = document.getElementById('confirm-proceed');
         const cancelBtn = document.getElementById('confirm-cancel');
 
+        // Set type class
+        content.classList.remove('danger', 'warning', 'info');
+        content.classList.add(type);
+
         titleEl.textContent = title;
         messageEl.textContent = message;
+        proceedBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+
+        // Reset classes for proceed button
+        proceedBtn.className = 'btn';
+        proceedBtn.classList.add(type === 'danger' ? 'btn-danger' : (type === 'warning' ? 'btn-primary' : 'btn-primary'));
 
         const handleProceed = () => {
-            onProceed();
+            if (typeof onProceed === 'function') onProceed();
             this.closeModal('confirm-modal');
-            proceedBtn.removeEventListener('click', handleProceed);
+            proceedBtn.onclick = null;
+            cancelBtn.onclick = null;
         };
 
         const handleCancel = () => {
             this.closeModal('confirm-modal');
-            proceedBtn.removeEventListener('click', handleProceed);
-            cancelBtn.removeEventListener('click', handleCancel);
+            proceedBtn.onclick = null;
+            cancelBtn.onclick = null;
         };
 
-        proceedBtn.addEventListener('click', handleProceed);
-        cancelBtn.addEventListener('click', handleCancel);
+        // Use onclick to prevent listener stacking
+        proceedBtn.onclick = handleProceed;
+        cancelBtn.onclick = handleCancel;
 
         this.openModal('confirm-modal');
     },
@@ -3592,11 +3620,33 @@ window.NotaryCRM = {
 
         if (this.fullCalendar) this.fullCalendar.destroy();
 
+        // Regular Appointments
         const events = this.state.appointments.map(app => ({
             title: `${app.clientName} - ${app.type}`,
             start: `${app.date}T${app.time}`,
             color: '#1e3a8a'
         }));
+
+        // Blocked Dates
+        if (this.state.blockedDates) {
+            this.state.blockedDates.forEach(block => {
+                events.push({
+                    title: 'DÍA BLOQUEADO',
+                    start: block.date,
+                    display: 'background',
+                    backgroundColor: '#fee2e2',
+                    allDay: true
+                });
+                // Optional: Add a text label as a separate event if background doesn't show text well
+                events.push({
+                    title: '🚫 BLOQUEADO',
+                    start: block.date,
+                    allDay: true,
+                    color: '#ef4444',
+                    display: 'block'
+                });
+            });
+        }
 
         this.fullCalendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -3640,56 +3690,227 @@ window.NotaryCRM = {
 
     showDayDetails(dateStr) {
         const appointments = this.state.appointments.filter(app => app.date === dateStr);
+        // Correct IDs based on index.html
         const listEl = document.getElementById('day-appointments-list');
-        const titleEl = document.getElementById('day-details-title');
+        const titleEl = document.getElementById('calendar-day-date');
+
+        // Ensure modal elements exist
+        if (!listEl || !titleEl) {
+            console.error('Calendar modal elements not found');
+            return;
+        }
 
         const dateObj = new Date(dateStr + 'T00:00:00');
-        titleEl.textContent = `Citas: ${dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        titleEl.textContent = `Agenda: ${formattedDate}`;
 
         if (appointments.length === 0) {
-            listEl.innerHTML = `<p style="text-align:center; color:var(--color-gray-500); padding: 2rem 0;">No hay citas programadas para este día.</p>`;
+            const isBlocked = this.state.blockedDates?.find(b => b.date === dateStr);
+            listEl.innerHTML = `<div style="text-align:center; padding: 3.5rem 1rem;">
+                <div style="background:${isBlocked ? '#fff1f2' : 'var(--color-gray-50)'}; width:80px; height:80px; border-radius:30%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem auto; transform:rotate(-5deg); border: 1px solid ${isBlocked ? '#fecaca' : 'var(--color-gray-100)'};">
+                    ${isBlocked ?
+                    '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>' :
+                    '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-light)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+                }
+                </div>
+                <h3 style="color:var(--color-gray-900); margin-bottom:0.5rem; font-weight:700;">${isBlocked ? 'Agenda Bloqueada' : 'Día Libre'}</h3>
+                <p style="color:var(--color-gray-500); font-size:1rem; max-width: 250px; margin: 0 auto;">${isBlocked ? 'Este día ha sido marcado como no disponible para clientes públicos.' : 'No hay citas programadas para esta fecha.'}</p>
+            </div>`;
         } else {
+            // Sort by time
+            appointments.sort((a, b) => a.time.localeCompare(b.time));
+
             listEl.innerHTML = appointments.map(app => `
                 <div class="timeline-item" style="padding-left: 0; margin-bottom: 1rem;">
-                    <div class="timeline-card" style="margin-left: 0; border-left: 4px solid var(--color-primary); display: flex; align-items: center; justify-content: space-between;">
-                        <div style="flex:1">
-                            <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.25rem;">
-                                <span class="timeline-time" style="background: var(--color-primary-light); color: var(--color-primary);">${app.time}</span>
-                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--color-gray-400);">${app.type}</span>
+                    <div class="timeline-card" style="margin-left: 0; border-left: 4px solid var(--color-primary); padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div>
+                                <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.25rem;">
+                                    <span class="timeline-time" style="background: var(--color-primary-light); color: var(--color-primary); font-weight:700;">${app.time}</span>
+                                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--color-gray-500); text-transform:uppercase; letter-spacing:0.5px;">${app.type}</span>
+                                </div>
+                                <div class="timeline-title" style="font-size:1.1rem;">${app.clientName}</div>
                             </div>
-                            <div class="timeline-title">${app.clientName}</div>
+                            <div class="dropdown" style="position:relative;">
+                                <button class="btn-icon" onclick="this.nextElementSibling.classList.toggle('show'); event.stopPropagation();" title="Más Opciones" style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-gray-50);">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle><circle cx="5" cy="12" r="2"></circle></svg>
+                                </button>
+                                <div class="dropdown-menu" style="right:0; top:100%;">
+                                    <button class="dropdown-item" style="color: var(--color-primary);" onclick="NotaryCRM.showClientDetails('${app.clientId}')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> 
+                                        <strong>Ver Perfil Cliente</strong>
+                                    </button>
+                                    <button class="dropdown-item" style="color: var(--text-light);" onclick="NotaryCRM.editAppointment('${app.id}')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> 
+                                        Reagendar / Editar
+                                    </button>
+                                    <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
+                                    <button class="dropdown-item" style="color: #dc2626;" onclick="NotaryCRM.deleteAppointment('${app.id}')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> 
+                                        Cancelar Cita
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:0.5rem; align-items:center;">
-                            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Cita Notarial: ' + app.clientName)}&dates=${app.date.replace(/-/g, '')}T${app.time.replace(/:/g, '')}00Z&details=${encodeURIComponent('Servicio: ' + app.type)}&sf=true&output=xml" target="_blank" class="btn-icon" title="Añadir a Google Calendar" style="color: #4285f4;">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><path d="M21 6H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path></svg>
+
+                        <!-- Quick Actions Row -->
+                        <div style="display:flex; gap:0.5rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #f1f5f9;">
+                             <a href="https://wa.me/?text=${encodeURIComponent('Hola ' + app.clientName + ', confirmo su cita para el ' + formattedDate + ' a las ' + app.time)}" target="_blank" class="btn btn-sm btn-outline" style="flex:1; justify-content:center; gap: 6px; border: 1px solid var(--color-gray-200);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> 
+                                WhatsApp
                             </a>
-                            <button class="btn-icon btn-danger" onclick="NotaryCRM.deleteAppointment('${app.id}')" title="Eliminar Cita">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
+                            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Cita Notarial: ' + app.clientName)}&dates=${app.date.replace(/-/g, '')}T${app.time.replace(/:/g, '')}00Z&details=${encodeURIComponent('Servicio: ' + app.type)}" target="_blank" class="btn btn-sm btn-outline" style="flex:1; justify-content:center; gap: 6px; border: 1px solid var(--color-gray-200);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 
+                                G-Cal
+                            </a>
                         </div>
                     </div>
                 </div>
             `).join('');
+
+            // Close dropdowns when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        if (!menu.contains(e.target)) menu.classList.remove('show');
+                    });
+                }, { once: true });
+            }, 100);
+        }
+
+        // Inject General Day Options if not present
+        const actionsContainer = document.getElementById('calendar-day-actions');
+        if (actionsContainer && !document.getElementById('day-extra-actions')) {
+            const extraActions = document.createElement('div');
+            extraActions.id = 'day-extra-actions';
+            extraActions.style.gridColumn = '1 / -1';
+            extraActions.style.display = 'flex';
+            extraActions.style.gap = '0.5rem';
+
+            const isBlocked = this.state.blockedDates?.find(b => b.date === dateStr);
+
+            extraActions.innerHTML = `
+                <button class="btn btn-block btn-outline" style="border: 1px solid var(--color-gray-300); color: var(--color-gray-700); justify-content: center; gap: 8px;" onclick="print()" title="Imprimir Agenda del Día">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Imprimir
+                </button>
+                <button class="btn btn-block ${isBlocked ? 'btn-success' : 'btn-outline-danger'}" style="justify-content: center; gap: 8px; border: 1px solid ${isBlocked ? '#22c55e' : '#fecaca'};" onclick="NotaryCRM.blockDay('${dateStr}')" title="${isBlocked ? 'Reactivar citas' : 'Bloquear citas publicas'}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        ${isBlocked ? '<path d="M7 11V7a5 5 0 0 1 10 0v4"></path><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><circle cx="12" cy="16" r="1.5"></circle>' : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>'}
+                    </svg>
+                    ${isBlocked ? 'Reactivar Día' : 'Bloquear Día'}
+                </button>
+             `;
+            actionsContainer.appendChild(extraActions);
         }
 
         const addBtn = document.getElementById('add-from-day-btn');
-        addBtn.onclick = () => {
-            this.closeModal('day-details-modal');
-            this.openModal('calendar-modal');
-            const dateInput = document.querySelector('#calendar-modal input[name="date"]');
-            if (dateInput) dateInput.value = dateStr;
-        };
+        if (addBtn) {
+            addBtn.onclick = () => {
+                this.closeModal('calendar-day-modal');
+                this.openModal('calendar-modal');
+                const dateInput = document.querySelector('#calendar-modal input[name="date"]');
+                if (dateInput) dateInput.value = dateStr;
+            };
+        }
 
-        this.openModal('day-details-modal');
+        this.openModal('calendar-day-modal');
+    },
+
+    editAppointment(id) {
+        const app = this.state.appointments.find(a => a.id === id);
+        if (!app) return;
+
+        const form = document.getElementById('calendar-form');
+        if (!form) return;
+
+        // Populate form
+        // We'll use a data attribute to store the id for the addAppointment function
+        form.dataset.editId = id;
+
+        const clientSelect = form.querySelector('select[name="clientId"]');
+        if (clientSelect) clientSelect.value = app.clientId || '';
+
+        const dateInput = form.querySelector('input[name="date"]');
+        if (dateInput) dateInput.value = app.date || '';
+
+        const timeInput = form.querySelector('input[name="time"]');
+        if (timeInput) timeInput.value = app.time || '';
+
+        const typeSelect = form.querySelector('select[name="type"]');
+        if (typeSelect) typeSelect.value = app.type || '';
+
+        const rec = form.querySelector('input[name="recurring"]');
+        if (rec) rec.checked = false;
+
+        this.closeModal('calendar-day-modal');
+        this.openModal('calendar-modal');
+    },
+
+    async blockDay(dateStr) {
+        if (!this.currentUser) return alert('Debes iniciar sesión.');
+
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        const existingBlock = this.state.blockedDates?.find(b => b.date === dateStr);
+
+        if (existingBlock) {
+            this.confirmAction(
+                'Reactivar Agenda',
+                `¿Deseas volver a habilitar el día ${formattedDate} para que los clientes puedan agendar citas?`,
+                async () => {
+                    try {
+                        const { doc, deleteDoc } = window.dbFuncs;
+                        const db = window.firebaseDB;
+                        if (this.useFirestore) {
+                            await deleteDoc(doc(db, 'blocked_dates', existingBlock.id));
+                        }
+                        Toast.success('Día Reactivado', `El día ${dateStr} ya está disponible nuevamente para el público.`);
+                        this.closeModal('calendar-day-modal');
+                    } catch (err) {
+                        console.error('Error unblocking day', err);
+                        Toast.error('Error', 'No se pudo habilitar el día.');
+                    }
+                },
+                { type: 'warning', confirmText: 'Reactivar Día' }
+            );
+        } else {
+            this.confirmAction(
+                'Bloquear Fecha',
+                `¿Bloquear el día ${formattedDate}? Los clientes no podrán agendar citas en este día desde la web de reservas.`,
+                async () => {
+                    try {
+                        const { addDoc, collection } = window.dbFuncs;
+                        const db = window.firebaseDB;
+
+                        if (this.useFirestore) {
+                            await addDoc(collection(db, 'blocked_dates'), {
+                                date: dateStr,
+                                ownerId: this.currentUser.uid,
+                                createdAt: new Date().toISOString()
+                            });
+                        }
+
+                        Toast.success('Día Bloqueado', `El día ${dateStr} ha sido bloqueado exitosamente.`);
+                        this.closeModal('calendar-day-modal');
+                    } catch (err) {
+                        console.error('Error blocking day', err);
+                        Toast.error('Error', 'No se pudo bloquear el día.');
+                    }
+                },
+                { type: 'danger', confirmText: 'Bloquear Agenda' }
+            );
+        }
     },
 
     async shareDayAgenda() {
-        const titleEl = document.getElementById('day-details-title');
+        const titleEl = document.getElementById('calendar-day-date');
         const appointments = Array.from(document.querySelectorAll('#day-appointments-list .timeline-item'));
 
         if (appointments.length === 0) return alert('No hay citas para compartir.');
 
-        let message = `*📅 Agenda ${titleEl.textContent}*\n\n`;
+        let message = `*📅 ${titleEl.textContent}*\n\n`;
 
         appointments.forEach(item => {
             const time = item.querySelector('.timeline-time').textContent;
