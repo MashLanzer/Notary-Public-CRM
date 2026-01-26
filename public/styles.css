@@ -3162,3 +3162,111 @@ body:not(.authenticated) {
         transform: translateY(0);
     }
 }
+
+/* ============================================
+   DOCUMENTS GENERATOR
+   ============================================ */
+
+.documents-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+}
+
+#doc-preview {
+    transition: all 0.2s ease;
+}
+
+#doc-client-search-results {
+    animation: fadeIn 0.2s ease;
+}
+
+@media (max-width: 1024px) {
+    .documents-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #doc-preview {
+        min-height: 500px !important;
+        padding: 20px !important;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================
+   KANBAN VIEW
+   ============================================ */
+.kanban-board {
+    display: flex;
+    gap: 1.5rem;
+    height: 100%;
+    align-items: flex-start;
+}
+
+.kanban-column {
+    flex: 0 0 300px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    border: 1px solid #e2e8f0;
+}
+
+.kanban-header {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #475569;
+}
+
+.kanban-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 50px;
+    /* Drop target area */
+}
+
+.kanban-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.kanban-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.kanban-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+/* Toggle Buttons */
+.btn-toggle.active {
+    background: white !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--color-primary);
+    font-weight: 600;
+}

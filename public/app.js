@@ -1627,6 +1627,11 @@ window.NotaryCRM = {
         // Initialize audit logs
         AuditManager.init();
 
+        // Initialize Documents Generator
+        if (window.DocumentsManager) {
+            DocumentsManager.init();
+        }
+
         // Log performance metrics after initialization
         setTimeout(() => {
             if (window.PerformanceOptimizer) {
@@ -1903,6 +1908,146 @@ window.NotaryCRM = {
         }
     },
 
+    // Render Cases List
+    renderCases() {
+        if (this.state.caseView === 'kanban') {
+            this.renderCasesKanban();
+            return;
+        }
+
+        const listContainer = document.getElementById('cases-list');
+        const kanbanContainer = document.getElementById('cases-kanban-board');
+        if (listContainer) listContainer.style.display = 'flex';
+        if (kanbanContainer) kanbanContainer.style.display = 'none';
+
+        if (!listContainer) return;
+
+        let cases = this.state.cases.filter(c =>
+            c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
+            c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
+        );
+
+        // Sorting (by date desc)
+        cases.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+
+        // Pagination
+        const start = (this.state.casesPage - 1) * this.state.casesPageSize;
+        const pagedCases = cases.slice(start, start + this.state.casesPageSize);
+
+        document.getElementById('cases-page-indicator').textContent = `Page ${this.state.casesPage}`;
+
+        if (pagedCases.length === 0) {
+            listContainer.innerHTML = '<p class="empty-state">No cases found.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = pagedCases.map(c => `
+            <div class="case-card">
+                <div class="case-header">
+                    <div class="case-title-row">
+                        <span class="case-number">${c.caseNumber}</span>
+                        <span class="status-badge status-${c.status}">${c.status.replace('-', ' ')}</span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn-icon" onclick="toggleDropdown('case-${c.id}')">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                        </button>
+                        <div class="dropdown-menu" id="dropdown-case-${c.id}">
+                            <a href="#" onclick="NotaryCRM.openEditCaseModal('${c.id}')">Edit</a>
+                            <a href="#" onclick="NotaryCRM.deleteCase('${c.id}')" style="color:var(--color-danger)">Delete</a>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin:0 0 .5rem 0; font-size:1rem; color:var(--text-primary)">${c.clientName}</h3>
+                    <p style="color:var(--text-secondary); font-size:0.875rem;">${c.type}</p>
+                    <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center; font-size:0.875rem;">
+                        <span style="font-weight:600;">$${parseFloat(c.amount).toFixed(2)}</span>
+                        <span>Due: ${c.dueDate}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    toggleCaseView(view) {
+        this.state.caseView = view; // 'list' or 'kanban'
+
+        // Update Buttons
+        document.getElementById('view-list-btn').classList.toggle('active', view === 'list');
+        document.getElementById('view-kanban-btn').classList.toggle('active', view === 'kanban');
+
+        // Update Visibility
+        const list = document.getElementById('cases-list');
+        const kanban = document.getElementById('cases-kanban-board');
+        const pagination = document.getElementById('cases-pagination');
+
+        if (view === 'kanban') {
+            if (list) list.style.display = 'none';
+            if (pagination) pagination.style.display = 'none';
+            if (kanban) {
+                kanban.style.display = 'flex';
+                this.renderCasesKanban();
+            }
+        } else {
+            if (kanban) kanban.style.display = 'none';
+            if (list) list.style.display = 'flex';
+            if (pagination) pagination.style.display = 'flex';
+            this.renderCases();
+        }
+    },
+
+    renderCasesKanban() {
+        const container = document.getElementById('cases-kanban-board');
+        if (!container) return;
+
+        let cases = this.state.cases.filter(c =>
+            c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
+            c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
+        );
+
+        const columns = {
+            'pending': { title: 'Pendiente', items: [] },
+            'in-progress': { title: 'En Proceso', items: [] },
+            'signed': { title: 'Firmado', items: [] },
+            'completed': { title: 'Completado', items: [] }
+        };
+
+        // Distribute items
+        cases.forEach(c => {
+            const status = c.status || 'pending';
+            if (columns[status]) {
+                columns[status].items.push(c);
+            } else {
+                columns['pending'].items.push(c); // Fallback
+            }
+        });
+
+        // Generate HTML
+        container.innerHTML = Object.keys(columns).map(status => `
+            <div class="kanban-column">
+                <div class="kanban-header">
+                    <span>${columns[status].title}</span>
+                    <span class="badge" style="background:var(--color-gray-200); color:var(--text-secondary); font-size:0.75rem;">${columns[status].items.length}</span>
+                </div>
+                <div class="kanban-cards">
+                    ${columns[status].items.map(c => `
+                        <div class="kanban-card" onclick="NotaryCRM.openEditCaseModal('${c.id}')">
+                            <span class="status-badge status-${status} kanban-tag" style="margin-bottom:0.5rem; display:inline-block; font-size:0.7rem; padding:2px 6px;">${c.caseNumber}</span>
+                            <h4>${c.clientName}</h4>
+                            <p style="font-size:0.8rem; color:#64748b; margin-bottom:0.5rem;">${c.type}</p>
+                            <div class="kanban-meta">
+                                <span>${new Date(c.dueDate).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
+                                <span style="font-weight:600;">$${c.amount}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${columns[status].items.length === 0 ? '<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin trámites</div>' : ''}
+                </div>
+            </div>
+        `).join('');
+    },
+
     // Render users list for admin
     renderUsers() {
         const container = document.getElementById('users-list');
@@ -2053,6 +2198,91 @@ window.NotaryCRM = {
         addL('search-clients', 'input', (e) => { this.state.searchClientQuery = e.target.value.toLowerCase(); this.state.clientsPage = 1; this.renderClients(); });
         addL('search-cases', 'input', (e) => { this.state.searchCaseQuery = e.target.value.toLowerCase(); this.state.casesPage = 1; this.renderCases(); });
 
+        // Global Command Search
+        const globalSearch = document.getElementById('global-command-search');
+        const searchResults = document.getElementById('global-search-results');
+
+        if (globalSearch && searchResults) {
+            globalSearch.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                searchResults.style.display = query.length > 0 ? 'block' : 'none';
+
+                if (query.length === 0) return;
+
+                const commands = [
+                    { type: 'nav', label: 'Go to Dashboard', action: () => this.switchTab('dashboard') },
+                    { type: 'nav', label: 'Go to Clients', action: () => this.switchTab('clients') },
+                    { type: 'nav', label: 'Go to Cases', action: () => this.switchTab('cases') },
+                    { type: 'nav', label: 'Go to Calendar', action: () => this.switchTab('calendar') },
+                    { type: 'action', label: 'Create New Client', action: () => this.openModal('client-modal') },
+                    { type: 'action', label: 'Create New Case', action: () => this.openModal('case-modal') }
+                ];
+
+                const filteredCmds = commands.filter(c => c.label.toLowerCase().includes(query));
+
+                const filteredClients = this.state.clients
+                    .filter(c => c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query))
+                    .slice(0, 5);
+
+                const filteredCases = this.state.cases
+                    .filter(c => c.caseNumber.toLowerCase().includes(query) || c.clientName.toLowerCase().includes(query))
+                    .slice(0, 5);
+
+                let html = '';
+
+                if (filteredCmds.length > 0) {
+                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">COMMANDS</div>`;
+                    html += filteredCmds.map(cmd => `
+                        <div class="search-result-item" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background: #f1f5f9;" onclick="window.NotaryCRM.execGlobalCommand(${commands.indexOf(cmd)})">
+                            <span style="color: var(--color-primary); margin-right: 8px;">Run</span> ${cmd.label}
+                        </div>
+                    `).join('');
+                }
+
+                if (filteredClients.length > 0) {
+                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">CLIENTS</div>`;
+                    html += filteredClients.map(c => `
+                        <div class="search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="window.NotaryCRM.openEditModal('${c.id}')">
+                            <div style="font-weight: 500;">${c.name}</div>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">${c.email}</div>
+                        </div>
+                    `).join('');
+                }
+
+                if (filteredCases.length > 0) {
+                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">CASES</div>`;
+                    html += filteredCases.map(c => `
+                        <div class="search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="window.NotaryCRM.switchTab('cases'); window.NotaryCRM.state.searchCaseQuery='${c.caseNumber}'; window.NotaryCRM.renderCases();">
+                            <div style="font-weight: 500;">${c.caseNumber} - ${c.clientName}</div>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">${c.type}</div>
+                        </div>
+                    `).join('');
+                }
+
+                if (!html) html = '<div style="padding: 12px; color: #94a3b8; text-align: center;">No results found</div>';
+
+                searchResults.innerHTML = html;
+
+                // Hacky way to store commands for onclick
+                window.NotaryCRM.tempGlobalCommands = commands;
+            });
+
+            // Focus on Cmd+K
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    globalSearch.focus();
+                }
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-command-bar')) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+
         // Auth
         addL('sign-in-btn', 'click', () => this.openModal('auth-modal'));
         addL('email-login-btn', 'click', () => this.openModal('auth-modal')); // Nuevo botón en landing
@@ -2060,13 +2290,20 @@ window.NotaryCRM = {
         addL('register-btn', 'click', () => this.registerFromForm());
         addL('auth-form', 'submit', (e) => { e.preventDefault(); this.signIn(e.target); });
 
-        // Calendar View
+        // Calendar View links
         document.querySelectorAll('.cal-view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const view = e.target.getAttribute('data-view');
                 if (this.calendar) this.calendar.changeView(view);
             });
         });
+    },
+
+    execGlobalCommand(index) {
+        if (this.tempGlobalCommands && this.tempGlobalCommands[index]) {
+            this.tempGlobalCommands[index].action();
+            document.getElementById('global-search-results').style.display = 'none';
+        }
     },
 
     // Check if current user has a specific permission
@@ -2315,10 +2552,16 @@ window.NotaryCRM = {
 
         // Update tab buttons & content
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.style.display = 'none'; // Force hide for robust switching
+        });
 
         const targetTab = document.getElementById(`${tabName}-tab`);
-        if (targetTab) targetTab.classList.add('active');
+        if (targetTab) {
+            targetTab.classList.add('active');
+            targetTab.style.display = 'block'; // Force show
+        }
 
         const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
         if (targetBtn) targetBtn.classList.add('active');
@@ -2336,6 +2579,12 @@ window.NotaryCRM = {
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
         if (tabName === 'emails') EmailManager.renderTemplates();
+        if (tabName === 'documents' && window.DocumentsManager) {
+            const layout = document.querySelector('.documents-layout');
+            if (layout) layout.style.display = 'grid'; // Ensure grid is restored
+            DocumentsManager.updatePreview();
+            setTimeout(() => DocumentsManager.resizeCanvas(), 100);
+        }
     },
 
     switchHelpTab(tab) {
@@ -2927,6 +3176,12 @@ window.NotaryCRM = {
             }
         })();
     },
+
+    // Aliases for compatibility with HTML onclick handlers
+    openEditCaseModal(id) { this.editCasePrompt(id); },
+    openEditModal(id) { this.editClientPrompt(id); },
+    showClientDetails(id) { this.editClientPrompt(id); }, // Reusing edit modal for details for now
+    showCaseDetails(id) { this.editCasePrompt(id); }, // Reusing edit modal for details for now
 
     // Update sync indicator
     updateSyncStatus(status) {
@@ -4786,8 +5041,396 @@ const Reminders = {
     }
 };
 
+
+
+// ============================================
+// DOCUMENTS MANAGER (PDF & SIGNATURE)
+// ============================================
+
+const DocumentsManager = {
+    signaturePad: null,
+    templates: {
+        affidavit: {
+            title: "AFFIDAVIT GENERAL",
+            content: (data) => `
+                <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
+                    <h2 style="text-align: center; margin-bottom: 2rem;">AFFIDAVIT</h2>
+                    
+                    <p><strong>ESTADO DE:</strong> ${data.location.split(',')[1] || '___________'}</p>
+                    <p><strong>CONDADO DE:</strong> ${data.location.split(',')[0] || '___________'}</p>
+                    
+                    <br>
+                    
+                    <p>ANTES DE MÍ, la autoridad que suscribe, compareció personalmente <strong>${data.clientName}</strong>, quien siendo debidamente juramentado, depone y dice:</p>
+                    
+                    <p style="text-align: justify; margin: 1.5rem 0; min-height: 100px;">
+                        ${data.body || '[El contenido de la declaración jurada aparecerá aquí...]'}
+                    </p>
+                    
+                    <p>BAJO PROTESTA DE DECIR VERDAD.</p>
+                    
+                    <br><br><br>
+                    
+                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
+                        Firma del Declarante<br>
+                        <strong>${data.clientName}</strong>
+                    </div>
+                    
+                    <br><br>
+                    
+                    <p>JURADO y SUSCRITO ante mí este día <strong>${data.date}</strong>.</p>
+                    
+                    <br><br><br>
+                    
+                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
+                        Notario Público
+                    </div>
+                </div>
+            `
+        },
+        power_attorney: {
+            title: "PODER NOTARIAL",
+            content: (data) => `
+                 <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
+                    <h2 style="text-align: center; margin-bottom: 2rem;">PODER LEGAL GENERAL</h2>
+                    
+                    <p style="text-align: justify;">
+                        SEPASE POR TODOS LOS PRESENTES, que yo, <strong>${data.clientName}</strong>, residente de ${data.location}, por la presente nombro y constituyo a un representante legal para actuar en mi nombre y lugar.
+                    </p>
+                    
+                    <p style="text-align: justify; margin: 1.5rem 0;">
+                        Por medio de este instrumento otorgo plenos poderes y autoridad para realizar y ejecutar todos y cada uno de los actos necesarios con el mismo efecto que si yo estuviera personalmente presente.
+                    </p>
+
+                    <h4 style="margin-bottom: 0.5rem; text-decoration: underline;">TÉRMINOS ESPECÍFICOS:</h4>
+                    <p style="text-align: justify; margin-bottom: 2rem;">
+                         ${data.body || '[Detalles de los poderes otorgados...]'}
+                    </p>
+                    
+                    <p>EN FE DE LO CUAL, he firmado este documento el día <strong>${data.date}</strong>.</p>
+                    
+                    <br><br><br>
+                    
+                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
+                        Firma del Otorgante<br>
+                        <strong>${data.clientName}</strong>
+                    </div>
+                </div>
+            `
+        },
+        contract: {
+            title: "CONTRATO DE SERVICIOS",
+            content: (data) => `
+                <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
+                    <h2 style="text-align: center; margin-bottom: 2rem;">ACUERDO DE SERVICIOS PROFESIONALES</h2>
+                    
+                    <p>Este acuerdo se celebra el <strong>${data.date}</strong> entre:</p>
+                    
+                    <p><strong>PROVEEDOR:</strong> Notary Public Services<br>
+                    <strong>CLIENTE:</strong> ${data.clientName}</p>
+                    
+                    <br>
+                    
+                    <h4 style="text-decoration: underline;">ALCANCE DEL SERVICIO:</h4>
+                    <p style="text-align: justify; margin-bottom: 1.5rem;">
+                         ${data.body || '[Descripción de los servicios notariales a prestar...]'}
+                    </p>
+                    
+                    <p>El Cliente acepta pagar los honorarios acordados por estos servicios profesionales.</p>
+                    
+                    <br><br>
+                    
+                    <div style="display: flex; gap: 2rem;">
+                        <div style="flex: 1;">
+                            <br><br><br>
+                            <div style="border-top: 1px solid #000; padding-top: 5px;">
+                                Firma del Cliente<br>
+                                <strong>${data.clientName}</strong>
+                            </div>
+                        </div>
+                         <div style="flex: 1;">
+                            <br><br><br>
+                            <div style="border-top: 1px solid #000; padding-top: 5px;">
+                                Firma del Proveedor<br>
+                                <strong>Notary Public</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        }
+    },
+
+    init() {
+        if (document.getElementById('signature-pad')) {
+            this.resizeCanvas();
+
+            // Add resize listener
+            window.addEventListener('resize', () => this.resizeCanvas());
+
+            document.getElementById('clear-signature').addEventListener('click', () => {
+                if (this.signaturePad) this.signaturePad.clear();
+            });
+
+            // Set default date
+            const dateInput = document.getElementById('doc-date');
+            if (dateInput) dateInput.valueAsDate = new Date();
+        }
+
+        this.attachListeners();
+        this.updatePreview();
+    },
+
+    resizeCanvas() {
+        const canvas = document.getElementById('signature-pad');
+        if (!canvas) return;
+
+        // Verify visibility before resizing to avoid 0x0
+        if (canvas.offsetWidth === 0) return;
+
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+
+        // Check if library loaded
+        if (typeof SignaturePad === 'undefined') {
+            console.warn('SignaturePad library not loaded (blocked by browser?)');
+            const ctx = canvas.getContext('2d');
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Firma digital no disponible (librería bloqueada)', 10, 30);
+            return;
+        }
+
+        // Re-init pad to handle new context scaling
+        try {
+            if (this.signaturePad) {
+                const data = this.signaturePad.toData();
+                this.signaturePad.off(); // Remove old listeners
+                this.signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgba(255, 255, 255, 0)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+                this.signaturePad.fromData(data); // Put data back
+            } else {
+                // First time initialization
+                this.signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgba(255, 255, 255, 0)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+            }
+        } catch (e) {
+            console.error('SignaturePad init error:', e);
+        }
+    },
+
+    attachListeners() {
+        const inputs = ['doc-template-select', 'doc-date', 'doc-location', 'doc-body', 'doc-client-id'];
+
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => this.updatePreview());
+        });
+
+        // Client Autocomplete Logic
+        const searchInput = document.getElementById('doc-client-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => this.handleClientSearch(e.target.value));
+
+            // Close autocomplete on click outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#doc-client-search-results') && e.target !== searchInput) {
+                    const list = document.getElementById('doc-client-search-results');
+                    if (list) list.remove();
+                }
+            });
+        }
+
+        // Generate PDF
+        const genBtn = document.getElementById('generate-pdf-btn');
+        if (genBtn) genBtn.addEventListener('click', () => this.generatePDF());
+    },
+
+    handleClientSearch(query) {
+        // Remove existing list
+        const existing = document.getElementById('doc-client-search-results');
+        if (existing) existing.remove();
+
+        if (!query || query.length < 2) return;
+
+        const results = NotaryCRM.state.clients.filter(c =>
+            c.name.toLowerCase().includes(query.toLowerCase()) ||
+            c.email.toLowerCase().includes(query.toLowerCase())
+        );
+
+        if (results.length === 0) return;
+
+        const list = document.createElement('div');
+        list.id = 'doc-client-search-results';
+        list.style.cssText = `
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            width: ${document.getElementById('doc-client-search').offsetWidth}px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        `;
+
+        // Position relative to input
+        const input = document.getElementById('doc-client-search');
+        input.parentNode.style.position = 'relative'; // Ensure parent is relative
+        input.parentNode.appendChild(list);
+
+        results.forEach(client => {
+            const item = document.createElement('div');
+            item.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background-color: #f8fafc;';
+            item.textContent = client.name;
+            item.onmouseover = () => item.style.backgroundColor = '#f8fafc';
+            item.onmouseout = () => item.style.backgroundColor = 'white';
+
+            item.onclick = () => {
+                input.value = client.name;
+                document.getElementById('doc-client-id').value = client.id;
+                // Auto-fill address if location empty
+                if (client.address && !document.getElementById('doc-location').value) {
+                    // Try to extract city/state or just put full address
+                    document.getElementById('doc-location').value = client.address;
+                }
+                list.remove();
+                this.updatePreview();
+            };
+            list.appendChild(item);
+        });
+    },
+
+    updatePreview() {
+        const previewEl = document.getElementById('doc-preview');
+        const templateKey = document.getElementById('doc-template-select').value;
+        const template = this.templates[templateKey];
+
+        if (!template) return;
+
+        const data = {
+            clientName: document.getElementById('doc-client-search').value || '__________________',
+            date: document.getElementById('doc-date').value || '__________',
+            location: document.getElementById('doc-location').value || '__________',
+            body: document.getElementById('doc-body').value.replace(/\n/g, '<br>')
+        };
+
+        previewEl.innerHTML = template.content(data);
+    },
+
+    async generatePDF() {
+        if (!window.jspdf) return alert('Librería PDF no cargada. Recarga la página.');
+
+        const templateKey = document.getElementById('doc-template-select').value;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Settings
+        doc.setFont("times", "normal");
+        doc.setFontSize(12);
+
+        // Get HTML content - simplified extraction for PDF
+        // In a real app we might use .html() but let's replicate the text structure for reliability
+
+        const clientName = document.getElementById('doc-client-search').value || '__________________';
+        const date = document.getElementById('doc-date').value || new Date().toLocaleDateString();
+        const location = document.getElementById('doc-location').value || 'Miami, FL';
+        const bodyText = document.getElementById('doc-body').value;
+
+        let y = 20;
+
+        // Header
+        doc.setFontSize(16);
+        doc.setFont("times", "bold");
+        doc.text(this.templates[templateKey].title, 105, y, { align: "center" });
+        y += 20;
+
+        doc.setFontSize(12);
+        doc.setFont("times", "normal");
+
+        if (templateKey === 'affidavit') {
+            doc.text(`ESTADO DE: ${location.split(',')[1] || '___________'}`, 20, y);
+            y += 10;
+            doc.text(`CONDADO DE: ${location.split(',')[0] || '___________'}`, 20, y);
+            y += 20;
+
+            const intro = `ANTES DE MÍ, la autoridad que suscribe, compareció personalmente ${clientName}, quien siendo debidamente juramentado, depone y dice:`;
+            const splitIntro = doc.splitTextToSize(intro, 170);
+            doc.text(splitIntro, 20, y);
+            y += splitIntro.length * 7 + 10;
+
+            if (bodyText) {
+                const splitBody = doc.splitTextToSize(bodyText, 170);
+                doc.text(splitBody, 20, y);
+                y += splitBody.length * 7 + 20;
+            } else {
+                y += 40; // Space for body
+            }
+
+            doc.text('BAJO PROTESTA DE DECIR VERDAD.', 20, y);
+            y += 30;
+
+            // Signature Logic
+            if (!this.signaturePad.isEmpty()) {
+                const imgData = this.signaturePad.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', 20, y - 25, 50, 25);
+            }
+
+            doc.line(20, y, 100, y);
+            doc.text(`Firma: ${clientName}`, 20, y + 5);
+
+            y += 20;
+            doc.text(`JURADO y SUSCRITO ante mí el ${date}.`, 20, y);
+            y += 30;
+
+            doc.line(20, y, 100, y);
+            doc.text(`Notario Público`, 20, y + 5);
+
+        } else if (templateKey === 'power_attorney') {
+            const p1 = `SEPASE POR TODOS LOS PRESENTES, que yo, ${clientName}, residente de ${location}, por la presente nombro y constituyo a un representante legal...`;
+            doc.text(doc.splitTextToSize(p1, 170), 20, y);
+            y += 30;
+
+            if (bodyText) {
+                doc.setFont("times", "bold");
+                doc.text("TÉRMINOS ESPECÍFICOS:", 20, y);
+                y += 10;
+                doc.setFont("times", "normal");
+                doc.text(doc.splitTextToSize(bodyText, 170), 20, y);
+                y += 50;
+            }
+
+            // Signature
+            if (!this.signaturePad.isEmpty()) {
+                const imgData = this.signaturePad.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', 20, y - 25, 50, 25);
+            }
+            doc.line(20, y, 100, y);
+            doc.text(`Firma: ${clientName}`, 20, y + 5);
+            y += 10;
+            doc.text(`Fecha: ${date}`, 20, y + 15);
+        } else {
+            // Generic fallback
+            doc.text("Documento Generado", 20, y);
+            y += 10;
+            doc.text(`Cliente: ${clientName}`, 20, y);
+            y += 10;
+            doc.text(doc.splitTextToSize(bodyText, 170), 20, y);
+        }
+
+        doc.save(`${templateKey}_${clientName.replace(/\s/g, '_')}.pdf`);
+        Toast.success('PDF Generado', 'El documento se ha descargado correctamente.');
+    }
+};
+
 // Expose to global for onclick handlers
 window.Reminders = Reminders;
+window.DocumentsManager = DocumentsManager;
 window.NotaryCRM = NotaryCRM;
 
 // Ensure escapeHtml exists (safety patch)
