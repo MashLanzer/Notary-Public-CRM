@@ -2167,55 +2167,58 @@
             </div>
 
 
-            <!-- Dynamic Signature Modal -->
-            <div class="modal" id="signature-modal">
-                <div class="modal-backdrop" onclick="NotaryCRM.closeModal('signature-modal')"></div>
-                <div class="modal-content" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Firma Digital</h3>
-                        <button class="modal-close" data-modal="signature-modal">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
+        </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- Dynamic Signature Modal -->
+    <div class="modal" id="signature-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('signature-modal')"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Firma Digital</h3>
+                <button class="modal-close" data-modal="signature-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="sig-role-display" style="margin-bottom: 1rem; color: var(--color-primary); font-weight: 600;">
+                    Firmando...</p>
+
+                <!-- Tabs -->
+                <div class="tabs" style="display:flex; gap:10px; margin-bottom:1rem; border-bottom:1px solid #e2e8f0;">
+                    <button class="tab-btn active" onclick="NoteGenerator.switchSigTab('draw')" id="tab-draw-btn"
+                        style="padding:8px 16px; border:none; background:none; border-bottom:2px solid var(--color-primary); font-weight:600; cursor:pointer;">🖋️
+                        Dibujar</button>
+                    <button class="tab-btn" onclick="NoteGenerator.switchSigTab('type')" id="tab-type-btn"
+                        style="padding:8px 16px; border:none; background:none; border-bottom:2px solid transparent; color:#64748b; cursor:pointer;">⌨️
+                        Escribir</button>
+                </div>
+
+                <!-- Draw Section -->
+                <div id="sig-draw-section">
+                    <div
+                        style="border: 2px dashed #94a3b8; border-radius: 8px; background: #fff; height: 200px; position: relative;">
+                        <canvas id="modal-signature-pad"
+                            style="width: 100%; height: 100%; touch-action: none;"></canvas>
                     </div>
-                    <div class="modal-body">
-                        <p id="sig-role-display"
-                            style="margin-bottom: 1rem; color: var(--color-primary); font-weight: 600;">Firmando...</p>
+                    <div style="text-align:right; margin-top:5px;">
+                        <button class="btn btn-sm btn-text" id="modal-clear-sig">Limpiar</button>
+                    </div>
+                </div>
 
-                        <!-- Tabs -->
-                        <div class="tabs"
-                            style="display:flex; gap:10px; margin-bottom:1rem; border-bottom:1px solid #e2e8f0;">
-                            <button class="tab-btn active" onclick="NoteGenerator.switchSigTab('draw')"
-                                id="tab-draw-btn"
-                                style="padding:8px 16px; border:none; background:none; border-bottom:2px solid var(--color-primary); font-weight:600; cursor:pointer;">🖋️
-                                Dibujar</button>
-                            <button class="tab-btn" onclick="NoteGenerator.switchSigTab('type')" id="tab-type-btn"
-                                style="padding:8px 16px; border:none; background:none; border-bottom:2px solid transparent; color:#64748b; cursor:pointer;">⌨️
-                                Escribir</button>
-                        </div>
+                <!-- Type Section -->
+                <div id="sig-type-section" style="display:none;">
+                    <label class="form-label">Escriba su nombre completo:</label>
+                    <input type="text" id="sig-type-input" class="form-input" placeholder="Su Nombre"
+                        style="margin-bottom:1rem;">
 
-                        <!-- Draw Section -->
-                        <div id="sig-draw-section">
-                            <div
-                                style="border: 2px dashed #94a3b8; border-radius: 8px; background: #fff; height: 200px; position: relative;">
-                                <canvas id="modal-signature-pad"
-                                    style="width: 100%; height: 100%; touch-action: none;"></canvas>
-                            </div>
-                            <div style="text-align:right; margin-top:5px;">
-                                <button class="btn btn-sm btn-text" id="modal-clear-sig">Limpiar</button>
-                            </div>
-                        </div>
-
-                        <!-- Type Section -->
-                        <div id="sig-type-section" style="display:none;">
-                            <label class="form-label">Escriba su nombre completo:</label>
-                            <input type="text" id="sig-type-input" class="form-input" placeholder="Su Nombre"
-                                style="margin-bottom:1rem;">
-
-                            <label class="form-label">Vista Previa:</label>
-                            <div id="sig-type-preview" style="
+                    <label class="form-label">Vista Previa:</label>
+                    <div id="sig-type-preview" style="
                         font-family: 'Great Vibes', cursive; 
                         font-size: 3rem; 
                         color: #000; 
@@ -2228,47 +2231,47 @@
                         align-items: center;
                         justify-content: center;
                     ">Firma Aquí</div>
-                        </div>
+                </div>
 
-                        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
-                            <button class="btn btn-primary" id="modal-save-sig" style="width:100%;">Confirmar e
-                                Insertar</button>
-                        </div>
-                    </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" id="modal-save-sig" style="width:100%;">Confirmar e
+                        Insertar</button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Scripts -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
-            <!-- FullCalendar -->
-            <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
 
-            <!-- PDF & Signature Libs -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <!-- PDF & Signature Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
-            <script type="module" src="firebase-init.js"></script>
-            <script src="draft-manager.js"></script>
-            <script src="smart-autocomplete.js"></script>
-            <script src="screen-reader-manager.js"></script>
-            <script src="file-upload-manager.js"></script>
-            <script src="calendar-enhancements.js"></script>
-            <script src="case-attachments-manager.js"></script>
-            <script src="advanced-calendar-features.js"></script>
-            <script src="interactive-charts.js"></script>
-            <script src="performance-optimizer.js"></script>
-            <script src="advanced-analytics.js"></script>
-            <script src="scroll-and-optimization.js"></script>
-            <script src="communication-manager.js"></script>
-            <script src="payment-manager.js"></script>
-            <script src="security-manager.js"></script>
-            <script src="advanced-features.js"></script>
-            <script src="business-features.js"></script>
-            <script src="faq-data.js"></script>
-            <script type="module" src="app.js"></script>
+    <script type="module" src="firebase-init.js"></script>
+    <script src="draft-manager.js"></script>
+    <script src="smart-autocomplete.js"></script>
+    <script src="screen-reader-manager.js"></script>
+    <script src="file-upload-manager.js"></script>
+    <script src="calendar-enhancements.js"></script>
+    <script src="case-attachments-manager.js"></script>
+    <script src="advanced-calendar-features.js"></script>
+    <script src="interactive-charts.js"></script>
+    <script src="performance-optimizer.js"></script>
+    <script src="advanced-analytics.js"></script>
+    <script src="scroll-and-optimization.js"></script>
+    <script src="communication-manager.js"></script>
+    <script src="payment-manager.js"></script>
+    <script src="security-manager.js"></script>
+    <script src="advanced-features.js"></script>
+    <script src="business-features.js"></script>
+    <script src="faq-data.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 
 </html>
