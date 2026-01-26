@@ -662,47 +662,10 @@
                     <h2 class="section-title">Centro de Documentos y Comunicaciones</h2>
                 </div>
 
-                <div class="comms-layout"
-                    style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; align-items: start;">
+                <div class="comms-layout" style="display: flex; flex-direction: column; gap: 2rem;">
 
-                    <!-- Left Column: Templates & Tools -->
-                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-
-                        <!-- Email Templates -->
-                        <div class="card" style="padding: 1.25rem;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <div>
-                                    <h3 style="margin: 0; font-size: 1.1rem;">Plantillas de Email</h3>
-                                    <p style="margin: 4px 0 0; font-size: 0.8rem; color: #64748b;">Correos rápidos para
-                                        clientes</p>
-                                </div>
-                                <button class="btn btn-sm" onclick="NotaryCRM.openModal('template-modal')"
-                                    title="Nueva Plantilla">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="template-grid" id="templates-list"
-                                style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                <p class="empty-state" style="font-size: 0.9rem; padding: 1rem;">No hay plantillas
-                                    creadas.</p>
-                            </div>
-                        </div>
-
-                        <!-- Future: Email History or Quick Send -->
-                        <div class="card" style="padding: 1.25rem; background: #f8fafc; border: 1px dashed #cbd5e1;">
-                            <h4 style="font-size: 0.9rem; color: #475569; margin-bottom: 0.5rem;">Consejo Pro</h4>
-                            <p style="font-size: 0.8rem; color: #64748b;">Usa el botón "Enviar Correo" desde el perfil
-                                de cualquier cliente para usar estas plantillas rápidamente.</p>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Document Generator Workspace -->
-                    <div class="card" style="padding: 2rem;">
+                    <!-- 1. Document Generator Workspace (Now First & Full Width) -->
+                    <div class="card" style="padding: 2rem; width: 100%;">
                         <h3
                             style="margin-bottom: 1.5rem; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: var(--color-primary);">
                             Generador de Documentos Legales</h3>
@@ -915,52 +878,87 @@
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Users Tab (admin) -->
-            <div class="tab-content" id="users-tab">
-                <div class="actions-bar">
-                    <button class="btn btn-primary" id="refresh-users-btn">Refresh Users</button>
-                </div>
-                <div class="card">
-                    <h2 class="card-title">Users</h2>
-                    <div id="users-list">
-                        <p class="empty-state">No users available.</p>
-                    </div>
-                </div>
-            </div>
+                    <!-- 2. Email Templates & Tools (Now Second & Full Width) -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%;">
 
-            <!-- Audit Logs Tab (admin) -->
-            <div class="tab-content" id="audit-tab">
-                <div class="actions-bar">
-                    <h2 class="section-title">Registros de Auditoría</h2>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
+                        <!-- Email Templates -->
+                        <div class="card" style="padding: 1.25rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.1rem;">Plantillas de Email</h3>
+                                    <p style="margin: 4px 0 0; font-size: 0.8rem; color: #64748b;">Correos rápidos para
+                                        clientes</p>
+                                </div>
+                                <button class="btn btn-sm" onclick="NotaryCRM.openModal('template-modal')"
+                                    title="Nueva Plantilla">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="template-grid" id="templates-list"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                                <p class="empty-state" style="font-size: 0.9rem; padding: 1rem;">No hay plantillas
+                                    creadas.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pro Tip -->
+                        <div class="card" style="padding: 1.25rem; background: #f8fafc; border: 1px dashed #cbd5e1;">
+                            <h4 style="font-size: 0.9rem; color: #475569; margin-bottom: 0.5rem;">Consejo Pro</h4>
+                            <p style="font-size: 0.8rem; color: #64748b;">Usa el botón "Enviar Correo" desde el perfil
+                                de cualquier cliente para usar estas plantillas rápidamente.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha y Hora</th>
-                                    <th>Usuario</th>
-                                    <th>Acción</th>
-                                    <th>Recurso</th>
-                                    <th>Detalles</th>
-                                </tr>
-                            </thead>
-                            <tbody id="audit-logs-list">
-                                <tr>
-                                    <td colspan="5" class="empty-state">No hay registros de auditoría aún.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                <!-- Users Tab (admin) -->
+                <div class="tab-content" id="users-tab">
+                    <div class="actions-bar">
+                        <button class="btn btn-primary" id="refresh-users-btn">Refresh Users</button>
+                    </div>
+                    <div class="card">
+                        <h2 class="card-title">Users</h2>
+                        <div id="users-list">
+                            <p class="empty-state">No users available.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Logs Tab (admin) -->
+                <div class="tab-content" id="audit-tab">
+                    <div class="actions-bar">
+                        <h2 class="section-title">Registros de Auditoría</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha y Hora</th>
+                                        <th>Usuario</th>
+                                        <th>Acción</th>
+                                        <th>Recurso</th>
+                                        <th>Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-logs-list">
+                                    <tr>
+                                        <td colspan="5" class="empty-state">No hay registros de auditoría aún.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <!-- Footer -->
