@@ -9408,44 +9408,74 @@ const NoteGenerator = {
     },
 
     handleSaveSignature() {
+        console.log('Attempting to save signature...');
         let dataUrl = null;
 
-        if (this.activeSigMode === 'type') {
-            const text = document.getElementById('sig-type-input').value;
-            if (!text || !text.trim()) return alert('Por favor escriba su nombre para firmar.');
+        try {
+            if (this.activeSigMode === 'type') {
+                const text = document.getElementById('sig-type-input').value;
+                if (!text || !text.trim()) {
+                    alert('Por favor escriba su nombre para firmar.');
+                    return;
+                }
 
-            // Create canvas for text signature
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 600;
-            canvas.height = 150;
+                // Create canvas for text signature
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 600;
+                canvas.height = 150;
 
-            // Draw text
-            ctx.font = "italic 60px 'Great Vibes', cursive";
-            ctx.fillStyle = "black";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+                // Draw text
+                ctx.font = "italic 60px 'Great Vibes', cursive";
+                ctx.fillStyle = "black";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
-            dataUrl = canvas.toDataURL('image/png');
-        } else {
-            // Draw mode
-            if (!this.signaturePad || this.signaturePad.isEmpty()) return alert('Firme antes de confirmar.');
-            dataUrl = this.signaturePad.toDataURL('image/png');
-        }
-
-        if (this.currentSigElement && dataUrl) {
-            // Save to state persistence
-            if (this.currentRole) {
-                this.signatures[this.currentRole] = dataUrl;
+                dataUrl = canvas.toDataURL('image/png');
+            } else {
+                // Draw mode
+                if (!this.signaturePad || this.signaturePad.isEmpty()) {
+                    alert('Por favor firme antes de confirmar.');
+                    return;
+                }
+                dataUrl = this.signaturePad.toDataURL('image/png');
             }
 
-            const img = document.createElement('img');
-            img.src = dataUrl;
-            this.currentSigElement.innerHTML = '';
-            this.currentSigElement.appendChild(img);
-            this.currentSigElement.classList.add('signed');
-            NotaryCRM.closeModal('signature-modal');
+            if (!this.currentSigElement) {
+                console.error('No currentSigElement found');
+                alert('Error: No se ha seleccionado una zona de firma. Por favor cierre e intente de nuevo.');
+                NotaryCRM.closeModal('signature-modal');
+                return;
+            }
+
+            if (dataUrl) {
+                console.log('Signature generated, inserting into DOM');
+                // Save to state persistence
+                if (this.currentRole) {
+                    this.signatures[this.currentRole] = dataUrl;
+                }
+
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                // Force styling to ensure it is visible within the box
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+
+                this.currentSigElement.innerHTML = '';
+                this.currentSigElement.appendChild(img);
+                this.currentSigElement.classList.add('signed');
+
+                // Close modal
+                NotaryCRM.closeModal('signature-modal');
+
+                // Optional: Update PDF preview if live update needed
+                // this.updatePreview(); 
+            }
+        } catch (e) {
+            console.error('Error saving signature:', e);
+            alert('Error al guardar la firma: ' + e.message);
         }
     },
 
