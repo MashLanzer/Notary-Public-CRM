@@ -2647,6 +2647,7 @@ window.NotaryCRM = {
         const modal = document.getElementById(modalId);
         if (!modal) return;
         modal.classList.remove('active');
+        modal.style.display = ''; // Clear inline styles that might force display
         document.body.style.overflow = '';
 
         // Reset form
