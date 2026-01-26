@@ -516,6 +516,24 @@
         // Init
         loadAppointments();
     </script>
+    <script>
+        // Check for service parameter in URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceParam = urlParams.get('service');
+
+            if (serviceParam) {
+                const select = document.querySelector('select[name="type"]');
+                if (select) {
+                    // Try to find exact match
+                    let match = Array.from(select.options).find(opt => opt.value === serviceParam);
+                    if (match) {
+                        select.value = serviceParam;
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -208,6 +208,58 @@
             border: 1px solid #e5e7eb;
             transition: transform 0.2s, box-shadow 0.2s;
             text-align: center;
+            cursor: pointer;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .close-modal:hover {
+            color: #111827;
         }
 
         .service-card:hover {
@@ -283,7 +335,10 @@
             }
 
             .nav-links {
-                display: none;
+                /* display: none; */
+                display: flex;
+                font-size: 0.9rem;
+                gap: 1rem;
             }
         }
     </style>
@@ -338,31 +393,39 @@
                     </a>
                     <a href="#servicios" class="btn btn-outline btn-lg">Ver Servicios</a>
                 </div>
-                <div
-                    style="margin-top: 2rem; display: flex; align-items: center; gap: 1rem; color: #6b7280; font-size: 0.9rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="color: #16a34a;">
-                            <polyline points="20 6 9 17 4 12"></polyline>
+                <!-- Badges / Certifications -->
+                <div style="margin-top: 2.5rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; background: #f0fdf4; padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #bbf7d0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #16a34a; width: 20px; height: 20px;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
-                        <span>Certificado</span>
+                        <span style="color: #15803d; font-weight: 600; font-size: 0.9rem;">NNA Certified</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="color: #16a34a;">
-                            <polyline points="20 6 9 17 4 12"></polyline>
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; background: #eff6ff; padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #bfdbfe;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #2563eb; width: 20px; height: 20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 8v8"></path>
+                            <path d="M8 12h8"></path>
                         </svg>
-                        <span>Seguro</span>
+                        <span style="color: #1d4ed8; font-weight: 600; font-size: 0.9rem;">Background Screened</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="color: #16a34a;">
-                            <polyline points="20 6 9 17 4 12"></polyline>
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; background: #fefce8; padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #fef08a;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #ca8a04; width: 20px; height: 20px;">
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                            </path>
                         </svg>
-                        <span>Rápido</span>
+                        <span style="color: #a16207; font-weight: 600; font-size: 0.9rem;">Top Rated</span>
                     </div>
                 </div>
             </div>
+
             <div class="hero-graphic">
                 <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
                     style="width: 100%; height: auto; max-width: 500px; display: block; margin: 0 auto; filter: drop-shadow(0 20px 30px rgba(30, 58, 138, 0.15));">
@@ -398,7 +461,8 @@
             </div>
 
             <div class="services-grid">
-                <div class="service-card">
+                <!-- Service 1 -->
+                <div class="service-card" onclick="openServiceModal('poderes')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -412,7 +476,8 @@
                     <p class="text-muted">Otorgamiento de facultades para representación legal, pleitos y cobranzas.</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 2 -->
+                <div class="service-card" onclick="openServiceModal('testamentos')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -424,7 +489,8 @@
                     <p class="text-muted">Proteja su patrimonio y asegure el bienestar de sus seres queridos.</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 3 -->
+                <div class="service-card" onclick="openServiceModal('bienes')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 21h18"></path>
@@ -436,7 +502,8 @@
                     <p class="text-muted">Compraventas, constitución de hipotecas, y cancelaciones.</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 4 -->
+                <div class="service-card" onclick="openServiceModal('fe')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -449,7 +516,8 @@
                     <p class="text-muted">Constancia oficial sobre hechos físicos o declaraciones ante notario.</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 5 -->
+                <div class="service-card" onclick="openServiceModal('sucesiones')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -461,7 +529,8 @@
                     <p class="text-muted">Trámites sucesorios testamentarios e intestamentarios.</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 6 -->
+                <div class="service-card" onclick="openServiceModal('empresas')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="4 7 4 4 20 4 20 7"></polyline>
@@ -475,7 +544,8 @@
                     <p class="text-muted">Formalización de sociedades civiles y mercantiles (S.A., S. de R.L.).</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 7 -->
+                <div class="service-card" onclick="openServiceModal('apostilla')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -486,7 +556,8 @@
                         Haya).</p>
                 </div>
 
-                <div class="service-card">
+                <!-- Service 8 -->
+                <div class="service-card" onclick="openServiceModal('matrimonios')">
                     <div class="service-icon">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path
@@ -501,6 +572,20 @@
             </div>
         </div>
     </section>
+
+    <!-- Modal for Services -->
+    <div id="service-modal" class="modal-overlay" onclick="closeServiceModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-modal" onclick="closeServiceModal()">&times;</button>
+            <h2 id="modal-title" style="color: #1e3a8a; margin-bottom: 1rem;">Título del Servicio</h2>
+            <div id="modal-body" style="color: #4b5563; line-height: 1.6;">
+                <!-- Content will be injected via JS -->
+            </div>
+            <div style="margin-top: 2rem; text-align: right;">
+                <a href="booking.html" class="btn btn-primary">Agendar este Servicio</a>
+            </div>
+        </div>
+    </div>
 
     <!-- About Section -->
     <section class="about-section fade-in">
@@ -527,6 +612,23 @@
                         </p>
                         <p style="font-weight: 700; color: #1e3a8a;">— Lic. Notario Público</p>
                     </div>
+
+                    <div style="margin-top: 2rem; display: flex; gap: 3rem;">
+                        <div style="text-align: center;">
+                            <h4 id="stat-cases"
+                                style="font-size: 2.5rem; font-weight: 800; color: #1e3a8a; line-height: 1;">150+
+                            </h4>
+                            <p class="text-xs text-muted" style="margin-top: 0.5rem; font-weight: 500;">Documentos
+                                Notarizados</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4 id="stat-clients"
+                                style="font-size: 2.5rem; font-weight: 800; color: #1e3a8a; line-height: 1;">80+
+                            </h4>
+                            <p class="text-xs text-muted" style="margin-top: 0.5rem; font-weight: 500;">Familias
+                                Ayudadas</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; justify-content: center; position: relative; flex: 1;">
@@ -539,7 +641,6 @@
                         <div
                             style="position: absolute; bottom: -15px; left: -15px; width: 50%; height: 50%; background: #eff6ff; border-radius: 1rem; z-index: 0;">
                         </div>
-
                         <!-- Image -->
                         <img src="notary-photo.png" alt="Foto del Notario"
                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 1rem; position: relative; z-index: 1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
@@ -664,6 +765,339 @@
         }, { threshold: 0.1 });
 
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    </script>
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module">
+        // Stats Counter Animation
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start) + "+";
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Fetch Real Stats
+        async function loadStats() {
+            if (!window.firebaseDB) {
+                setTimeout(loadStats, 500);
+                return;
+            }
+
+            try {
+                const { collection, getCountFromServer } = window.dbFuncs;
+                const db = window.firebaseDB;
+
+                // We use appointments count as a proxy for "Documentos Notarizados"
+                // and clients count for "Familias Ayudadas"
+                const appColl = collection(db, 'appointments');
+                const clientColl = collection(db, 'clients');
+
+                const [appSnap, clientSnap] = await Promise.all([
+                    getCountFromServer(appColl),
+                    getCountFromServer(clientColl)
+                ]);
+
+                const appCount = appSnap.data().count || 150; // Fallback to 150
+                const clientCount = clientSnap.data().count || 80; // Fallback to 80
+
+                const caseEl = document.getElementById('stat-cases');
+                const clientEl = document.getElementById('stat-clients');
+
+                // Animate if elements are visible
+                if (caseEl) animateValue(caseEl, 0, appCount, 2000);
+                if (clientEl) animateValue(clientEl, 0, clientCount, 2000);
+
+            } catch (err) {
+                console.warn('Could not load stats, using defaults', err);
+            }
+        }
+
+        // Load stats when page loads
+        window.addEventListener('load', loadStats);
+    </script>
+
+    <script>
+        // Service Details Data - Enhanced Professional Version
+        const serviceDetails = {
+            'poderes': {
+                title: 'Poderes Notariales y Mandatos',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            El <strong>Poder Notarial (Power of Attorney)</strong> es un instrumento legal vital que permite delegar autoridad a un tercero de confianza para gestionar sus asuntos financieros, legales o médicos. Es esencial para prevenir bloqueos legales ante viajes, enfermedad o ausencia.
+                        </p>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+                                <h4 style="color: #1e40af; font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">⚖️ Poder General (Durable)</h4>
+                                <p style="font-size: 0.9rem; margin: 0;">Otorga amplias facultades que permanecen vigentes incluso si usted pierde la capacidad mental. Ideal para planificación a largo plazo.</p>
+                            </div>
+                            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+                                <h4 style="color: #1e40af; font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">🎯 Poder Especial (Limited)</h4>
+                                <p style="font-size: 0.9rem; margin: 0;">Restringido a una acción específica (ej. vender una propiedad concreta o gestionar una cuenta bancaria) y/o por un tiempo limitado.</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #111827; font-weight: 700; margin-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;">Casos de Uso Frecuentes</h4>
+                            <ul style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; list-style: none; padding: 0;">
+                                <li style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #10b981;">✔</span> Compra/Venta de Inmuebles</li>
+                                <li style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #10b981;">✔</span> Representación Bancaria</li>
+                                <li style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #10b981;">✔</span> Gestión de Impuestos (IRS)</li>
+                                <li style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #10b981;">✔</span> Cobro de Pensiones</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #fffbeb; padding: 1rem; border-radius: 0.5rem; border: 1px solid #fcd34d; font-size: 0.9rem;">
+                            <strong>Requisito Crítico:</strong> El poderdante (usted) debe estar presente físicamente y tener plena capacidad mental al momento de la firma ante notario.
+                        </div>
+                    </div>`
+            },
+            'testamentos': {
+                title: 'Planificación Patrimonial y Testamentos',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            La planificación patrimonial no es solo para grandes fortunas; es un acto de amor que protege a su familia de procesos judiciales costosos e incertidumbre. Diseñamos estrategias legales a medida.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 0.5rem;">
+                                <h5 style="color: #1e3a8a; font-weight: 700; margin-bottom: 0.5rem;">📝 Testamento (Last Will)</h5>
+                                <p style="font-size: 0.9rem;">Documento donde designa herederos y, crucialmente, <strong>tutores legales</strong> para sus hijos menores de edad.</p>
+                            </div>
+                            <div style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 0.5rem;">
+                                <h5 style="color: #1e3a8a; font-weight: 700; margin-bottom: 0.5rem;">🏥 Voluntad Anticipada</h5>
+                                <p style="font-size: 0.9rem;">Designación de un sustituto para decisiones médicas y directivas sobre soporte vital (Living Will).</p>
+                            </div>
+                        </div>
+
+                        <div style="background: #f0fdf4; padding: 1.25rem; border-radius: 0.5rem; border-left: 4px solid #16a34a; margin-bottom: 1.5rem;">
+                            <h4 style="color: #166534; font-weight: 700; margin-bottom: 0.5rem;">¿Por qué hacerlo ante Notario?</h4>
+                            <p style="font-size: 0.9rem; margin: 0;">Un testamento notarial ("Self-Proving Affidavit") acelera drásticamente el proceso de validación en la corte (Probate), evitando que sus testigos tengan que comparecer ante el juez años después.</p>
+                        </div>
+                    </div>`
+            },
+            'bienes': {
+                title: 'Servicios Inmobiliarios (Real Estate Closing)',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            Como <strong>Notario Certificado en Cierres de Préstamos (Loan Signing Agent)</strong>, garantizamos que la compra, venta o refinanciamiento de su propiedad se ejecute sin errores. Un error en una firma puede retrasar su cierre o anular su hipoteca.
+                        </p>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #111827; font-weight: 700; margin-bottom: 0.75rem;">Nuestra Especialidad:</h4>
+                            <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                                <li style="background: white; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="background: #eff6ff; padding: 0.25rem; border-radius: 50%;">🏠</span>
+                                    <div><strong>Cierres de Compraventa:</strong> Paquetes completos de vendedor y comprador.</div>
+                                </li>
+                                <li style="background: white; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="background: #eff6ff; padding: 0.25rem; border-radius: 50%;">🏦</span>
+                                    <div><strong>Refinanciamientos:</strong> Hipotecas, HELOCs y Reverse Mortgages.</div>
+                                </li>
+                                <li style="background: white; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="background: #eff6ff; padding: 0.25rem; border-radius: 50%;">📄</span>
+                                    <div><strong>Quitclaim Deeds:</strong> Transferencias rápidas de título entre familiares o cónyuges.</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>`
+            },
+            'fe': {
+                title: 'Fe de Hechos y Declaraciones Juradas',
+                content: `
+                     <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            La "Fe de Hechos" es un acta donde el notario constata hechos físicos que percibe con sus propios sentidos. Es una prueba documental contundente para futuros litigios o trámites administrativos.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+                                <h4 style="color: #111827; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem;">🔍 Inspección Ocular</h4>
+                                <p style="font-size: 0.9rem;">Certificación del estado físico de inmuebles (grietas, daños, abandono) o vehículos antes de una compra.</p>
+                            </div>
+                             <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+                                <h4 style="color: #111827; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem;">📜 Affidavits (Declaraciones)</h4>
+                                <p style="font-size: 0.9rem;">Redacción de declaraciones bajo juramento para Migración (USCIS), soporte financiero o corrección de nombres.</p>
+                            </div>
+                        </div>
+
+                         <div style="padding: 1rem; border-left: 4px solid #9ca3af; background: #f3f4f6;">
+                            <em>"Lo que el notario ve y certifica, se presume cierto ante la ley salvo prueba en contrario."</em>
+                        </div>
+                    </div>`
+            },
+            'sucesiones': {
+                title: 'Trámites Sucesorios Extrajudiciales',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            Cuando todos los herederos son adultos y están de acuerdo, no es necesario un largo juicio. Gestionamos la transmisión de bienes de manera pacífica y eficiente mediante escritura pública.
+                        </p>
+
+                         <h4 style="color: #111827; font-weight: 700; margin-bottom: 1rem;">El Proceso Simplificado:</h4>
+                         <ol style="padding-left: 1.5rem; margin-bottom: 1.5rem; color: #4b5563; font-weight: 500;">
+                            <li style="margin-bottom: 0.5rem;"><strong>Radicación:</strong> Presentación del acta de defunción y testamento (si existe).</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Inventario y Avalúo:</strong> Listado formal de bienes y deudas del difunto.</li>
+                            <li style="margin-bottom: 0.5rem;"><strong>Adjudicación:</strong> Firma de la escritura donde los bienes pasan formalmente a nombre de los herederos.</li>
+                        </ol>
+
+                        <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; color: #991b1b; font-size: 0.9rem;">
+                            <strong>Aviso:</strong> Si existe conflicto entre herederos o menores de edad involucrados, el caso deberá remitirse obligatoriamente a un Juez Familiar.
+                        </div>
+                    </div>`
+            },
+            'empresas': {
+                title: 'Constitución y Servicios Corporativos',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            Comenzar un negocio requiere una base legal sólida. No solo registramos su empresa en Sunbiz; estructuramos sus documentos internos para proteger a los socios y delimitar responsabilidades.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-weight: 600;">Paso 1</div>
+                                <div style="font-weight: 700; color: #1e3a8a; margin-top: 0.25rem;">Registro Estatal</div>
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Articles of Incorporation / Organization.</p>
+                            </div>
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-weight: 600;">Paso 2</div>
+                                <div style="font-weight: 700; color: #1e3a8a; margin-top: 0.25rem;">Normas Internas</div>
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Operating Agreement o Bylaws (Vital para bancos).</p>
+                            </div>
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-weight: 600;">Paso 3</div>
+                                <div style="font-weight: 700; color: #1e3a8a; margin-top: 0.25rem;">Registro Federal</div>
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Obtención del EIN (Tax ID) ante el IRS.</p>
+                            </div>
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-weight: 600;">Paso 4</div>
+                                <div style="font-weight: 700; color: #1e3a8a; margin-top: 0.25rem;">Libro Corporativo</div>
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Emisión de acciones certificadas.</p>
+                            </div>
+                        </div>
+                    </div>`
+            },
+            'apostilla': {
+                title: 'Apostillas y Legalización Internacional',
+                content: `
+                     <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            Para que un documento de EE.UU. sea válido en otro país (ej. México, España, Colombia), debe pasar por un proceso riguroso de autenticación. Nosotros gestionamos toda la cadena burocrática por usted.
+                        </p>
+                        
+                        <div style="margin-bottom: 1.5rem; background: #fff; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e5e7eb;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                <thead style="background: #f3f4f6;">
+                                    <tr>
+                                        <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb;">Tipo de Documento</th>
+                                        <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb;">Autoridad</th>
+                                        <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb;">Tiempo Est.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6;">Notarizados en FL / Actas Locales</td>
+                                        <td style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6;">Secretaría de Estado (Tallahassee)</td>
+                                        <td style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6;">5-10 días hábiles</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 0.75rem;">Federales (FBI, Social Security)</td>
+                                        <td style="padding: 0.75rem;">Dept. de Estado (Washington DC)</td>
+                                        <td style="padding: 0.75rem;">4-8 semanas</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                         <div style="display: flex; gap: 0.5rem; align-items: start;">
+                            <span style="font-size: 1.2rem;">🌍</span>
+                            <p style="font-size: 0.9rem; margin: 0; color: #6b7280;">
+                                <strong>Países No-Haya:</strong> Si el país destino no está en el convenio (ej. Canadá, China, algunos países árabes), realizamos la <em>Legalización Consular</em> (paso adicional en Embajada).
+                            </p>
+                         </div>
+                    </div>`
+            },
+            'matrimonios': {
+                title: 'Ceremonias de Matrimonio Civil',
+                content: `
+                    <div style="font-family: 'Inter', sans-serif; color: #374151;">
+                        <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+                            Oficializamos su unión con la solemnidad legal requerida y la calidez que el momento merece. Como Notarios de Florida, tenemos la autoridad legal para casar parejas (Florida Statute 741.07).
+                        </p>
+                        
+                         <h4 style="color: #111827; font-weight: 700; margin-bottom: 1rem;">Paquetes Disponibles:</h4>
+                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: #fff0f7; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #fbcfe8; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">💍</div>
+                                <h5 style="color: #9d174d; font-weight: 700; margin-bottom: 0.25rem;">Civil Express</h5>
+                                <p style="font-size: 0.85rem;">Firma legal en oficina. Rápido, privado y económico. Solo contrayentes y testigos.</p>
+                            </div>
+                            <div style="background: #f0f9ff; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #bae6fd; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🥂</div>
+                                <h5 style="color: #0369a1; font-weight: 700; margin-bottom: 0.25rem;">Ceremonia Premium</h5>
+                                <p style="font-size: 0.85rem;">En la locación que elija (Playa, Parque, Salón). Incluye lectura de votos personalizados.</p>
+                            </div>
+                        </div>
+
+                         <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem;">
+                            <h5 style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem;">📝 Requisito Único:</h5>
+                            <p style="font-size: 0.9rem; margin: 0;">Debe obtener su <strong>Licencia de Matrimonio</strong> en la Corte del Condado (Clerk of Court) antes de la cita. <em>(Nota: Si son residentes de FL, hay una espera de 3 días post-licencia).</em></p>
+                        </div>
+                    </div>`
+            }
+        };
+
+        function openServiceModal(serviceKey) {
+            const data = serviceDetails[serviceKey];
+            if (data) {
+                document.getElementById('modal-title').innerText = data.title;
+                document.getElementById('modal-body').innerHTML = data.content;
+
+                // Update booking button with pre-selected service param
+                const bookingBtn = document.querySelector('#service-modal .btn-primary');
+                // Maps modal keys to booking form values if they differ, or pass directly
+                // Values on booking.html options: General, Notarization, Wills, Power of Attorney, Affidavit, Real Estate, Apostille, Marriage, Loan Signing, Other
+
+                const typeMapping = {
+                    'poderes': 'Power of Attorney',
+                    'testamentos': 'Wills',
+                    'bienes': 'Real Estate',
+                    'fe': 'Affidavit', // Mapping Fe de Hechos to Affidavit/General as closest
+                    'sucesiones': 'Wills', // Closest match
+                    'empresas': 'General', // Or Other
+                    'apostilla': 'Apostille',
+                    'matrimonios': 'Marriage'
+                };
+
+                const serviceType = typeMapping[serviceKey] || 'General';
+                bookingBtn.href = `booking.html?service=${encodeURIComponent(serviceType)}`;
+
+                const modal = document.getElementById('service-modal');
+                modal.classList.add('active'); // Use class for animation
+            }
+        }
+
+        function closeServiceModal() {
+            const modal = document.getElementById('service-modal');
+            modal.classList.remove('active');
+        }
+
+        // Close on Esc key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                closeServiceModal();
+            }
+        });
     </script>
 </body>
 
