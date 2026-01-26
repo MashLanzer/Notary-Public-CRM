@@ -5090,7 +5090,7 @@ const NoteGenerator = {
                         LA INFORMACIÓN ANTERIOR es verdadera y correcta según mi leal saber y entender.
                     </p>
                     <br><br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
                             <div class="sig-label">${data.affiantName || data.clientName}</div>
@@ -5163,7 +5163,7 @@ const NoteGenerator = {
                         Se vende "TAL CUAL" (AS-IS) sin garantía.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
                             <div class="sig-label">Vendedor: ${data.sellerName}</div>
@@ -5225,7 +5225,7 @@ const NoteGenerator = {
                          <strong>3. INCUMPLIMIENTO:</strong> En caso de mora, se aplicarán cargos permitidos por la ley.
                      </p>
                      <br>
-                     <div class="sig-section">
+                     <div class="sig-section" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                              <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestatario"></div>
                              <div class="sig-label">${data.borrower}</div>
@@ -5277,7 +5277,7 @@ const NoteGenerator = {
                         Autorizo al acompañante a tomar decisiones médicas de emergencia si fuera necesario.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Madre"></div>
                             <div class="sig-label">Padre/Madre/Tutor</div>
@@ -5328,7 +5328,7 @@ const NoteGenerator = {
                         Este Poder entrará en vigor el <strong>${data.effectiveDate || 'fecha de firma'}</strong> y permanecerá vigente hasta su revocación por escrito ${data.expirationDate ? 'o hasta el ' + data.expirationDate : ''}.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
                             <div class="sig-label">${data.principalName || data.clientName}</div>
@@ -5380,7 +5380,7 @@ const NoteGenerator = {
                          Médico Primario: ${data.primaryPhysician || 'N/A'}.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
                             <div class="sig-label">${data.declarantName || data.clientName}</div>
@@ -5442,7 +5442,7 @@ const NoteGenerator = {
                         <br><br><strong>Parcel ID:</strong> ${data.parcelId || '_______'}
                     </div>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Otorgante"></div>
                             <div class="sig-label">${data.grantor}</div>
@@ -5495,7 +5495,7 @@ const NoteGenerator = {
                         <strong>4. DEPÓSITO:</strong> $ ${data.securityDeposit || '0.00'} pagaderos a la firma.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
                             <div class="sig-label">Propietario</div>
@@ -5537,14 +5537,14 @@ const NoteGenerator = {
                         <p>3. Que presento esta declaración para probar mi domicilio a fines legales/administrativos.</p>
                     </div>
                      <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Residente"></div>
                             <div class="sig-label">${data.residentName}</div>
                         </div>
                     </div>
                     ${data.landlordName ? `
-                     <div class="sig-section">
+                     <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Firma Propietario/Testigo"></div>
                             <div class="sig-label">${data.landlordName} (Propietario/Testigo)</div>
@@ -5597,7 +5597,7 @@ const NoteGenerator = {
                         ${(data.specialInstructions || 'Mi agente tiene plena autoridad para tomar decisiones de atención médica.').replace(/\n/g, '<br>')}
                     </div>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
                             <div class="sig-label">${data.principalName}</div>
@@ -5652,7 +5652,7 @@ const NoteGenerator = {
                         ${data.beneficiary2 ? `<p>A <strong>${data.beneficiary2}</strong>: Cualquier activo restante si el beneficiario principal fallece antes que yo.</p>` : ''}
                     </div>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Testador"></div>
                             <div class="sig-label">${data.testatorName}</div>
@@ -5716,7 +5716,7 @@ const NoteGenerator = {
                         <strong>4. RELACIÓN.</strong> Las partes acuerdan que esta es una relación de contratista independiente y no de empleado-empleador.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div>
                             <div class="sig-label">Cliente</div>
@@ -5760,7 +5760,7 @@ const NoteGenerator = {
                         Entiendo los riesgos inherentes y asumo voluntariamente toda responsabilidad.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Indemnizador"></div>
                             <div class="sig-label">${data.indemnifier}</div>
@@ -5809,7 +5809,7 @@ const NoteGenerator = {
                         Al cumplir con este desalojo y entrega de llaves, ambas partes se liberan mutuamente de futuras obligaciones bajo el contrato original.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
                             <div class="sig-label">Propietario</div>
@@ -5862,7 +5862,7 @@ const NoteGenerator = {
                         En caso de incumplimiento, el Prestatario será responsable de todos los costos de cobranza y honorarios legales.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestamista"></div>
                             <div class="sig-label">Prestamista</div>
@@ -5921,7 +5921,7 @@ const NoteGenerator = {
                         Esta obligación de confidencialidad durará por un periodo de ${data.term || '5'} años desde la fecha de este acuerdo.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Receptora"></div>
                             <div class="sig-label">Parte Receptora</div>
@@ -5962,7 +5962,7 @@ const NoteGenerator = {
                          Notificaré inmediatamente al Agente y a todas las instituciones relevantes sobre esta revocación.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
                             <div class="sig-label">${data.principal}</div>
@@ -6012,7 +6012,7 @@ const NoteGenerator = {
                         Esta autorización será válida hasta el <strong>${data.endDate || '[FECHA FIN]'}</strong> o hasta que sea revocada por escrito.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Madre"></div>
                             <div class="sig-label">${data.parentName}</div>
@@ -6057,7 +6057,7 @@ const NoteGenerator = {
                         Nombra a <strong>${data.agent}</strong> como su apoderado legal para firmar documentos, transferir título, registrar y realizar cualquier trámite relacionado con dicho vehículo ante el Departamento de Vehículos Motorizados (DMV/DGT).
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div>
                             <div class="sig-label">${data.owner || data.clientName}</div>
@@ -6113,7 +6113,7 @@ const NoteGenerator = {
                          Envíe el pago inmediatamente a la dirección de mis registros.
                     </p>
                     <br><br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Acreedor"></div>
                             <div class="sig-label">Atentamente, ${data.creditor}</div>
@@ -6164,7 +6164,7 @@ const NoteGenerator = {
                         Si continúa con esta actividad se emprenderán acciones legales en su contra para buscar daños y perjuicios, así como medidas cautelares.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Remitente"></div>
                             <div class="sig-label">${data.sender}</div>
@@ -6213,7 +6213,7 @@ const NoteGenerator = {
                         <strong>4. GESTIÓN.</strong> Ambos socios tendrán iguales derechos en la gestión y conducción de los negocios de la asociación.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Socio 1"></div>
                             <div class="sig-label">${data.partner1}</div>
@@ -6264,7 +6264,7 @@ const NoteGenerator = {
                         <strong>4. TERMINACIÓN.</strong> Este acuerdo puede ser terminado por cualquiera de las partes con el debido aviso según la ley local o "at-will" si corresponde.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleador"></div>
                             <div class="sig-label">${data.employer}</div>
@@ -6315,7 +6315,7 @@ const NoteGenerator = {
                         El incumplimiento resultará en la presentación de una demanda de desalojo en su contra en el tribunal correspondiente.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario/Admin"></div>
                             <div class="sig-label">Propietario / Administrador</div>
@@ -6363,7 +6363,7 @@ const NoteGenerator = {
                         <strong>3. DIVORCIO.</strong> En caso de disolución del matrimonio, la propiedad separada permanecerá con el dueño original.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cónyuge 1"></div>
                             <div class="sig-label">${data.spouse1}</div>
@@ -6411,7 +6411,7 @@ const NoteGenerator = {
                          Libero al Fotógrafo/Organización de toda reclamación, responsabilidad y daños relacionados con cualquier distorsión difusa o alteración, ya sea intencional o no, que pueda ocurrir.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Modelo"></div>
                             <div class="sig-label">${data.modelName}</div>
@@ -6457,7 +6457,7 @@ const NoteGenerator = {
                         Todos los demás términos y condiciones del acuerdo original permanecen en pleno vigor y efecto.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Parte A"></div>
                             <div class="sig-label">${data.partyA}</div>
@@ -6508,7 +6508,7 @@ const NoteGenerator = {
                         Deudor acepta que la falta de pago acelerará la deuda restante, haciéndola exigible de inmediato.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Deudor"></div>
                             <div class="sig-label">Deudor</div>
@@ -6564,7 +6564,7 @@ const NoteGenerator = {
                         Este subarriendo está sujeto a los términos del Contrato de Arrendamiento Maestro original. El Propietario original ha dado su consentimiento (si es requerido).
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Subarrendador"></div>
                             <div class="sig-label">Subarrendador</div>
@@ -6615,7 +6615,7 @@ const NoteGenerator = {
                         El Arrendatario es responsable de devolver el equipo en buenas condiciones.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div>
                             <div class="sig-label">Arrendador</div>
@@ -6674,7 +6674,7 @@ const NoteGenerator = {
                         <strong>4. MANTENIMIENTO:</strong> El Arrendatario será responsable del mantenimiento interior y reparaciones menores. El Arrendador cubrirá la estructura del edificio.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div>
                             <div class="sig-label">Arrendador</div>
@@ -6738,7 +6738,7 @@ const NoteGenerator = {
                         Esta venta está condicionada a la obtención de financiamiento y a una inspección satisfactoria de la propiedad.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
                             <div class="sig-label">Vendedor</div>
@@ -6787,7 +6787,7 @@ const NoteGenerator = {
                         Esta restricción aplica dentro de un radio de <strong>${data.radius || '50'} millas</strong> de la ubicación principal de la Empresa.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div>
                             <div class="sig-label">Empresa</div>
@@ -6839,7 +6839,7 @@ const NoteGenerator = {
                         <strong>CONFIDENCIALIDAD:</strong> El Consultor mantendrá secreta toda la información del Cliente.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div>
                             <div class="sig-label">Cliente</div>
@@ -6887,7 +6887,7 @@ const NoteGenerator = {
                          Si está de acuerdo con estos términos preliminares, por favor firme a continuación.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proponente"></div>
                             <div class="sig-label">Proponente</div>
@@ -6931,7 +6931,7 @@ const NoteGenerator = {
                          Este MOU no constituye un contrato legalmente vinculante, sino que refleja la intención de las partes de trabajar juntas de buena fe hacia el objetivo común descrito.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Parte A"></div>
                             <div class="sig-label">${data.partyA}</div>
@@ -6979,7 +6979,7 @@ const NoteGenerator = {
                         Hago esta declaración para establecer la propiedad de los bienes raíces y personales del Difunto.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
                             <div class="sig-label">${data.clientName}</div>
@@ -7020,7 +7020,7 @@ const NoteGenerator = {
                          Esta declaración se hace para aclarar cualquier discrepancia en mi nombre en los registros públicos.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
                             <div class="sig-label">${data.fullName}</div>
@@ -7070,7 +7070,7 @@ const NoteGenerator = {
                         Todos los demás términos del contrato original permanecen sin cambios.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
                             <div class="sig-label">Propietario</div>
@@ -7111,7 +7111,7 @@ const NoteGenerator = {
                          Esta renuncia es vinculante para mí, mis herederos y mis cesionarios legales.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Participante"></div>
                             <div class="sig-label">${data.participant}</div>
@@ -7151,7 +7151,7 @@ const NoteGenerator = {
                          En todos los demás aspectos, ratifico y confirmo mi Testamento original.
                      </p>
                      <br>
-                     <div class="sig-section">
+                     <div class="sig-section" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                              <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Testador"></div>
                              <div class="sig-label">${data.testator}</div>
@@ -7215,7 +7215,7 @@ const NoteGenerator = {
                         Ambos padres acuerdan fomentar una relación amorosa y estable entre los niños y el otro padre.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre 1"></div>
                             <div class="sig-label">${data.parent1}</div>
@@ -7270,7 +7270,7 @@ const NoteGenerator = {
                         Declaro bajo pena de perjurio que la información anterior es verdadera y correcta.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Servidor"></div>
                             <div class="sig-label">${data.serverName}</div>
@@ -7311,7 +7311,7 @@ const NoteGenerator = {
                          <p>2. La traducción adjunta del documento titulado "<strong>${data.docTitle}</strong>" es una traducción verdadera, precisa y completa del original, según mi leal saber y entender.</p>
                      </div>
                      <br>
-                     <div class="sig-section">
+                     <div class="sig-section" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                              <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Traductor"></div>
                              <div class="sig-label">${data.translatorName}</div>
@@ -7357,7 +7357,7 @@ const NoteGenerator = {
                         El Donante certifica que es dueño legítimo de la propiedad y tiene derecho a transmitirla.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Donante"></div>
                             <div class="sig-label">${data.donor}</div>
@@ -7402,7 +7402,7 @@ const NoteGenerator = {
                         Certifico además que esta resolución está en plena vigencia y no ha sido modificada ni rescindida.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario/Director"></div>
                             <div class="sig-label">Secretario / Director</div>
@@ -7437,7 +7437,7 @@ const NoteGenerator = {
                         ${(data.topics || '').replace(/\n/g, '<br>')}
                     </div>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario"></div>
                             <div class="sig-label">Secretario de Actas</div>
@@ -7489,7 +7489,7 @@ const NoteGenerator = {
                         Certifico que la información anterior es verdadera. Autorizo al propietario a verificar mis referencias, empleo y antecedentes crediticios/penales para fines de arrendamiento.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Solicitante"></div>
                             <div class="sig-label">Solicitante</div>
@@ -7533,7 +7533,7 @@ const NoteGenerator = {
                         <strong>3. REGLAS DE LA CASA.</strong> Se acuerda mantener la limpieza de las áreas comunes, respetar el ruido y las visitas nocturnas.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comp. 1"></div>
                             <div class="sig-label">${data.roommate1}</div>
@@ -7581,7 +7581,7 @@ const NoteGenerator = {
                         El Inquilino es responsable de cualquier daño causado por la mascota y acepta cumplir con las normas de ruido e higiene.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
                             <div class="sig-label">Propietario</div>
@@ -7626,7 +7626,7 @@ const NoteGenerator = {
                         TIPO DE RENUNCIA: <strong>${data.type}</strong>.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div>
                             <div class="sig-label">${data.contractor}</div>
@@ -7676,7 +7676,7 @@ const NoteGenerator = {
                         Este acuerdo pretende ser un arreglo final de todos los derechos maritales y patrimoniales hasta que se finalice un divorcio formal o reconciliación.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cónyuge 1"></div>
                             <div class="sig-label">${data.spouse1}</div>
@@ -7728,7 +7728,7 @@ const NoteGenerator = {
                         La terminación de la convivencia no dará lugar a derechos de pensión alimenticia ni soporte ("palimony") a menos que se acuerde por escrito.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Pareja 1"></div>
                             <div class="sig-label">${data.partner1}</div>
@@ -7789,7 +7789,7 @@ const NoteGenerator = {
                          Adjunto copia de mis documentos para su revisión.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Anfitrión"></div>
                             <div class="sig-label">${data.hostName}</div>
@@ -7836,7 +7836,7 @@ const NoteGenerator = {
                         El Acreedor acepta la suma de <strong>$ ${data.settleAmount}</strong> como pago completo y definitivo de la Deuda. Al recibir este pago, el Acreedor liberará al Deudor de cualquier reclamación adicional relacionada con esta cuenta.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Acreedor"></div>
                             <div class="sig-label">Acreedor</div>
@@ -7886,7 +7886,7 @@ const NoteGenerator = {
                         Esta protección se extiende a todos los agentes, empleados y sucesores del Indemnizado.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Indemnizador"></div>
                             <div class="sig-label">Indemnizador</div>
@@ -7937,7 +7937,7 @@ const NoteGenerator = {
                          <strong>4. DISOLUCIÓN.</strong> La LLC se disolverá por voto unánime de los miembros o por decreto judicial.
                      </p>
                      <br>
-                     <div class="sig-section">
+                     <div class="sig-section" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                              <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Miembro Admin"></div>
                              <div class="sig-label">Firma Autorizada</div>
@@ -7982,7 +7982,7 @@ const NoteGenerator = {
                         <strong>ARTÍCULO IV: OFICIALES.</strong> Los oficiales incluirán un Presidente, Secretario y Tesorero.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario"></div>
                             <div class="sig-label">Secretario Corporativo</div>
@@ -8016,7 +8016,7 @@ const NoteGenerator = {
                         Este poder es revocable en cualquier momento antes de que se ejerza el voto.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Accionista"></div>
                             <div class="sig-label">${data.shareholder}</div>
@@ -8062,7 +8062,7 @@ const NoteGenerator = {
                         El Título de la propiedad no se transferirá hasta que se complete el pago total. El Comprador es responsable de impuestos y seguros.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
                             <div class="sig-label">Vendedor</div>
@@ -8114,7 +8114,7 @@ const NoteGenerator = {
                         Este aviso se proporciona en cumplimiento con las leyes estatales que requieren notificación previa (generalmente 24 horas).
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario/Agente"></div>
                             <div class="sig-label">Propietario / Agente</div>
@@ -8155,7 +8155,7 @@ const NoteGenerator = {
                          Todos los demás términos de su acuerdo de arrendamiento permanecen iguales.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
                             <div class="sig-label">Propietario / Administrador</div>
@@ -8194,7 +8194,7 @@ const NoteGenerator = {
                         Recibirá su pago final y beneficios acumulados de acuerdo con la ley estatal. Por favor devuelva toda la propiedad de la empresa antes de su partida.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Supervisor/HR"></div>
                             <div class="sig-label">Supervisor / HR</div>
@@ -8227,7 +8227,7 @@ const NoteGenerator = {
                         La falta de corrección de este comportamiento puede resultar en una acción disciplinaria adicional, hasta e incluyendo la terminación.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Supervisor"></div>
                             <div class="sig-label">Supervisor</div>
@@ -8273,7 +8273,7 @@ const NoteGenerator = {
                         <strong>3. RELACIÓN.</strong> El Proveedor es un contratista independiente, no un empleado.
                     </p>
                     <br>
-                    <div class="sig-section-row">
+                    <div class="sig-section-row" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div>
                             <div class="sig-label">Proveedor</div>
@@ -8321,7 +8321,7 @@ const NoteGenerator = {
                         El monto total adeudado y no pagado, después de deducir todos los créditos y compensaciones, es: <strong>$ ${data.amount}</strong>.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Reclamante"></div>
                             <div class="sig-label">${data.claimant}</div>
@@ -8357,7 +8357,7 @@ const NoteGenerator = {
                         Por lo tanto, el abajo firmante consiente que el mismo sea cancelado de los registros.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                         <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Reclamante"></div>
                             <div class="sig-label">${data.claimant}</div>
@@ -8400,7 +8400,7 @@ const NoteGenerator = {
                         Entiendo que no recibiré compensación y libero al Fotógrafo de cualquier reclamación relacionada con el uso de estas imágenes.
                     </p>
                     <br>
-                    <div class="sig-section">
+                    <div class="sig-section" contenteditable="false">
                          <div class="sig-block" contenteditable="false">
                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Tutor"></div>
                             <div class="sig-label">${data.parent}</div>
@@ -8423,7 +8423,7 @@ const NoteGenerator = {
                     <p class="doc-text">Esta carta es una demanda formal de pago por <strong>$ ${data.amount}</strong>, adeudado por: ${data.reason}.</p>
                     <p class="doc-text">Exijo el pago antes del <strong>${data.deadline}</strong>. De lo contrario, procederé legalmente.</p>
                     <p class="doc-text">Atentamente,</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Remitente"></div><div class="sig-label">${data.sender}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Remitente"></div><div class="sig-label">${data.sender}</div></div></div>
                 </div>`
         },
         resignation_letter: {
@@ -8437,7 +8437,7 @@ const NoteGenerator = {
                     <p class="doc-text">A: <strong>${data.manager}</strong>, ${data.company}</p>
                     <p class="doc-text">Por la presente presento mi renuncia formal a mi puesto en <strong>${data.company}</strong>. Mi último día de trabajo será el <strong>${data.lastDay}</strong>.</p>
                     <p class="doc-text">Agradezco la oportunidad de haber trabajado aquí y haré todo lo posible para asegurar una transición fluida.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.empName}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.empName}</div></div></div>
                 </div>`
         },
         recommendation_letter: {
@@ -8452,7 +8452,7 @@ const NoteGenerator = {
                     <p class="doc-text">Es un placer recomendar a <strong>${data.candidate}</strong>. He conocido a ${data.candidate} como <strong>${data.relation}</strong> y puedo dar fe de su integridad y habilidades.</p>
                     <div class="doc-body-text">${data.qualities}</div>
                     <p class="doc-text">Recomiendo encarecidamente a ${data.candidate} para cualquier oportunidad futura.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma"></div><div class="sig-label">${data.author}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma"></div><div class="sig-label">${data.author}</div></div></div>
                 </div>`
         },
         offer_letter: {
@@ -8471,7 +8471,7 @@ const NoteGenerator = {
                         <li><strong>Reporta a:</strong> Gerencia</li>
                     </ul>
                     <p class="doc-text">Firme a continuación para aceptar esta oferta.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-emp" onclick="NoteGenerator.openSignPad('emp', this)" data-label="Firma Candidato"></div><div class="sig-label">${data.candidate}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-emp" onclick="NoteGenerator.openSignPad('emp', this)" data-label="Firma Candidato"></div><div class="sig-label">${data.candidate}</div></div></div>
                 </div>`
         },
         joint_venture: {
@@ -8486,8 +8486,8 @@ const NoteGenerator = {
                     <p class="doc-text">Este Acuerdo se celebra entre <strong>${data.partyA}</strong> y <strong>${data.partyB}</strong> con el fin de llevar a cabo una empresa conjunta.</p>
                     <p class="doc-text"><strong>PROPÓSITO:</strong> ${data.purpose}</p>
                     <p class="doc-text">Ambas partes acuerdan compartir ganancias, pérdidas y responsabilidades al 50% salvo acuerdo contrario anexo.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Socio A"></div><div class="sig-label">${data.partyA}</div></div><div class="sig-block"><div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Socio B"></div><div class="sig-label">${data.partyB}</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Notariado el: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Socio A"></div><div class="sig-label">${data.partyA}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Socio B"></div><div class="sig-label">${data.partyB}</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado el: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         shareholder_agreement: {
@@ -8498,7 +8498,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">ACUERDO DE ACCIONISTAS</h2>
                     <p class="doc-text">Referente a: <strong>${data.company}</strong>.</p>
                     <p class="doc-text">Los accionistas abajo firmantes acuerdan las reglas de gobernanza, transferencia de acciones y votación descritas en los estatutos adjuntos.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Accionista Principal"></div><div class="sig-label">Accionista</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Accionista Principal"></div><div class="sig-label">Accionista</div></div></div>
                 </div>`
         },
         stock_purchase: {
@@ -8509,7 +8509,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">ACUERDO DE COMPRA DE ACCIONES</h2>
                     <p class="doc-text">El Vendedor <strong>${data.seller}</strong> vende a <strong>${data.buyer}</strong> un total de <strong>${data.shares}</strong> acciones por el precio de <strong>$ ${data.price}</strong>.</p>
                     <p class="doc-text">El Vendedor garantiza que posee título claro sobre dichas acciones.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
                 </div>`
         },
         asset_purchase: {
@@ -8521,7 +8521,7 @@ const NoteGenerator = {
                     <p class="doc-text"><strong>${data.seller}</strong> (Vendedor) acuerda vender a <strong>${data.buyer}</strong> (Comprador) los siguientes activos:</p>
                     <div class="doc-body-text">${data.assets}</div>
                     <p class="doc-text">Precio de compra: <strong>$ ${data.price}</strong>. La venta incluye todo derecho, título e interés sobre los activos.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
                 </div>`
         },
         ip_assignment: {
@@ -8533,8 +8533,8 @@ const NoteGenerator = {
                     <p class="doc-text">Yo, <strong>${data.assignor}</strong>, por valor recibido, cedo y transfiero a <strong>${data.assignee}</strong> todos mis derechos, títulos e intereses en:</p>
                     <div class="doc-body-text">${data.ipDesc}</div>
                     <p class="doc-text">Esta cesión es irrevocable y mundial.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         construction_contract: {
@@ -8547,7 +8547,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Contratista realizará los siguientes trabajos en ${data.address}:</p>
                     <div class="doc-body-text">${data.scope}</div>
                     <p class="doc-text">El Propietario pagará <strong>$ ${data.price}</strong> por los servicios.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">Propietario</div></div><div class="sig-block"><div class="sig-zone" id="sig-contractor" onclick="NoteGenerator.openSignPad('contractor', this)" data-label="Firma Contratista"></div><div class="sig-label">Contratista</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">Propietario</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-contractor" onclick="NoteGenerator.openSignPad('contractor', this)" data-label="Firma Contratista"></div><div class="sig-label">Contratista</div></div></div>
                 </div>`
         },
         subcontractor_agreement: {
@@ -8559,7 +8559,7 @@ const NoteGenerator = {
                     <p class="doc-text">El contratista <strong>${data.contractor}</strong> contrata a <strong>${data.sub}</strong> para realizar:</p>
                     <div class="doc-body-text">${data.service}</div>
                     <p class="doc-text">El Subcontratista es un contratista independiente, responsable de sus propios impuestos y seguros.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sub" onclick="NoteGenerator.openSignPad('sub', this)" data-label="Firma Subcontratista"></div><div class="sig-label">${data.sub}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-sub" onclick="NoteGenerator.openSignPad('sub', this)" data-label="Firma Subcontratista"></div><div class="sig-label">${data.sub}</div></div></div>
                 </div>`
         },
         loan_agreement: {
@@ -8571,8 +8571,8 @@ const NoteGenerator = {
                     <p class="doc-text">Prestamista: <strong>${data.lender}</strong> | Prestatario: <strong>${data.borrower}</strong></p>
                     <p class="doc-text">Monto: <strong>$ ${data.amount}</strong> | Interés: <strong>${data.rate}%</strong> anual.</p>
                     <p class="doc-text">El Prestatario promete pagar el préstamo en <strong>${data.term}</strong> meses. El incumplimiento resultará en la aceleración de la deuda y costos legales.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestamista"></div><div class="sig-label">Prestamista</div></div><div class="sig-block"><div class="sig-zone" id="sig-borrower" onclick="NoteGenerator.openSignPad('borrower', this)" data-label="Firma Prestatario"></div><div class="sig-label">Prestatario</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestamista"></div><div class="sig-label">Prestamista</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-borrower" onclick="NoteGenerator.openSignPad('borrower', this)" data-label="Firma Prestatario"></div><div class="sig-label">Prestatario</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         personal_guarantee: {
@@ -8583,8 +8583,8 @@ const NoteGenerator = {
                     <h2 class="doc-title">GARANTÍA PERSONAL</h2>
                     <p class="doc-text">Yo, <strong>${data.guarantor}</strong>, garantizo incondicionalmente el pago de todas las deudas contraídas por <strong>${data.debtor}</strong> a favor de <strong>${data.creditor}</strong>.</p>
                     <p class="doc-text">Esta es una garantía continua y cubre el principal, intereses y costos de cobranza.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Garante"></div><div class="sig-label">${data.guarantor}</div></div></div>
-                    <div class="notary-block"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Garante"></div><div class="sig-label">${data.guarantor}</div></div></div>
+                    <div class="notary-block" contenteditable="false"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         security_agreement: {
@@ -8596,7 +8596,7 @@ const NoteGenerator = {
                     <p class="doc-text">Para garantizar el pago, el Deudor <strong>${data.debtor}</strong> otorga a <strong>${data.secured}</strong> un interés de seguridad sobre:</p>
                     <div class="doc-body-text">${data.collateral}</div>
                     <p class="doc-text">En caso de incumplimiento, la Parte Asegurada tiene derecho a tomar posesión del colateral.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Deudor"></div><div class="sig-label">${data.debtor}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Deudor"></div><div class="sig-label">${data.debtor}</div></div></div>
                 </div>`
         },
         warranty_deed: {
@@ -8609,8 +8609,8 @@ const NoteGenerator = {
                     <p class="doc-text">EL BENEFICIARIO: <strong>${data.grantee}</strong>, la siguiente propiedad inmobiliaria en el Condado de ${data.county || '___________'}:</p>
                     <div class="doc-body-text">${data.legalDesc}</div>
                     <p class="doc-text">El Otorgante garantiza que tiene pleno derecho a vender dicha propiedad y la defenderá contra reclamaciones de todas las personas.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Otorgante"></div><div class="sig-label">${data.grantor}</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Reconocido ante mí este <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Otorgante"></div><div class="sig-label">${data.grantor}</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Reconocido ante mí este <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         copyright_assignment: {
@@ -8622,8 +8622,8 @@ const NoteGenerator = {
                     <p class="doc-text">Por valor recibido, <strong>${data.assignor}</strong> cede a <strong>${data.assignee}</strong> todos los derechos, títulos e intereses sobre la obra titulada:</p>
                     <p class="doc-center-bold">"${data.work}"</p>
                     <p class="doc-text">Registro No: ${data.regNum || 'N/A'}. Esta cesión incluye todos los derechos de reproducción y distribución.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
-                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         trademark_assignment: {
@@ -8635,8 +8635,8 @@ const NoteGenerator = {
                     <p class="doc-text">El Cedente <strong>${data.assignor}</strong> transfiere al Cesionario <strong>${data.assignee}</strong> todos los derechos sobre la marca:</p>
                     <p class="doc-center-bold">"${data.mark}"</p>
                     <p class="doc-text">No. Registro: ${data.regNum}. Incluye el "goodwill" del negocio asociado.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
-                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         patent_assignment: {
@@ -8647,8 +8647,8 @@ const NoteGenerator = {
                     <h2 class="doc-title">CESIÓN DE PATENTE</h2>
                     <p class="doc-text">Yo, <strong>${data.assignor}</strong>, cedo a <strong>${data.assignee}</strong> todos los derechos sobre la invención titulada "<strong>${data.title}</strong>".</p>
                     <p class="doc-text">Número de Patente/Aplicación: <strong>${data.patNum}</strong>.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Inventor"></div><div class="sig-label">${data.assignor}</div></div></div>
-                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Inventor"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         domain_assignment: {
@@ -8660,7 +8660,7 @@ const NoteGenerator = {
                     <p class="doc-text"><strong>${data.transferor}</strong> transfiere a <strong>${data.transferee}</strong> todo control y propiedad sobre el nombre de dominio:</p>
                     <p class="doc-center-bold">www.${data.domain}</p>
                     <p class="doc-text">Precio de transferencia: <strong>$ ${data.price}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Transferente"></div><div class="sig-label">${data.transferor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-new" onclick="NoteGenerator.openSignPad('new', this)" data-label="Firma Adquirente"></div><div class="sig-label">${data.transferee}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Transferente"></div><div class="sig-label">${data.transferor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-new" onclick="NoteGenerator.openSignPad('new', this)" data-label="Firma Adquirente"></div><div class="sig-label">${data.transferee}</div></div></div>
                 </div>`
         },
         privacy_policy: {
@@ -8698,7 +8698,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Influencer creará contenido para la plataforma <strong>${data.platform}</strong>. Entregables:</p>
                     <div class="doc-body-text">${data.deliverables}</div>
                     <p class="doc-text">Compensación total: <strong>$ ${data.fee}</strong>, pagaderos tras la publicación.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Marca"></div><div class="sig-label">${data.brand}</div></div><div class="sig-block"><div class="sig-zone" id="sig-inf" onclick="NoteGenerator.openSignPad('inf', this)" data-label="Firma Influencer"></div><div class="sig-label">${data.influencer}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Marca"></div><div class="sig-label">${data.brand}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-inf" onclick="NoteGenerator.openSignPad('inf', this)" data-label="Firma Influencer"></div><div class="sig-label">${data.influencer}</div></div></div>
                 </div>`
         },
         sponsorship_agreement: {
@@ -8709,7 +8709,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE PATROCINIO</h2>
                     <p class="doc-text">El Patrocinador <strong>${data.sponsor}</strong> acuerda apoyar a <strong>${data.recipient}</strong> para el evento: "${data.event}".</p>
                     <p class="doc-text">Aporte de Patrocinio: <strong>$ ${data.amount}</strong>. A cambio, el Beneficiario proporcionará publicidad y reconocimiento de marca según lo acordado.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Patrocinador"></div><div class="sig-label">${data.sponsor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rec" onclick="NoteGenerator.openSignPad('rec', this)" data-label="Firma Beneficiario"></div><div class="sig-label">${data.recipient}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Patrocinador"></div><div class="sig-label">${data.sponsor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-rec" onclick="NoteGenerator.openSignPad('rec', this)" data-label="Firma Beneficiario"></div><div class="sig-label">${data.recipient}</div></div></div>
                 </div>`
         },
         referral_agreement: {
@@ -8720,7 +8720,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">ACUERDO DE REFERENCIA</h2>
                     <p class="doc-text"><strong>${data.company}</strong> acuerda pagar a <strong>${data.referrer}</strong> una comisión por cada cliente calificado referido.</p>
                     <p class="doc-text">Términos de Comisión: <strong>${data.commission}</strong> por venta cerrada.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-ref" onclick="NoteGenerator.openSignPad('ref', this)" data-label="Firma Referidor"></div><div class="sig-label">${data.referrer}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-ref" onclick="NoteGenerator.openSignPad('ref', this)" data-label="Firma Referidor"></div><div class="sig-label">${data.referrer}</div></div></div>
                 </div>`
         },
         commission_agreement: {
@@ -8732,7 +8732,7 @@ const NoteGenerator = {
                     <p class="doc-text">Entre <strong>${data.principal}</strong> y <strong>${data.agent}</strong>.</p>
                     <p class="doc-text">El Agente venderá productos/servicios del Principal y recibirá una compensación basada en:</p>
                     <div class="doc-body-text">${data.structure}</div>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div><div class="sig-block"><div class="sig-zone" id="sig-agent" onclick="NoteGenerator.openSignPad('agent', this)" data-label="Firma Agente"></div><div class="sig-label">${data.agent}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-agent" onclick="NoteGenerator.openSignPad('agent', this)" data-label="Firma Agente"></div><div class="sig-label">${data.agent}</div></div></div>
                 </div>`
         },
         distributor_agreement: {
@@ -8744,7 +8744,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Proveedor <strong>${data.supplier}</strong> otorga a <strong>${data.distributor}</strong> el derecho exclusivo de distribuir los siguientes productos:</p>
                     <div class="doc-body-text">${data.products}</div>
                     <p class="doc-text">En el territorio de: <strong>${data.territory}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div><div class="sig-block"><div class="sig-zone" id="sig-dist" onclick="NoteGenerator.openSignPad('dist', this)" data-label="Firma Distribuidor"></div><div class="sig-label">${data.distributor}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-dist" onclick="NoteGenerator.openSignPad('dist', this)" data-label="Firma Distribuidor"></div><div class="sig-label">${data.distributor}</div></div></div>
                 </div>`
         },
         manufacturing_agreement: {
@@ -8755,7 +8755,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE MANUFACTURA</h2>
                     <p class="doc-text">El Fabricante <strong>${data.manufacturer}</strong> acuerda producir <strong>${data.product}</strong> para el Cliente <strong>${data.client}</strong>.</p>
                     <p class="doc-text">Precio acordado: <strong>$ ${data.price}</strong> por unidad. El Fabricante garantiza la calidad y especificaciones del producto.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div><div class="sig-block"><div class="sig-zone" id="sig-man" onclick="NoteGenerator.openSignPad('man', this)" data-label="Firma Fabricante"></div><div class="sig-label">${data.manufacturer}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-man" onclick="NoteGenerator.openSignPad('man', this)" data-label="Firma Fabricante"></div><div class="sig-label">${data.manufacturer}</div></div></div>
                 </div>`
         },
         supply_agreement: {
@@ -8767,7 +8767,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Proveedor <strong>${data.supplier}</strong> se compromete a suministrar a <strong>${data.purchaser}</strong> los siguientes bienes de manera recurrente:</p>
                     <div class="doc-body-text">${data.goods}</div>
                     <p class="doc-text">Este acuerdo asegura la disponibilidad y precio de los bienes durante el término del contrato.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.purchaser}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sup" onclick="NoteGenerator.openSignPad('sup', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.purchaser}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-sup" onclick="NoteGenerator.openSignPad('sup', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div></div>
                 </div>`
         },
         agency_agreement: {
@@ -8779,8 +8779,8 @@ const NoteGenerator = {
                     <p class="doc-text">Yo, <strong>${data.principal}</strong>, nombro a <strong>${data.agent}</strong> como mi agente legal para actuar en mi nombre con respecto a:</p>
                     <div class="doc-body-text">${data.scope}</div>
                     <p class="doc-text">El Agente acepta actuar con lealtad y cuidado en el mejor interés del Principal.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div></div>
-                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div></div>
+                    <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         vehicle_lease: {
@@ -8793,7 +8793,7 @@ const NoteGenerator = {
                     <p class="doc-text">Vehículo arrendado:</p>
                     <div class="doc-body-text">${data.vehicle}</div>
                     <p class="doc-text">El Arrendatario pagará <strong>$ ${data.payment}</strong> por mes. El vehículo debe ser devuelto en buenas condiciones al final del plazo.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.lessee}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.lessee}</div></div></div>
                 </div>`
         },
         internship_agreement: {
@@ -8805,7 +8805,7 @@ const NoteGenerator = {
                     <p class="doc-text">Entre: <strong>${data.company}</strong> y <strong>${data.intern}</strong>.</p>
                     <p class="doc-text">Este acuerdo confirma que el Pasante realizará una pasantía como <strong>${data.role}</strong>.</p>
                     <p class="doc-text">Compensación: ${data.compensation || 'Pasantía no remunerada'}.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-intern" onclick="NoteGenerator.openSignPad('intern', this)" data-label="Firma Pasante"></div><div class="sig-label">${data.intern}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-intern" onclick="NoteGenerator.openSignPad('intern', this)" data-label="Firma Pasante"></div><div class="sig-label">${data.intern}</div></div></div>
                 </div>`
         },
         volunteer_agreement: {
@@ -8817,7 +8817,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Voluntario <strong>${data.volunteer}</strong> acuerda donar su tiempo a <strong>${data.org}</strong>.</p>
                     <p class="doc-text">Tareas: ${data.tasks}</p>
                     <p class="doc-text">El Voluntario entiende que no recibirá compensación financiera alguna.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Voluntario"></div><div class="sig-label">${data.volunteer}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Voluntario"></div><div class="sig-label">${data.volunteer}</div></div></div>
                 </div>`
         },
         remote_work_agreement: {
@@ -8829,7 +8829,7 @@ const NoteGenerator = {
                     <p class="doc-text">Empleado: <strong>${data.emp}</strong>. Aprobado por: <strong>${data.manager}</strong>.</p>
                     <p class="doc-text">Se autoriza al empleado a trabajar desde casa bajo el siguiente horario/condiciones:</p>
                     <div class="doc-body-text">${data.schedule}</div>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
                 </div>`
         },
         employee_handbook_ack: {
@@ -8840,7 +8840,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">ACUSE DE RECIBO DE MANUAL DEL EMPLEADO</h2>
                     <p class="doc-text">Yo, <strong>${data.emp}</strong>, certifico que he recibido y leído el Manual del Empleado (Versión: ${data.version}).</p>
                     <p class="doc-text">Entiendo que es mi responsabilidad familiarizarme con las políticas de la empresa.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
                 </div>`
         },
         property_management: {
@@ -8852,7 +8852,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Propietario <strong>${data.owner}</strong> designa a <strong>${data.manager}</strong> como agente exclusivo para administrar la propiedad en:</p>
                     <p class="doc-center-bold">${data.address}</p>
                     <p class="doc-text">El Administrador recibirá: <strong>${data.fee}</strong> por sus servicios.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-mgr" onclick="NoteGenerator.openSignPad('mgr', this)" data-label="Firma Administrador"></div><div class="sig-label">${data.manager}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-mgr" onclick="NoteGenerator.openSignPad('mgr', this)" data-label="Firma Administrador"></div><div class="sig-label">${data.manager}</div></div></div>
                 </div>`
         },
         storage_lease: {
@@ -8864,7 +8864,7 @@ const NoteGenerator = {
                     <p class="doc-text">Arrendador: <strong>${data.landlord}</strong>. Arrendatario: <strong>${data.tenant}</strong>.</p>
                     <p class="doc-text">Se alquila la unidad de almacenamiento #: <strong>${data.unit}</strong>.</p>
                     <p class="doc-text">Renta mensual: <strong>$ ${data.rent}</strong>. Solo para almacenamiento de bienes personales.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div><div class="sig-block"><div class="sig-zone" id="sig-ten" onclick="NoteGenerator.openSignPad('ten', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.tenant}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-ten" onclick="NoteGenerator.openSignPad('ten', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.tenant}</div></div></div>
                 </div>`
         },
         parking_lease: {
@@ -8876,7 +8876,7 @@ const NoteGenerator = {
                     <p class="doc-text">Entre <strong>${data.lessor}</strong> y <strong>${data.lessee}</strong>.</p>
                     <p class="doc-text">Se alquila el espacio de estacionamiento ubicado en: <strong>${data.spot}</strong>.</p>
                     <p class="doc-text">Tarifa mensual: <strong>$ ${data.rent}</strong>. El usuario asume responsabilidad por su vehículo.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Usuario"></div><div class="sig-label">${data.lessee}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Usuario"></div><div class="sig-label">${data.lessee}</div></div></div>
                 </div>`
         },
         lease_violation: {
@@ -8889,7 +8889,7 @@ const NoteGenerator = {
                     <p class="doc-text">Usted está en violación de su contrato de arrendamiento debido a:</p>
                     <div class="doc-body-text">${data.violation}</div>
                     <p class="doc-text">Debe corregir esta violación inmediatamente para evitar acciones legales o de desalojo.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div></div>
                 </div>`
         },
         rent_receipt: {
@@ -8901,7 +8901,7 @@ const NoteGenerator = {
                     <p class="doc-text">Fecha: <strong>${data.date}</strong></p>
                     <p class="doc-text">Recibí de <strong>${data.tenant}</strong> la suma de <strong>$ ${data.amount}</strong>.</p>
                     <p class="doc-text">Por el alquiler correspondiente al periodo: <strong>${data.period}</strong>.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Recipiente"></div><div class="sig-label">${data.landlord}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Recipiente"></div><div class="sig-label">${data.landlord}</div></div></div>
                 </div>`
         },
         photography_contract: {
@@ -8913,7 +8913,7 @@ const NoteGenerator = {
                     <p class="doc-text">Cliente: <strong>${data.client}</strong> | Fotógrafo: <strong>${data.photographer}</strong></p>
                     <p class="doc-text">Fecha del Evento: <strong>${data.eventDate}</strong>.</p>
                     <p class="doc-text">El Cliente acuerda pagar <strong>$ ${data.fee}</strong> por los servicios. El Fotógrafo conserva los derechos de autor.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Fotógrafo"></div><div class="sig-label">${data.photographer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Fotógrafo"></div><div class="sig-label">${data.photographer}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         venue_rental: {
@@ -8924,7 +8924,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE ALQUILER DE SALÓN DE EVENTOS</h2>
                     <p class="doc-text">El Propietario <strong>${data.venue}</strong> alquila el espacio a <strong>${data.renter}</strong> para el evento del día <strong>${data.eventDate}</strong>.</p>
                     <p class="doc-text">Costo total: <strong>$ ${data.cost}</strong>. El Arrendatario es responsable de cualquier daño a la propiedad.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.venue}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.venue}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
                 </div>`
         },
         catering_agreement: {
@@ -8936,7 +8936,7 @@ const NoteGenerator = {
                     <p class="doc-text">Proveedor: <strong>${data.caterer}</strong>. Cliente: <strong>${data.client}</strong>.</p>
                     <p class="doc-text">Servicio para aprox. <strong>${data.pax}</strong> personas. Menú acordado:</p>
                     <div class="doc-body-text">${data.menu}</div>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.caterer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.caterer}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         dj_contract: {
@@ -8947,7 +8947,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE SERVICIOS DE ENTRETENIMIENTO (DJ)</h2>
                     <p class="doc-text">El Artista <strong>${data.dj}</strong> proveerá servicios musicales a <strong>${data.client}</strong>.</p>
                     <p class="doc-text">Duración: <strong>${data.hours}</strong>. Tarifa acordada: <strong>$ ${data.fee}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma DJ"></div><div class="sig-label">${data.dj}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma DJ"></div><div class="sig-label">${data.dj}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         model_release_adult: {
@@ -8958,7 +8958,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">AUTORIZACIÓN DE USO DE IMAGEN (MODELO ADULTO)</h2>
                     <p class="doc-text">Yo, <strong>${data.model}</strong>, otorgo a <strong>${data.photographer}</strong> permiso irrevocable para usar mi imagen en fotografías/videos para cualquier fin legal (incluyendo comercial y promocional).</p>
                     <p class="doc-text">Libero al Fotógrafo de cualquier responsabilidad derivada de dicho uso.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Modelo"></div><div class="sig-label">${data.model}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Modelo"></div><div class="sig-label">${data.model}</div></div></div>
                 </div>`
         },
         consignment_agreement: {
@@ -8970,7 +8970,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Dueño <strong>${data.owner}</strong> entrega a <strong>${data.shop}</strong> los siguientes artículos para su venta:</p>
                     <div class="doc-body-text">${data.items}</div>
                     <p class="doc-text">División de ganancias: <strong>${data.split}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-shop" onclick="NoteGenerator.openSignPad('shop', this)" data-label="Firma Tienda"></div><div class="sig-label">${data.shop}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-shop" onclick="NoteGenerator.openSignPad('shop', this)" data-label="Firma Tienda"></div><div class="sig-label">${data.shop}</div></div></div>
                 </div>`
         },
         purchase_order: {
@@ -8983,7 +8983,7 @@ const NoteGenerator = {
                     <p class="doc-text">Por favor suministrar los siguientes artículos:</p>
                     <div class="doc-body-text">${data.items}</div>
                     <p class="doc-text"><strong>PRECIO TOTAL: $ ${data.total}</strong>.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.buyer}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.buyer}</div></div></div>
                 </div>`
         },
         invoice_template: {
@@ -9007,8 +9007,8 @@ const NoteGenerator = {
                     <p class="doc-text">Yo, <strong>${data.patient}</strong>, autorizo a <strong>${data.provider}</strong> a divulgar mi información de salud protegida (PHI) a:</p>
                     <p class="doc-center-bold">${data.recipient}</p>
                     <p class="doc-text">Entiendo que puedo revocar esta autorización por escrito en cualquier momento.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Paciente"></div><div class="sig-label">${data.patient}</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Paciente"></div><div class="sig-label">${data.patient}</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         medical_consent_caregiver: {
@@ -9020,8 +9020,8 @@ const NoteGenerator = {
                     <p class="doc-text">Yo, <strong>${data.parent}</strong>, padre/tutor de <strong>${data.child}</strong>, autorizo a:</p>
                     <p class="doc-center-bold">${data.caregiver}</p>
                     <p class="doc-text">A tomar decisiones médicas de emergencia y tratamiento para el Menor en mi ausencia.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre"></div><div class="sig-label">${data.parent}</div></div></div>
-                     <div class="notary-block"><p class="doc-text">Jurado ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre"></div><div class="sig-label">${data.parent}</div></div></div>
+                     <div class="notary-block" contenteditable="false"><p class="doc-text">Jurado ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
                 </div>`
         },
         equipment_rental_personal: {
@@ -9033,7 +9033,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Dueño <strong>${data.owner}</strong> alquila el siguiente equipo a <strong>${data.renter}</strong>:</p>
                     <div class="doc-body-text">${data.equip}</div>
                     <p class="doc-text">Tarifa: <strong>${data.fee}</strong>. El Arrendatario acepta devolver el equipo en las mismas condiciones.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
                 </div>`
         },
         music_license: {
@@ -9045,7 +9045,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Licenciante <strong>${data.licensor}</strong> otorga a <strong>${data.licensee}</strong> una licencia no exclusiva para usar la canción "<strong>${data.song}</strong>".</p>
                     <p class="doc-text">Uso permitido:</p>
                     <div class="doc-body-text">${data.usage}</div>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Licenciante"></div><div class="sig-label">${data.licensor}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Licenciante"></div><div class="sig-label">${data.licensor}</div></div></div>
                 </div>`
         },
         artwork_commission: {
@@ -9057,7 +9057,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Cliente <strong>${data.client}</strong> comisiona al Artista <strong>${data.artist}</strong> para crear:</p>
                     <div class="doc-body-text">${data.description}</div>
                     <p class="doc-text">Precio acordado: <strong>$ ${data.price}</strong>. El Artista conserva los derechos de exhibición en portafolio.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Artista"></div><div class="sig-label">${data.artist}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Artista"></div><div class="sig-label">${data.artist}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         video_production: {
@@ -9070,7 +9070,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Productor creará un video basado en las siguientes especificaciones:</p>
                     <div class="doc-body-text">${data.project}</div>
                     <p class="doc-text">Entrega final programada para: <strong>${data.deadline}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Productor"></div><div class="sig-label">${data.producer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Productor"></div><div class="sig-label">${data.producer}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         podcast_guest: {
@@ -9081,7 +9081,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">ACUERDO DE INVITADO A PODCAST</h2>
                     <p class="doc-text">El Invitado <strong>${data.guest}</strong> consiente ser grabado por <strong>${data.host}</strong>.</p>
                     <p class="doc-text">El Invitado otorga todos los derechos de distribución y edición del episodio sobre "${data.topic}" al Anfitrión.</p>
-                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Invitado"></div><div class="sig-label">${data.guest}</div></div></div>
+                    <br><div class="sig-section" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Invitado"></div><div class="sig-label">${data.guest}</div></div></div>
                 </div>`
         },
         house_sitting: {
@@ -9093,7 +9093,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Cuidador <strong>${data.sitter}</strong> cuidará la casa de <strong>${data.owner}</strong> durante: ${data.dates}.</p>
                     <p class="doc-text">Responsabilidades:</p>
                     <div class="doc-body-text">${data.duties}</div>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
                 </div>`
         },
         pet_sitting: {
@@ -9105,7 +9105,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Cuidador <strong>${data.sitter}</strong> asume la responsabilidad temporal de: <strong>${data.pets}</strong>, propiedad de <strong>${data.owner}</strong>.</p>
                     <p class="doc-text">Instrucciones de cuidado:</p>
                     <div class="doc-body-text">${data.instructions}</div>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
                 </div>`
         },
         tutoring_contract: {
@@ -9116,7 +9116,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE SERVICIOS DE TUTORÍA</h2>
                     <p class="doc-text">El Tutor <strong>${data.tutor}</strong> proveerá instrucción en <strong>${data.subject}</strong> a <strong>${data.student}</strong>.</p>
                     <p class="doc-text">Tarifa: <strong>$ ${data.rate}</strong>/hora. Las cancelaciones deben hacerse con 24h de anticipación.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Tutor"></div><div class="sig-label">${data.tutor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-st" onclick="NoteGenerator.openSignPad('st', this)" data-label="Firma Estudiante/Padre"></div><div class="sig-label">${data.student}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Tutor"></div><div class="sig-label">${data.tutor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-st" onclick="NoteGenerator.openSignPad('st', this)" data-label="Firma Estudiante/Padre"></div><div class="sig-label">${data.student}</div></div></div>
                 </div>`
         },
         personal_trainer: {
@@ -9128,7 +9128,7 @@ const NoteGenerator = {
                     <p class="doc-text">Entrenador: <strong>${data.trainer}</strong> | Cliente: <strong>${data.client}</strong></p>
                     <p class="doc-text">Servicio contratado: <strong>${data.package}</strong>.</p>
                     <p class="doc-text">El cliente certifica que está en condiciones físicas para realizar ejercicio. ${data.waiver === 'Sí' ? 'El cliente renuncia a reclamaciones por lesiones durante el entrenamiento.' : ''}</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Entrenador"></div><div class="sig-label">${data.trainer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Entrenador"></div><div class="sig-label">${data.trainer}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         cleaning_services: {
@@ -9139,7 +9139,7 @@ const NoteGenerator = {
                     <h2 class="doc-title">CONTRATO DE SERVICIOS DE LIMPIEZA</h2>
                     <p class="doc-text"><strong>${data.provider}</strong> realizará servicios de limpieza en: ${data.address}.</p>
                     <p class="doc-text">Frecuencia: <strong>${data.frequency}</strong>. Costo: <strong>$ ${data.price}</strong> por visita.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.provider}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.provider}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         gardening_contract: {
@@ -9152,7 +9152,7 @@ const NoteGenerator = {
                     <p class="doc-text">Servicios incluidos:</p>
                     <div class="doc-body-text">${data.services}</div>
                     <p class="doc-text">Pago acordado: <strong>${data.price}</strong>.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Jardinero"></div><div class="sig-label">${data.gardener}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Jardinero"></div><div class="sig-label">${data.gardener}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         general_contractor: {
@@ -9164,7 +9164,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Contratista <strong>${data.contractor}</strong> ejecutará el siguiente proyecto para <strong>${data.client}</strong>:</p>
                     <div class="doc-body-text">${data.project}</div>
                     <p class="doc-text">El Cliente pagará un total de <strong>$ ${data.total}</strong> según el cronograma de pagos adjunto.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         hvac_service: {
@@ -9177,7 +9177,7 @@ const NoteGenerator = {
                     <p class="doc-text">Unidad: ${data.system}</p>
                     <p class="doc-text">Trabajo realizado / Diagnóstico:</p>
                     <div class="doc-body-text">${data.work}</div>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Técnico"></div><div class="sig-label">${data.technician}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Técnico"></div><div class="sig-label">${data.technician}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         plumbing_contract: {
@@ -9189,7 +9189,7 @@ const NoteGenerator = {
                     <p class="doc-text">El Plomero <strong>${data.plumber}</strong> realizará los siguientes trabajos para <strong>${data.client}</strong>:</p>
                     <div class="doc-body-text">${data.problem}</div>
                     <p class="doc-text">Costo estimado: <strong>$ ${data.estimate}</strong> (sujeto a cambios por materiales imprevistos).</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Plomero"></div><div class="sig-label">${data.plumber}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Plomero"></div><div class="sig-label">${data.plumber}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         electrical_service: {
@@ -9203,7 +9203,7 @@ const NoteGenerator = {
                     <p class="doc-text">Descripción del trabajo:</p>
                     <div class="doc-body-text">${data.scope}</div>
                     <p class="doc-text">Todo el trabajo cumplirá con los códigos eléctricos locales.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Electricista"></div><div class="sig-label">${data.electrician}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Electricista"></div><div class="sig-label">${data.electrician}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         },
         roofing_contract: {
@@ -9215,7 +9215,7 @@ const NoteGenerator = {
                     <p class="doc-text">Empresa: <strong>${data.roofer}</strong> | Cliente: <strong>${data.client}</strong></p>
                     <p class="doc-text">Materiales a utilizar: <strong>${data.material}</strong>.</p>
                     <p class="doc-text">Se ofrece una garantía de mano de obra de <strong>${data.warranty}</strong> años.</p>
-                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Techador"></div><div class="sig-label">${data.roofer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                    <br><div class="sig-section-row" contenteditable="false"><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Techador"></div><div class="sig-label">${data.roofer}</div></div><div class="sig-block" contenteditable="false"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
                 </div>`
         }
     },
