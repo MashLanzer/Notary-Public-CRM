@@ -4603,7 +4603,7 @@ window.NotaryCRM = {
 
         // Generate full tracking link
         const baseUrl = window.location.origin;
-        const trackingLink = `${baseUrl}/status.html?case=${caseItem.caseNumber}`;
+        const trackingLink = `${baseUrl}/status.html?case=${caseItem.caseNumber}&action=sign`;
 
         const message = `Hola ${client.name}, le envío el documento correspondiente al caso ${caseItem.caseNumber} (${caseItem.type}) para su firma digital. \n\nPuede rastrear el avance de su trámite en este enlace directo: ${trackingLink}`;
         const encodedMsg = encodeURIComponent(message);
@@ -5044,200 +5044,4506 @@ const Reminders = {
 
 
 // ============================================
+
+// ============================================
 // DOCUMENTS MANAGER (PDF & SIGNATURE)
 // ============================================
 
-const DocumentsManager = {
+const NoteGenerator = {
+    // Force global exposure immediately for inline event handlers
+    get self() { window.NoteGenerator = this; return this; },
+
     signaturePad: null,
+    currentSigElement: null,
     templates: {
         affidavit: {
-            title: "AFFIDAVIT GENERAL",
+            title: "DECLARACIÓN JURADA (AFFIDAVIT)",
+            fields: [
+                {
+                    group: 'Datos del Declarante', fields: [
+                        { id: 'affiantName', label: 'Nombre Completo', type: 'text', width: 'full' },
+                        { id: 'address', label: 'Dirección Completa', type: 'text', width: 'full' },
+                        { id: 'age', label: 'Edad', type: 'number', width: 'half' },
+                        { id: 'occupation', label: 'Ocupación', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Detalles de la Declaración', fields: [
+                        { id: 'statement', label: 'Hechos Declarados', type: 'textarea', rows: 6, placeholder: 'Detalle punto por punto los hechos...' }
+                    ]
+                }
+            ],
             content: (data) => `
-                <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
-                    <h2 style="text-align: center; margin-bottom: 2rem;">AFFIDAVIT</h2>
-                    
-                    <p><strong>ESTADO DE:</strong> ${data.location.split(',')[1] || '___________'}</p>
-                    <p><strong>CONDADO DE:</strong> ${data.location.split(',')[0] || '___________'}</p>
-                    
-                    <br>
-                    
-                    <p>ANTES DE MÍ, la autoridad que suscribe, compareció personalmente <strong>${data.clientName}</strong>, quien siendo debidamente juramentado, depone y dice:</p>
-                    
-                    <p style="text-align: justify; margin: 1.5rem 0; min-height: 100px;">
-                        ${data.body || '[El contenido de la declaración jurada aparecerá aquí...]'}
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DECLARACIÓN JURADA</h2>
+                    <p class="doc-text">
+                        Estado de <strong>${data.location ? data.location.split(',')[1] || '_______' : '_______'}</strong><br>
+                        Condado de <strong>${data.location ? data.location.split(',')[0] || '_______' : '_______'}</strong>
                     </p>
-                    
-                    <p>BAJO PROTESTA DE DECIR VERDAD.</p>
-                    
-                    <br><br><br>
-                    
-                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
-                        Firma del Declarante<br>
-                        <strong>${data.clientName}</strong>
+                    <p class="doc-text">
+                        YO, <strong>${data.affiantName || data.clientName}</strong>, mayor de edad (${data.age || '__'} años), de ocupación ${data.occupation || '_______'}, con domicilio en ${data.address || '____________________'}, siendo debidamente juramentado, DECLARO BAJO PENA DE PERJURIO:
+                    </p>
+                    <div class="doc-body-text">
+                        ${(data.statement || '[Escriba aquí los hechos...]').replace(/\n/g, '<br>')}
                     </div>
-                    
+                    <p class="doc-text">
+                        LA INFORMACIÓN ANTERIOR es verdadera y correcta según mi leal saber y entender.
+                    </p>
                     <br><br>
-                    
-                    <p>JURADO y SUSCRITO ante mí este día <strong>${data.date}</strong>.</p>
-                    
-                    <br><br><br>
-                    
-                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
-                        Notario Público
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
+                            <div class="sig-label">${data.affiantName || data.clientName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-center-bold">JURAT</p>
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
                     </div>
                 </div>
             `
         },
-        power_attorney: {
-            title: "PODER NOTARIAL",
+        bill_of_sale: {
+            title: "FACTURA DE VENTA DE VEHÍCULO/BIEN",
+            fields: [
+                {
+                    group: 'Vendedor', fields: [
+                        { id: 'sellerName', label: 'Nombre Vendedor', type: 'text', width: 'full' },
+                        { id: 'sellerAddress', label: 'Dirección Vendedor', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Comprador', fields: [
+                        { id: 'buyerName', label: 'Nombre Comprador', type: 'text', width: 'full' },
+                        { id: 'buyerAddress', label: 'Dirección Comprador', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Datos del Bien', fields: [
+                        { id: 'itemType', label: 'Tipo (Vehículo, Bote, etc)', type: 'text', width: 'half' },
+                        { id: 'make', label: 'Marca', type: 'text', width: 'half' },
+                        { id: 'model', label: 'Modelo', type: 'text', width: 'half' },
+                        { id: 'year', label: 'Año', type: 'number', width: 'half' },
+                        { id: 'vin', label: 'VIN / N.º Serie', type: 'text', width: 'full' },
+                        { id: 'odometer', label: 'Millaje/Uso', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Transacción', fields: [
+                        { id: 'price', label: 'Precio de Venta ($)', type: 'number', width: 'half' },
+                        { id: 'saleDate', label: 'Fecha Venta', type: 'date', width: 'half' },
+                        { id: 'gift', label: '¿Es regalo?', type: 'select', options: ['No', 'Sí'], width: 'full' }
+                    ]
+                }
+            ],
             content: (data) => `
-                 <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
-                    <h2 style="text-align: center; margin-bottom: 2rem;">PODER LEGAL GENERAL</h2>
-                    
-                    <p style="text-align: justify;">
-                        SEPASE POR TODOS LOS PRESENTES, que yo, <strong>${data.clientName}</strong>, residente de ${data.location}, por la presente nombro y constituyo a un representante legal para actuar en mi nombre y lugar.
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">FACTURA DE VENTA (BILL OF SALE)</h2>
+                    <div class="doc-box">
+                        <p><strong>MONTO:</strong> $ ${data.price || '0.00'}</p>
+                        <p><strong>FECHA:</strong> ${data.saleDate || data.date}</p>
+                    </div>
+                    <p class="doc-text">
+                        <strong>EL VENDEDOR:</strong> ${data.sellerName} (Domicilio: ${data.sellerAddress})<br>
+                        Transfiere absoluta propiedad al<br>
+                        <strong>COMPRADOR:</strong> ${data.buyerName} (Domicilio: ${data.buyerAddress})
                     </p>
-                    
-                    <p style="text-align: justify; margin: 1.5rem 0;">
-                        Por medio de este instrumento otorgo plenos poderes y autoridad para realizar y ejecutar todos y cada uno de los actos necesarios con el mismo efecto que si yo estuviera personalmente presente.
+                    <p class="doc-text">Sobre el siguiente Bien/Vehículo:</p>
+                    <table style="width:100%; border:1px solid #000; border-collapse:collapse; margin-bottom:15px;">
+                        <tr><td style="border:1px solid #000; padding:5px;"><strong>Tipo:</strong></td><td style="border:1px solid #000; padding:5px;">${data.itemType || ''}</td></tr>
+                        <tr><td style="border:1px solid #000; padding:5px;"><strong>Marca/Modelo:</strong></td><td style="border:1px solid #000; padding:5px;">${data.make || ''} ${data.model || ''} (${data.year || ''})</td></tr>
+                        <tr><td style="border:1px solid #000; padding:5px;"><strong>VIN/Serie:</strong></td><td style="border:1px solid #000; padding:5px;">${data.vin || ''}</td></tr>
+                        <tr><td style="border:1px solid #000; padding:5px;"><strong>Lectura:</strong></td><td style="border:1px solid #000; padding:5px;">${data.odometer || 'N/A'}</td></tr>
+                    </table>
+                    <p class="doc-text">
+                        ${data.gift === 'Sí' ? 'Este traspaso es un REGALO y no hay intercambio monetario mayor.' : 'El Vendedor certifica que el bien está libre de gravámenes.'}
+                        Se vende "TAL CUAL" (AS-IS) sin garantía.
                     </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
+                            <div class="sig-label">Vendedor: ${data.sellerName}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div>
+                             <div class="sig-label">Comprador: ${data.buyerName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        promissory_note: {
+            title: "PAGARÉ CON GARANTÍA",
+            fields: [
+                {
+                    group: 'Términos', fields: [
+                        { id: 'amount', label: 'Monto Prestado ($)', type: 'number', width: 'half' },
+                        { id: 'rate', label: 'Interés Anual (%)', type: 'number', width: 'half' },
+                        { id: 'startDate', label: 'Fecha Inicio', type: 'date', width: 'half' },
+                        { id: 'endDate', label: 'Fecha Vencimiento', type: 'date', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Partes', fields: [
+                        { id: 'borrower', label: 'Prestatario', type: 'text', width: 'full' },
+                        { id: 'lender', label: 'Prestamista', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Pagos', fields: [
+                        { id: 'frequency', label: 'Frecuencia', type: 'select', options: ['Mensual', 'Semanal', 'Al Vencimiento'], width: 'half' },
+                        { id: 'installment', label: 'Cuota ($)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                 <div class="legal-doc" contenteditable="true">
+                     <h2 class="doc-title">PAGARÉ (PROMISSORY NOTE)</h2>
+                     <p class="doc-text"><strong>${data.date}</strong> (Fecha)</p>
+                     <p class="doc-text">
+                         POR VALOR RECIBIDO, <strong>${data.borrower || '[Prestatario]'}</strong> (el "Prestatario"), promete pagar a <strong>${data.lender || '[Prestamista]'}</strong> (el "Tenedor"), la suma principal de <strong>$ ${data.amount || '0.00'}</strong>.
+                     </p>
+                     <p class="doc-text">
+                         <strong>1. INTERÉS:</strong> Tasa del <strong>${data.rate || '0'}%</strong> anual sobre el saldo insoluto.
+                     </p>
+                     <p class="doc-text">
+                         <strong>2. PAGOS:</strong> El pago se realizará de forma <strong>${data.frequency || 'Mensual'}</strong>.
+                         Cuota estimada: $ ${data.installment || '0.00'}.
+                         El pago total final vence el: <strong>${data.endDate || '___________'}</strong>.
+                     </p>
+                     <p class="doc-text">
+                         <strong>3. INCUMPLIMIENTO:</strong> En caso de mora, se aplicarán cargos permitidos por la ley.
+                     </p>
+                     <br>
+                     <div class="sig-section">
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestatario"></div>
+                             <div class="sig-label">${data.borrower}</div>
+                         </div>
+                     </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                 </div>
+             `
+        },
+        child_travel_consent: {
+            title: "CONSENTIMIENTO DE VIAJE (MENORES)",
+            fields: [
+                {
+                    group: 'Menor', fields: [
+                        { id: 'childName', label: 'Nombre del Menor', type: 'text', width: 'full' },
+                        { id: 'dob', label: 'Fecha Nacimiento', type: 'date', width: 'half' },
+                        { id: 'passport', label: 'Pasaporte N.º', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Viaje', fields: [
+                        { id: 'guardian', label: 'Viaja con (Nombre)', type: 'text', width: 'full' },
+                        { id: 'relation', label: 'Relación', type: 'text', width: 'full' },
+                        { id: 'dest', label: 'Destino', type: 'text', width: 'half' },
+                        { id: 'dates', label: 'Fechas del Viaje', type: 'text', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN DE VIAJE PARA MENORES</h2>
+                    <p class="doc-text">
+                        YO/NOSOTROS, <strong>${data.clientName}</strong>, bajo juramento certifico que soy el padre/madre/tutor legal de:
+                    </p>
+                    <p class="doc-center-bold">${data.childName || '[NOMBRE MENOR]'}</p>
+                    <p class="doc-text" style="text-align:center;">
+                        Nacido el: ${data.dob || '_______'} | Pasaporte: ${data.passport || '_______'}
+                    </p>
+                    <p class="doc-text">
+                        Doy mi consentimiento irrevocable para que mi hijo(a) viaje a <strong>${data.dest || '[PAÍS/CIUDAD]'}</strong> durante las fechas <strong>${data.dates || '_______'}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El menor viajará acompañado por: <strong>${data.guardian || '[ACOMPAÑANTE]'}</strong> (${data.relation || 'Relación'}).
+                        Autorizo al acompañante a tomar decisiones médicas de emergencia si fuera necesario.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Madre"></div>
+                            <div class="sig-label">Padre/Madre/Tutor</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        power_of_attorney: {
+            title: "PODER NOTARIAL GENERAL (POWER OF ATTORNEY)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'principalName', label: 'Poderdante (Principal)', type: 'text', width: 'full' },
+                        { id: 'agentName', label: 'Apoderado (Agent)', type: 'text', width: 'full' },
+                        { id: 'agentAddress', label: 'Dirección del Apoderado', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Poderes', fields: [
+                        { id: 'effectiveDate', label: 'Fecha de Efectividad', type: 'date', width: 'half' },
+                        { id: 'expirationDate', label: 'Fecha de Expiración (Opcional)', type: 'date', width: 'half' },
+                        { id: 'powers', label: 'Poderes Otorgados', type: 'textarea', rows: 4, placeholder: 'Describa los poderes (Bancarios, Bienes Raíces, etc.)' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">PODER NOTARIAL GENERAL</h2>
+                    <p class="doc-text">
+                        POR EL PRESENTE DOCUMENTO, yo, <strong>${data.principalName || data.clientName}</strong> (el "Poderdante"), domiciliado en <strong>${data.location}</strong>, designo y nombro a:
+                    </p>
+                    <p class="doc-center-bold">${data.agentName} <br><span style="font-weight:normal; font-size:10pt;">${data.agentAddress}</span></p>
+                    <p class="doc-text">
+                        Como mi verdadero y legal Apoderado (Attorney-in-Fact) para actuar en mi nombre y representación.
+                    </p>
+                    <div class="doc-box">
+                        <strong>PODERES OTORGADOS:</strong><br>
+                        ${(data.powers || 'El Apoderado tendrá plenos poderes para gestionar mis asuntos financieros, bancarios y de propiedad.').replace(/\n/g, '<br>')}
+                    </div>
+                    <p class="doc-text">
+                        Este Poder entrará en vigor el <strong>${data.effectiveDate || 'fecha de firma'}</strong> y permanecerá vigente hasta su revocación por escrito ${data.expirationDate ? 'o hasta el ' + data.expirationDate : ''}.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
+                            <div class="sig-label">${data.principalName || data.clientName}</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Apoderado"></div>
+                            <div class="sig-label">${data.agentName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        living_will: {
+            title: "TESTAMENTO VITAL (LIVING WILL)",
+            fields: [
+                {
+                    group: 'Declarante', fields: [
+                        { id: 'declarantName', label: 'Nombre Completo', type: 'text', width: 'full' },
+                        { id: 'primaryPhysician', label: 'Médico Primario', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Directivas', fields: [
+                        { id: 'lifeSupport', label: 'Soporte Vital', type: 'select', options: ['Retirar si es terminal', 'Mantener artificialmente'], width: 'full' },
+                        { id: 'organDonation', label: 'Donación de Órganos', type: 'select', options: ['No autorizo', 'Autorizo cualquier órgano', 'Solo fines de investigación'], width: 'full' },
+                        { id: 'specialRequests', label: 'Peticiones Especiales', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DIRECTIVA ANTICIPADA DE SALUD (LIVING WILL)</h2>
+                    <p class="doc-text">
+                        YO, <strong>${data.declarantName || data.clientName}</strong>, estando en pleno uso de mis facultades mentales, declaro mi voluntad respecto a mi tratamiento médico futuro.
+                    </p>
+                    <div class="doc-body-text">
+                        <p><strong>1. SOPORTE VITAL:</strong> ${data.lifeSupport}</p>
+                        <p><strong>2. DONACIÓN DE ÓRGANOS:</strong> ${data.organDonation}</p>
+                        <p><strong>3. INSTRUCCIONES ESPECIALES:</strong><br>${data.specialRequests || 'Ninguna.'}</p>
+                    </div>
+                    <p class="doc-text">
+                         Esta directiva debe seguirse si no puedo comunicarme y me encuentro en una condición terminal incurable.
+                         Médico Primario: ${data.primaryPhysician || 'N/A'}.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
+                            <div class="sig-label">${data.declarantName || data.clientName}</div>
+                        </div>
+                    </div>
+                    <!-- Witness Section -->
+                     <div class="sig-section-row" style="margin-top:20px;">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Testigo 1"></div>
+                            <div class="sig-label">Testigo 1</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness2" onclick="NoteGenerator.openSignPad('witness2', this)" data-label="Testigo 2"></div>
+                             <div class="sig-label">Testigo 2</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        quitclaim_deed: {
+            title: "ESCRITURA DE RENUNCIA (QUITCLAIM DEED)",
+            fields: [
+                {
+                    group: 'Transmisión', fields: [
+                        { id: 'grantor', label: 'Otorgante (Grantor)', type: 'text', width: 'full' },
+                        { id: 'grantee', label: 'Beneficiario (Grantee)', type: 'text', width: 'full' },
+                        { id: 'consideration', label: 'Contraprestación ($)', type: 'number', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Propiedad', fields: [
+                        { id: 'parcelId', label: 'Parcel ID / Folio', type: 'text', width: 'half' },
+                        { id: 'propertyDesc', label: 'Descripción Legal Completa', type: 'textarea', rows: 4 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">QUITCLAIM DEED</h2>
+                    <p class="doc-text">
+                        ESTA ESCRITURA DE RENUNCIA, ejecutada el <strong>${data.date}</strong>, por el Otorgante (Grantor):
+                    </p>
+                    <p class="doc-center-bold">${data.grantor}</p>
+                    <p class="doc-text">
+                        A favor del Beneficiario (Grantee):
+                    </p>
+                     <p class="doc-center-bold">${data.grantee}</p>
+                    <p class="doc-text">
+                        POR LA CONTRAPRESTACIÓN DE $ ${data.consideration || '10.00'}, y otra buena y valiosa compensación, el Otorgante por la presente renuncia y cede al Beneficiario todo derecho, título e interés en la siguiente propiedad:
+                    </p>
+                    <div class="doc-box-highlight">
+                        ${data.propertyDesc || '[Inserte Descripción Legal Aquí]'}
+                        <br><br><strong>Parcel ID:</strong> ${data.parcelId || '_______'}
+                    </div>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Otorgante"></div>
+                            <div class="sig-label">${data.grantor}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        residential_lease: {
+            title: "CONTRATO DE ALQUILER RESIDENCIAL",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'landlord', label: 'Propietario', type: 'text', width: 'full' },
+                        { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'propertyAddress', label: 'Dirección Inmueble', type: 'text', width: 'full' },
+                        { id: 'termStart', label: 'Inicio', type: 'date', width: 'half' },
+                        { id: 'termEnd', label: 'Fin', type: 'date', width: 'half' },
+                        { id: 'rentAmount', label: 'Renta Mensual ($)', type: 'number', width: 'half' },
+                        { id: 'securityDeposit', label: 'Depósito ($)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ARRENDAMIENTO</h2>
+                    <p class="doc-text">
+                        ACUERDO celebrado el <strong>${data.date}</strong>, entre <strong>${data.landlord}</strong> (Propietario) y <strong>${data.tenant}</strong> (Inquilino).
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. PROPIEDAD:</strong> El Propietario alquila al Inquilino la propiedad ubicada en: ${data.propertyAddress}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. PLAZO:</strong> Comienza el ${data.termStart || '_______'} y termina el ${data.termEnd || '_______'}.
+                    </p>
+                     <p class="doc-text">
+                        <strong>3. RENTA:</strong> $ ${data.rentAmount || '0.00'} pagaderos mensualmente.
+                    </p>
+                     <p class="doc-text">
+                        <strong>4. DEPÓSITO:</strong> $ ${data.securityDeposit || '0.00'} pagaderos a la firma.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
+                            <div class="sig-label">Propietario</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Inquilino"></div>
+                            <div class="sig-label">Inquilino</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        residency_affidavit: {
+            title: "PRUEBA DE RESIDENCIA (RESIDENCY AFFIDAVIT)",
+            fields: [
+                {
+                    group: 'Residente', fields: [
+                        { id: 'residentName', label: 'Nombre Residente', type: 'text', width: 'full' },
+                        { id: 'currAddress', label: 'Dirección Actual', type: 'text', width: 'full' },
+                        { id: 'yearsResiding', label: 'Años Residiendo', type: 'number', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Propietario/Testigo (Opcional)', fields: [
+                        { id: 'landlordName', label: 'Nombre Dueño/Testigo', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                 <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DECLARACIÓN JURADA DE RESIDENCIA</h2>
+                     <p class="doc-text">
+                        Yo, <strong>${data.residentName || data.clientName}</strong>, bajo juramento declaro:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. Que mi residencia principal y actual es:</p>
+                        <p style="text-align:center; font-weight:bold;">${data.currAddress}</p>
+                        <p>2. Que he residido en esta dirección por un periodo de ${data.yearsResiding || '__'} años.</p>
+                        <p>3. Que presento esta declaración para probar mi domicilio a fines legales/administrativos.</p>
+                    </div>
+                     <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Residente"></div>
+                            <div class="sig-label">${data.residentName}</div>
+                        </div>
+                    </div>
+                    ${data.landlordName ? `
+                     <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Firma Propietario/Testigo"></div>
+                            <div class="sig-label">${data.landlordName} (Propietario/Testigo)</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        medical_poa: {
+            title: "PODER MÉDICO (MEDICAL POWER OF ATTORNEY)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'principalName', label: 'Poderdante (Principal)', type: 'text', width: 'full' },
+                        { id: 'agentName', label: 'Agente de Salud', type: 'text', width: 'full' },
+                        { id: 'altAgentName', label: 'Agente Alterno (Opcional)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Instrucciones', fields: [
+                        { id: 'effectiveCondition', label: 'Efectivo cuando', type: 'select', options: ['Inmediatamente', 'Cuando sea incapaz de decidir'], width: 'full' },
+                        { id: 'specialInstructions', label: 'Limitaciones o Instrucciones', type: 'textarea', rows: 4 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">PODER NOTARIAL PARA ATENCIÓN MÉDICA</h2>
+                    <p class="doc-text">
+                        <strong>DESIGNACIÓN DE AGENTE DE ATENCIÓN MÉDICA.</strong><br>
+                        Yo, <strong>${data.principalName || data.clientName}</strong>, designo y nombro a:
+                    </p>
+                    <p class="doc-center-bold">${data.agentName}</p>
+                    <p class="doc-text">
+                        Como mi agente para tomar todas y cada una de las decisiones de atención médica por mí, excepto en la medida en que yo indique lo contrario en este documento.
+                    </p>
+                    <p class="doc-text">
+                        Si mi agente designado no puede o no quiere servir, designo a <strong>${data.altAgentName || 'N/A'}</strong> como mi agente alterno.
+                    </p>
+                    <div class="doc-box">
+                        <strong>EFECTIVIDAD:</strong> ${data.effectiveCondition}<br><br>
+                        <strong>LIMITACIONES/INSTRUCCIONES:</strong><br>
+                        ${(data.specialInstructions || 'Mi agente tiene plena autoridad para tomar decisiones de atención médica.').replace(/\n/g, '<br>')}
+                    </div>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
+                            <div class="sig-label">${data.principalName}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Firma Testigo 1"></div>
+                            <div class="sig-label">Testigo 1</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        last_will: {
+            title: "ÚLTIMA VOLUNTAD Y TESTAMENTO (LAST WILL)",
+            fields: [
+                {
+                    group: 'Testador', fields: [
+                        { id: 'testatorName', label: 'Nombre del Testador', type: 'text', width: 'full' },
+                        { id: 'executorName', label: 'Albacea (Ejecutor)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Beneficiarios', fields: [
+                        { id: 'beneficiary1', label: 'Beneficiario Principal', type: 'text', width: 'full' },
+                        { id: 'assets1', label: 'Bienes para Principal', type: 'textarea', rows: 2 },
+                        { id: 'beneficiary2', label: 'Beneficiario Secundario', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ÚLTIMA VOLUNTAD Y TESTAMENTO</h2>
+                    <p class="doc-text">
+                        YO, <strong>${data.testatorName || data.clientName}</strong>, residente de <strong>${data.location}</strong>, siendo de mente sana, declaro que este es mi Testamento y revoco todos los testamentos y codicilos anteriores.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO 1. ALBACEA.</strong><br>
+                        Nombro a <strong>${data.executorName}</strong> como mi Albacea/Ejecutor para administrar mi patrimonio.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO 2. DISTRIBUCIÓN DE BIENES.</strong><br>
+                        Lego y devengo mis bienes de la siguiente manera:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>A <strong>${data.beneficiary1 || '[Beneficiario]'}</strong>: ${data.assets1 || 'Todo el resto y residuo de mi patrimonio.'}</p>
+                        ${data.beneficiary2 ? `<p>A <strong>${data.beneficiary2}</strong>: Cualquier activo restante si el beneficiario principal fallece antes que yo.</p>` : ''}
+                    </div>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Testador"></div>
+                            <div class="sig-label">${data.testatorName}</div>
+                        </div>
+                    </div>
+                    <div class="sig-section-row" style="margin-top:20px;">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Firma Testigo 1"></div>
+                            <div class="sig-label">Testigo 1</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness2" onclick="NoteGenerator.openSignPad('witness2', this)" data-label="Firma Testigo 2"></div>
+                             <div class="sig-label">Testigo 2</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        contractor_agreement: {
+            title: "CONTRATO DE SERVICIOS (INDEPENDENT CONTRACTOR)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'client', label: 'Cliente (Contratante)', type: 'text', width: 'full' },
+                        { id: 'contractor', label: 'Contratista', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Servicio', fields: [
+                        { id: 'serviceDesc', label: 'Descripción del Servicio', type: 'textarea', rows: 3 },
+                        { id: 'compensation', label: 'Compensación Total ($)', type: 'number', width: 'half' },
+                        { id: 'timeline', label: 'Fecha de Entrega/Fin', type: 'date', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE CONTRATISTA INDEPENDIENTE</h2>
+                    <p class="doc-text">
+                        ESTE ACUERDO se celebra el <strong>${data.date}</strong>, entre:
+                    </p>
+                    <p class="doc-text"><strong>CLIENTE:</strong> ${data.client}</p>
+                    <p class="doc-text"><strong>CONTRATISTA:</strong> ${data.contractor}</p>
+                    <p class="doc-text">
+                        <strong>1. SERVICIOS.</strong> El Contratista acuerda realizar los siguientes servicios:<br>
+                        ${data.serviceDesc || '[Describir servicios]'}
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. PAGO.</strong> El Cliente pagará al Contratista la suma de <strong>$ ${data.compensation || '0.00'}</strong> al completarse el servicio.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. PLAZO.</strong> Los servicios se completarán para la fecha: <strong>${data.timeline}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>4. RELACIÓN.</strong> Las partes acuerdan que esta es una relación de contratista independiente y no de empleado-empleador.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div>
+                            <div class="sig-label">Cliente</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Contratista"></div>
+                            <div class="sig-label">Contratista</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        hold_harmless: {
+            title: "ACUERDO DE EXENCIÓN (HOLD HARMLESS)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'indemnifier', label: 'Indemnizador (Libera)', type: 'text', width: 'full' },
+                        { id: 'indemnitee', label: 'Indemnizado (Protegido)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Evento', fields: [
+                        { id: 'activity', label: 'Actividad/Evento', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE EXENCIÓN DE RESPONSABILIDAD</h2>
+                    <p class="doc-text">
+                        VIGENCIA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Yo, <strong>${data.indemnifier}</strong> (el "Indemnizador"), acuerdo liberar de responsabilidad, defender e indemnizar a <strong>${data.indemnitee}</strong> (el "Indemnizado") de cualquier y toda responsabilidad, pérdida, daño o costo que pueda incurrir debido a mi participación en:
+                    </p>
+                    <div class="doc-box">
+                        ${data.activity || '[Describir Actividad o Evento]'}
+                    </div>
+                    <p class="doc-text">
+                        Entiendo los riesgos inherentes y asumo voluntariamente toda responsabilidad.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Indemnizador"></div>
+                            <div class="sig-label">${data.indemnifier}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        lease_termination: {
+            title: "TERMINACIÓN DE ALQUILER (LEASE TERMINATION)",
+            fields: [
+                {
+                    group: 'Contrato Original', fields: [
+                        { id: 'leaseDate', label: 'Fecha Contrato Original', type: 'date', width: 'half' },
+                        { id: 'vacateDate', label: 'Fecha de Desalojo', type: 'date', width: 'half' },
+                        { id: 'property', label: 'Propiedad', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Partes', fields: [
+                        { id: 'landlord', label: 'Propietario', type: 'text', width: 'full' },
+                        { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE TERMINACIÓN DE ALQUILER</h2>
+                    <p class="doc-text">
+                        Este Acuerdo se celebra entre <strong>${data.landlord}</strong> (Propietario) y <strong>${data.tenant}</strong> (Inquilino).
+                    </p>
+                    <p class="doc-text">
+                        Las partes acuerdan terminar anticipadamente el Contrato de Arrendamiento con fecha <strong>${data.leaseDate}</strong> respecto a la propiedad ubicada en:
+                    </p>
+                    <p class="doc-center-bold">${data.property}</p>
+                    <p class="doc-text">
+                        El Inquilino acuerda desalojar la propiedad y entregar la posesión el día: <strong>${data.vacateDate}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Al cumplir con este desalojo y entrega de llaves, ambas partes se liberan mutuamente de futuras obligaciones bajo el contrato original.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
+                            <div class="sig-label">Propietario</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Inquilino"></div>
+                            <div class="sig-label">Inquilino</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        loan_agreement: {
+            title: "CONTRATO DE PRÉSTAMO PERSONAL (LOAN AGREEMENT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'lender', label: 'Prestamista', type: 'text', width: 'full' },
+                        { id: 'borrower', label: 'Prestatario', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'amount', label: 'Monto ($)', type: 'number', width: 'half' },
+                        { id: 'interest', label: 'Tasa/Interés (%)', type: 'number', width: 'half' },
+                        { id: 'dueDate', label: 'Fecha Límite Pago', type: 'date', width: 'full' },
+                        { id: 'paymentPlan', label: 'Plan de Pago', type: 'textarea', rows: 2, placeholder: 'Ej: Pagos mensuales de $200 comenzando el 1 de enero...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE PRÉSTAMO DE DINERO</h2>
+                    <p class="doc-text">
+                        FECHA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>PRESTA MISTA:</strong> ${data.lender}<br>
+                        <strong>PRESTATARIO:</strong> ${data.borrower}
+                    </p>
+                    <p class="doc-text">
+                        El Prestamista acuerda prestar la suma de <strong>$ ${data.amount}</strong> al Prestatario bajo los siguientes términos:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. <strong>Interés:</strong> El préstamo devengará un interés del ${data.interest || '0'}% anual.</p>
+                        <p>2. <strong>Reembolso:</strong> El monto total (principal + interés) debe pagarse antes del: <strong>${data.dueDate}</strong>.</p>
+                        <p>3. <strong>Forma de Pago:</strong><br>${data.paymentPlan || 'Pago único en la fecha de vencimiento.'}</p>
+                    </div>
+                    <p class="doc-text">
+                        En caso de incumplimiento, el Prestatario será responsable de todos los costos de cobranza y honorarios legales.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestamista"></div>
+                            <div class="sig-label">Prestamista</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Prestatario"></div>
+                            <div class="sig-label">Prestatario</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                         <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                         <div class="notary-seal-placeholder">SELLO</div>
+                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                         <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        nda_agreement: {
+            title: "ACUERDO DE CONFIDENCIALIDAD (NDA)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'disclosingParty', label: 'Parte Reveladora', type: 'text', width: 'full' },
+                        { id: 'receivingParty', label: 'Parte Receptora', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Información', fields: [
+                        { id: 'topic', label: 'Tema / Proyecto', type: 'text', width: 'full' },
+                        { id: 'term', label: 'Duración (Años)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE NO DIVULGACIÓN (NDA)</h2>
+                    <p class="doc-text">
+                        Este Acuerdo se hace efectivo el <strong>${data.date}</strong> entre:
+                    </p>
+                    <p class="doc-text">
+                        <strong>Parte Reveladora:</strong> ${data.disclosingParty}<br>
+                        <strong>Parte Receptora:</strong> ${data.receivingParty}
+                    </p>
+                    <p class="doc-text">
+                        En relación con el proyecto/tema: "${data.topic || 'Negociaciones Comerciales'}", la Parte Receptora acuerda:
+                    </p>
+                    <div class="doc-body-text">
+                        <ol>
+                            <li>Mantener la Información Confidencial en estricto secreto.</li>
+                            <li>No usar la Información para beneficio propio o de terceros.</li>
+                            <li>Devolver todos los materiales al finalizar la relación.</li>
+                        </ol>
+                    </div>
+                    <p class="doc-text">
+                        Esta obligación de confidencialidad durará por un periodo de ${data.term || '5'} años desde la fecha de este acuerdo.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Receptora"></div>
+                            <div class="sig-label">Parte Receptora</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Reveladora"></div>
+                            <div class="sig-label">Parte Reveladora</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        revocation_poa: {
+            title: "REVOCACIÓN DE PODER (REVOCATION OF POA)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'principal', label: 'Poderdante (Yo)', type: 'text', width: 'full' },
+                        { id: 'agent', label: 'Agente a Remover', type: 'text', width: 'full' },
+                        { id: 'originalDate', label: 'Fecha del Poder Original', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">REVOCACIÓN DE PODER NOTARIAL</h2>
+                    <p class="doc-text">
+                        POR EL PRESENTE DOCUMENTO, yo, <strong>${data.principal}</strong>, domiciliado en ${data.location}, por la presente:
+                    </p>
+                    <p class="doc-center-bold">REVOCO, CANCELO Y ANULO</p>
+                    <p class="doc-text">
+                        Todo Poder Notarial firmado anteriormente por mí designando a <strong>${data.agent}</strong> como mi agente o apoderado.
+                    </p>
+                    <p class="doc-text">
+                        Específicamente, el documento fechado el <strong>${data.originalDate || '___________'}</strong> queda sin efecto ni valor legal a partir de este momento.
+                    </p>
+                    <p class="doc-text">
+                         Notificaré inmediatamente al Agente y a todas las instituciones relevantes sobre esta revocación.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Poderdante"></div>
+                            <div class="sig-label">${data.principal}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        temp_guardianship: {
+            title: "TUTELA TEMPORAL DE MENOR (TEMPORARY GUARDIANSHIP)",
+            fields: [
+                {
+                    group: 'Padres', fields: [
+                        { id: 'parentName', label: 'Nombre Padre/Madre', type: 'text', width: 'full' },
+                        { id: 'childNames', label: 'Nombre(s) del/los Menor(es)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Guardián Temporal', fields: [
+                        { id: 'guardianName', label: 'Nombre del Guardián', type: 'text', width: 'full' },
+                        { id: 'guardianAddress', label: 'Dirección Guardián', type: 'text', width: 'full' },
+                        { id: 'endDate', label: 'Válido Hasta', type: 'date', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN DE TUTELA TEMPORAL</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.parentName || data.clientName}</strong>, con autoridad legal sobre el/los menor(es):
+                    </p>
+                    <p class="doc-center-bold">${data.childNames}</p>
+                    <p class="doc-text">
+                        Por la presente otorgo la custodia temporal y autorizo a:
+                    </p>
+                    <p class="doc-center-bold">${data.guardianName}<br><span style="font-size:10pt; font-weight:normal;">${data.guardianAddress}</span></p>
+                    <p class="doc-text">
+                        Para actuar como guardián temporal, autorizando tratamiento médico, decisiones escolares y cuidado general en mi ausencia.
+                    </p>
+                    <p class="doc-text">
+                        Esta autorización será válida hasta el <strong>${data.endDate || '[FECHA FIN]'}</strong> o hasta que sea revocada por escrito.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Madre"></div>
+                            <div class="sig-label">${data.parentName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Jurado y suscrito ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        vehicle_poa: {
+            title: "PODER PARA VEHÍCULO (VEHICLE POA)",
+            fields: [
+                {
+                    group: 'Vehículo', fields: [
+                        { id: 'makeModel', label: 'Marca / Modelo / Año', type: 'text', width: 'full' },
+                        { id: 'vin', label: 'VIN (Número de Serie)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Apoderado', fields: [
+                        { id: 'owner', label: 'Dueño (Poderdante)', type: 'text', width: 'full' },
+                        { id: 'agent', label: 'Apoderado (Persona Autorizada)', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">PODER ESPECIAL PARA VEHÍCULO DE MOTOR</h2>
+                    <p class="doc-text">
+                        Por la presente, el abajo firmante, dueño del siguiente vehículo:
+                    </p>
+                    <div class="doc-box">
+                        <strong>Vehículo:</strong> ${data.makeModel}<br>
+                        <strong>VIN:</strong> ${data.vin}
+                    </div>
+                    <p class="doc-text">
+                        Nombra a <strong>${data.agent}</strong> como su apoderado legal para firmar documentos, transferir título, registrar y realizar cualquier trámite relacionado con dicho vehículo ante el Departamento de Vehículos Motorizados (DMV/DGT).
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div>
+                            <div class="sig-label">${data.owner || data.clientName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        demand_letter: {
+            title: "CARTA DE COBRO (DEMAND LETTER)",
+            fields: [
+                {
+                    group: 'Deuda', fields: [
+                        { id: 'debtor', label: 'Deudor', type: 'text', width: 'full' },
+                        { id: 'creditor', label: 'Acreedor (Remitente)', type: 'text', width: 'full' },
+                        { id: 'amount', label: 'Monto Adeudado ($)', type: 'number', width: 'half' },
+                        { id: 'reason', label: 'Razón de la Deuda', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Plazo', fields: [
+                        { id: 'deadline', label: 'Fecha Límite de Pago', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE REQUERIMIENTO DE PAGO</h2>
+                    <p class="doc-text" style="text-align:right;">Fecha: ${data.date}</p>
+                    <p class="doc-text">
+                        A: <strong>${data.debtor}</strong><br>
+                        (Deudor)
+                    </p>
+                    <p class="doc-text">
+                        <strong>ASUNTO: AVISO FINAL PREVIO A ACCIÓN LEGAL</strong>
+                    </p>
+                    <p class="doc-text">
+                        Estimado/a Sr./Sra.,
+                    </p>
+                    <p class="doc-text">
+                        Esta carta es para exigir formalmente el pago de <strong>$ ${data.amount}</strong> que se me adeuda por concepto de: ${data.reason}.
+                    </p>
+                    <p class="doc-text">
+                        Si el pago no se recibe antes del <strong>${data.deadline}</strong>, iniciaré procedimientos legales para recuperar la deuda, más los costos judiciales e intereses acumulados.
+                    </p>
+                    <p class="doc-text">
+                         Envíe el pago inmediatamente a la dirección de mis registros.
+                    </p>
+                    <br><br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Acreedor"></div>
+                            <div class="sig-label">Atentamente, ${data.creditor}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        cease_desist: {
+            title: "CARTA DE CESE Y DESISTIMIENTO (CEASE AND DESIST)",
+            fields: [
+                {
+                    group: 'Involucrados', fields: [
+                        { id: 'sender', label: 'Remitente (Afectado)', type: 'text', width: 'full' },
+                        { id: 'recipient', label: 'Destinatario (Infractor)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Infracción', fields: [
+                        { id: 'activity', label: 'Actividad Ilegal/Molesta', type: 'textarea', rows: 3, placeholder: 'Describa el acoso, difamación, uso de derechos de autor...' },
+                        { id: 'demand', label: 'Demanda Específica', type: 'textarea', rows: 2, placeholder: 'Detener el contacto, retirar el contenido...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE CESE Y DESISTIMIENTO</h2>
+                    <p class="doc-text" style="text-align:right;">Fecha: ${data.date}</p>
+                    <p class="doc-text">
+                        A: <strong>${data.recipient}</strong>
+                    </p>
+                    <p class="doc-text">
+                        <strong>ASUNTO: AVISO FINAL PARA CESAR ACTIVIDAD ILEGAL</strong>
+                    </p>
+                    <p class="doc-text">
+                        Esta carta sirve como un aviso formal exigiendo que usted cese y desista inmediatamente de las siguientes actividades:
+                    </p>
+                    <div class="doc-box">
+                        ${data.activity}
+                    </div>
+                    <p class="doc-text">
+                        Esta conducta es ilegal y/o perjudicial. Exijo que cumpla inmediatamente con lo siguiente:
+                    </p>
+                    <div class="doc-body-text">
+                        ${data.demand}
+                    </div>
+                    <p class="doc-text">
+                        Si continúa con esta actividad se emprenderán acciones legales en su contra para buscar daños y perjuicios, así como medidas cautelares.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Remitente"></div>
+                            <div class="sig-label">${data.sender}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        partnership_agreement: {
+            title: "ACUERDO DE ASOCIACIÓN (PARTNERSHIP AGREEMENT)",
+            fields: [
+                {
+                    group: 'Socios', fields: [
+                        { id: 'partner1', label: 'Socio 1', type: 'text', width: 'full' },
+                        { id: 'partner2', label: 'Socio 2', type: 'text', width: 'full' },
+                        { id: 'businessName', label: 'Nombre del Negocio', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'capital', label: 'Contribución Inicial ($)', type: 'number', width: 'half' },
+                        { id: 'profitShare', label: 'División de Ganancias (50/50, etc)', type: 'text', width: 'half' },
+                        { id: 'purpose', label: 'Propósito del Negocio', type: 'textarea', rows: 2 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE ASOCIACIÓN GENERAL</h2>
+                    <p class="doc-text">
+                        FECHA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>PARTES:</strong> Este acuerdo se celebra entre <strong>${data.partner1}</strong> y <strong>${data.partner2}</strong> (los "Socios").
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. NOMBRE Y NEGOCIO.</strong> Los socios formarán una Asociación General bajo el nombre de: <strong>${data.businessName}</strong>, con el propósito de: ${data.purpose}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. CAPITAL.</strong> Cada socio contribuirá inicialmente con: $ ${data.capital || '0.00'}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. GANANCIAS Y PÉRDIDAS.</strong> Las ganancias y pérdidas netas de la asociación se dividirán de la siguiente manera: <strong>${data.profitShare}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>4. GESTIÓN.</strong> Ambos socios tendrán iguales derechos en la gestión y conducción de los negocios de la asociación.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Socio 1"></div>
+                            <div class="sig-label">${data.partner1}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Socio 2"></div>
+                            <div class="sig-label">${data.partner2}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        employment_contract: {
+            title: "CONTRATO DE EMPLEO (EMPLOYMENT CONTRACT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'employer', label: 'Empleador (Empresa)', type: 'text', width: 'full' },
+                        { id: 'employee', label: 'Empleado', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Detalles del Puesto', fields: [
+                        { id: 'position', label: 'Cargo / Puesto', type: 'text', width: 'half' },
+                        { id: 'salary', label: 'Salario ($)', type: 'number', width: 'half' },
+                        { id: 'startDate', label: 'Fecha de Inicio', type: 'date', width: 'half' },
+                        { id: 'salaryFreq', label: 'Frecuencia Pago', type: 'select', options: ['Anual', 'Mensual', 'Por Hora'], width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE EMPLEO</h2>
+                    <p class="doc-text">
+                        ENTRE: <strong>${data.employer}</strong> (el "Empleador")<br>
+                        Y: <strong>${data.employee}</strong> (el "Empleado").
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. PUESTO.</strong> El Empleador contrata al Empleado para el puesto de: <strong>${data.position}</strong>, comenzando el ${data.startDate}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. COMPENSACIÓN.</strong> El Empleador pagará al Empleado un salario de <strong>$ ${data.salary}</strong> (${data.salaryFreq}), sujeto a las deducciones estándar.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. DEBERES.</strong> El Empleado acepta realizar todas las tareas y responsabilidades asociadas con el puesto lo mejor que pueda.
+                    </p>
+                    <p class="doc-text">
+                        <strong>4. TERMINACIÓN.</strong> Este acuerdo puede ser terminado por cualquiera de las partes con el debido aviso según la ley local o "at-will" si corresponde.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleador"></div>
+                            <div class="sig-label">${data.employer}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Empleado"></div>
+                             <div class="sig-label">${data.employee}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        eviction_notice: {
+            title: "AVISO DE DESALOJO (EVICTION NOTICE)",
+            fields: [
+                {
+                    group: 'Inquilino', fields: [
+                        { id: 'tenantName', label: 'Nombre Inquilino', type: 'text', width: 'full' },
+                        { id: 'property', label: 'Dirección Propiedad', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Razón', fields: [
+                        { id: 'issue', label: 'Razón (Falta de Pago, etc)', type: 'select', options: ['Falta de Pago', 'Violación de Contrato', 'Terminación de Plazo', 'Actividad Ilegal'], width: 'full' },
+                        { id: 'amountOwed', label: 'Monto Debiddo (si aplica)', type: 'number', width: 'half' },
+                        { id: 'cureDate', label: 'Fecha Límite para Corregir/Salir', type: 'date', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AVISO DE DESALOJO / TERMINACIÓN</h2>
+                    <p class="doc-text">
+                        A: <strong>${data.tenantName}</strong> (Inquilino)<br>
+                        Propiedad: <strong>${data.property}</strong>
+                    </p>
+                    <p class="doc-text">
+                        USTED ESTÁ NOTIFICADO de que debe desalojar y entregar la posesión de las instalaciones mencionadas anteriormente o corregir la siguiente violación:
+                    </p>
+                    <div class="doc-box-highlight">
+                        <strong>${data.issue}</strong>
+                        ${data.amountOwed ? `<br>Monto Adeudado: $ ${data.amountOwed}` : ''}
+                    </div>
+                    <p class="doc-text">
+                        Debe actuar (pagar, corregir o salir) antes del: <strong>${data.cureDate}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El incumplimiento resultará en la presentación de una demanda de desalojo en su contra en el tribunal correspondiente.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario/Admin"></div>
+                            <div class="sig-label">Propietario / Administrador</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Entrega certificada el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO/CONSTANCIA</div>
+                    </div>
+                </div>
+            `
+        },
+        prenuptial_agreement: {
+            title: "ACUERDO PRENUPCIAL (PRENUPTIAL AGREEMENT)",
+            fields: [
+                {
+                    group: 'Futuros Cónyuges', fields: [
+                        { id: 'spouse1', label: 'Cónyuge 1', type: 'text', width: 'full' },
+                        { id: 'spouse2', label: 'Cónyuge 2', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Bienes', fields: [
+                        { id: 'separateProperty', label: 'Bienes Separados (Descripción breve)', type: 'textarea', rows: 3 },
+                        { id: 'marriageDate', label: 'Fecha Prevista de Matrimonio', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO PRENUPCIAL</h2>
+                    <p class="doc-text">
+                        ESTE ACUERDO se celebra el <strong>${data.date}</strong>, en contemplación del matrimonio entre <strong>${data.spouse1}</strong> y <strong>${data.spouse2}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. BIENES SEPARADOS.</strong> Las partes acuerdan que los activos y deudas listados a continuación permanecerán como propiedad separada de cada parte y no se convertirán en propiedad conyugal:
+                    </p>
+                    <div class="doc-body-text">
+                        ${data.separateProperty || '[Listar Activos Separados Aquí]'}
+                    </div>
+                    <p class="doc-text">
+                        <strong>2. GANANCIAS.</strong> Las ganancias obtenidas durante el matrimonio serán consideradas propiedad conyugal a menos que se especifique lo contrario en un anexo.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. DIVORCIO.</strong> En caso de disolución del matrimonio, la propiedad separada permanecerá con el dueño original.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cónyuge 1"></div>
+                            <div class="sig-label">${data.spouse1}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Cónyuge 2"></div>
+                             <div class="sig-label">${data.spouse2}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        media_release: {
+            title: "AUTORIZACIÓN DE USO DE IMAGEN (MEDIA RELEASE)",
+            fields: [
+                {
+                    group: 'Sujeto', fields: [
+                        { id: 'modelName', label: 'Nombre Modelo/Persona', type: 'text', width: 'full' },
+                        { id: 'orgName', label: 'Organización/Fotógrafo', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'shootDate', label: 'Fecha de la toma', type: 'date', width: 'full' },
+                        { id: 'usage', label: 'Uso Permitido', type: 'select', options: ['Comercial ilimitado', 'Solo Redes Sociales', 'Solo Educativo', 'Uso Interno'], width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN DE USO DE IMAGEN</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.modelName || data.clientName}</strong>, por la presente otorgo a <strong>${data.orgName}</strong>, el derecho irrevocable y sin restricciones para usar y publicar fotografías/videos de mí, o en los que pueda estar incluido.
+                    </p>
+                    <p class="doc-text">
+                        <strong>USO PERMITIDO:</strong> ${data.usage}.
+                    </p>
+                    <p class="doc-text">
+                         Libero al Fotógrafo/Organización de toda reclamación, responsabilidad y daños relacionados con cualquier distorsión difusa o alteración, ya sea intencional o no, que pueda ocurrir.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Modelo"></div>
+                            <div class="sig-label">${data.modelName}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        contract_amendment: {
+            title: "ENMIENDA A CONTRATO (CONTRACT AMENDMENT)",
+            fields: [
+                {
+                    group: 'Contrato Original', fields: [
+                        { id: 'origDate', label: 'Fecha Contrato Original', type: 'date', width: 'half' },
+                        { id: 'contractName', label: 'Nombre del Contrato', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Partes', fields: [
+                        { id: 'partyA', label: 'Parte A', type: 'text', width: 'half' },
+                        { id: 'partyB', label: 'Parte B', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Cambios', fields: [
+                        { id: 'changes', label: 'Cláusulas Modificadas', type: 'textarea', rows: 4, placeholder: 'Describa qué secciones cambian y cómo...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ENMIENDA A CONTRATO</h2>
+                    <p class="doc-text">
+                        Esta Enmienda hace referencia al acuerdo titulado "<strong>${data.contractName}</strong>" fechado el <strong>${data.origDate}</strong>, entre <strong>${data.partyA}</strong> y <strong>${data.partyB}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Las partes acuerdan modificar dicho acuerdo de la siguiente manera:
+                    </p>
+                    <div class="doc-box">
+                        ${(data.changes || '[Insertar cambios aquí]').replace(/\n/g, '<br>')}
+                    </div>
+                    <p class="doc-text">
+                        Todos los demás términos y condiciones del acuerdo original permanecen en pleno vigor y efecto.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Parte A"></div>
+                            <div class="sig-label">${data.partyA}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Parte B"></div>
+                             <div class="sig-label">${data.partyB}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        payment_agreement: {
+            title: "ACUERDO DE PLAN DE PAGO (PAYMENT PLAN)",
+            fields: [
+                {
+                    group: 'Deuda', fields: [
+                        { id: 'debtor', label: 'Deudor', type: 'text', width: 'full' },
+                        { id: 'creditor', label: 'Acreedor', type: 'text', width: 'full' },
+                        { id: 'totalAmount', label: 'Deuda Total ($)', type: 'number', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Plan', fields: [
+                        { id: 'downPayment', label: 'Pago Inicial ($)', type: 'number', width: 'half' },
+                        { id: 'installmentAmt', label: 'Monto Cuota ($)', type: 'number', width: 'half' },
+                        { id: 'frequency', label: 'Frecuencia', type: 'select', options: ['Semanal', 'Bi-Semanal', 'Mensual'], width: 'half' },
+                        { id: 'firstDate', label: 'Fecha 1er Pago', type: 'date', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE PLAN DE PAGO</h2>
+                    <p class="doc-text">
+                        <strong>DEUDOR:</strong> ${data.debtor}<br>
+                        <strong>ACREEDOR:</strong> ${data.creditor}
+                    </p>
+                    <p class="doc-text">
+                        El Deudor reconoce una deuda pendiente de <strong>$ ${data.totalAmount}</strong>. Ambas partes acuerdan el siguiente calendario de pagos para saldar la deuda:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. <strong>Pago Inicial:</strong> $ ${data.downPayment || '0.00'} a la firma de este acuerdo.</p>
+                        <p>2. <strong>Pagos a Plazos:</strong> $ ${data.installmentAmt} pagaderos de forma <strong>${data.frequency}</strong>.</p>
+                        <p>3. <strong>Inicio:</strong> El primer pago a plazos vence el <strong>${data.firstDate}</strong> y continuará hasta que la deuda se pague en su totalidad.</p>
+                    </div>
+                    <p class="doc-text">
+                        Deudor acepta que la falta de pago acelerará la deuda restante, haciéndola exigible de inmediato.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Deudor"></div>
+                            <div class="sig-label">Deudor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Acreedor"></div>
+                             <div class="sig-label">Acreedor</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+             `
+        },
+        sublease_agreement: {
+            title: "CONTRATO DE SUBARRIENDO (SUBLEASE AGREEMENT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'sublessor', label: 'Subarrendador (Inquilino Actual)', type: 'text', width: 'full' },
+                        { id: 'sublessee', label: 'Subarrendatario (Nuevo)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Propiedad', fields: [
+                        { id: 'address', label: 'Dirección', type: 'text', width: 'full' },
+                        { id: 'rent', label: 'Renta Mensual ($)', type: 'number', width: 'half' },
+                        { id: 'start', label: 'Fecha Inicio', type: 'date', width: 'half' },
+                        { id: 'end', label: 'Fecha Fin', type: 'date', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SUBARRIENDO</h2>
+                    <p class="doc-text">
+                        Entre <strong>${data.sublessor}</strong> (Subarrendador) y <strong>${data.sublessee}</strong> (Subarrendatario).
+                    </p>
+                    <p class="doc-text">
+                        El Subarrendador acuerda subarrendar la propiedad ubicada en: ${data.address}.
+                    </p>
+                     <p class="doc-text">
+                        <strong>TÉRMINO:</strong> Del ${data.start} al ${data.end}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>RENTA:</strong> $ ${data.rent} por mes, pagaderos al Subarrendador.
+                    </p>
+                    <p class="doc-text">
+                        Este subarriendo está sujeto a los términos del Contrato de Arrendamiento Maestro original. El Propietario original ha dado su consentimiento (si es requerido).
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Subarrendador"></div>
+                            <div class="sig-label">Subarrendador</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Subarrendatario"></div>
+                             <div class="sig-label">Subarrendatario</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        equipment_lease: {
+            title: "ALQUILER DE EQUIPO (EQUIPMENT LEASE)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'lessor', label: 'Arrendador (Dueño)', type: 'text', width: 'full' },
+                        { id: 'lessee', label: 'Arrendatario (Cliente)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Equipo', fields: [
+                        { id: 'equipmentDesc', label: 'Descripción del Equipo', type: 'textarea', rows: 3 },
+                        { id: 'value', label: 'Valor Declarado ($)', type: 'number', width: 'half' },
+                        { id: 'rate', label: 'Tarifa de Alquiler', type: 'text', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ALQUILER DE EQUIPO</h2>
+                    <p class="doc-text">
+                        <strong>ARRENDADOR:</strong> ${data.lessor}<br>
+                        <strong>ARRENDATARIO:</strong> ${data.lessee}
+                    </p>
+                    <p class="doc-text">
+                        El Arrendador acuerda alquilar al Arrendatario el siguiente equipo:
+                    </p>
+                    <div class="doc-box">
+                        ${data.equipmentDesc}
+                    </div>
+                    <p class="doc-text">
+                        <strong>TARIFA:</strong> ${data.rate} (por día/semana/mes).<br>
+                        <strong>VALOR REEMPLAZO:</strong> $ ${data.value}.
+                    </p>
+                    <p class="doc-text">
+                        El Arrendatario es responsable de devolver el equipo en buenas condiciones.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div>
+                            <div class="sig-label">Arrendador</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Arrendatario"></div>
+                             <div class="sig-label">Arrendatario</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        commercial_lease: {
+            title: "CONTRATO DE ALQUILER COMERCIAL (COMMERCIAL LEASE)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'lessor', label: 'Arrendador (Dueño)', type: 'text', width: 'full' },
+                        { id: 'lessee', label: 'Arrendatario (Negocio)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Propiedad', fields: [
+                        { id: 'address', label: 'Dirección del Local/Oficina', type: 'text', width: 'full' },
+                        { id: 'use', label: 'Uso Permitido (Ej: Oficina, Tienda)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'rent', label: 'Renta Mensual ($)', type: 'number', width: 'half' },
+                        { id: 'termYears', label: 'Duración (Años)', type: 'number', width: 'half' },
+                        { id: 'startDate', label: 'Fecha Inicio', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ARRENDAMIENTO COMERCIAL</h2>
+                    <p class="doc-text">
+                        FECHA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ARRENDADOR:</strong> ${data.lessor}<br>
+                        <strong>ARRENDATARIO:</strong> ${data.lessee}
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. PROPIEDAD:</strong> El Arrendador alquila al Arrendatario el local ubicado en: ${data.address}, para ser usado exclusivamente como: ${data.use}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. PLAZO:</strong> Este arrendamiento comenzará el ${data.startDate} y continuará por un periodo de ${data.termYears || '1'} años.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. RENTA:</strong> $ ${data.rent} más impuestos aplicables, pagaderos el día 1 de cada mes.
+                    </p>
+                    <p class="doc-text">
+                        <strong>4. MANTENIMIENTO:</strong> El Arrendatario será responsable del mantenimiento interior y reparaciones menores. El Arrendador cubrirá la estructura del edificio.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div>
+                            <div class="sig-label">Arrendador</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Arrendatario"></div>
+                             <div class="sig-label">Arrendatario</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        real_estate_purchase: {
+            title: "COMPRAVENTA DE BIENES RAÍCES (RE PURCHASE AGREEMENT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'seller', label: 'Vendedor', type: 'text', width: 'full' },
+                        { id: 'buyer', label: 'Comprador', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Inmueble', fields: [
+                        { id: 'propertyAddr', label: 'Dirección Inmueble', type: 'text', width: 'full' },
+                        { id: 'legalDesc', label: 'Descripción Legal (Breve)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Precio', fields: [
+                        { id: 'purchasePrice', label: 'Precio Total ($)', type: 'number', width: 'half' },
+                        { id: 'earnestMoney', label: 'Depósito (Earnest Money)', type: 'number', width: 'half' },
+                        { id: 'closingDate', label: 'Fecha de Cierre', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE COMPRAVENTA DE BIENES RAÍCES</h2>
+                    <p class="doc-text">
+                        ESTE ACUERDO se celebra el <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>VENDEDOR:</strong> ${data.seller}<br>
+                        <strong>COMPRADOR:</strong> ${data.buyer}
+                    </p>
+                    <p class="doc-text">
+                        El Vendedor acuerda vender y el Comprador acuerda comprar la propiedad descrita como:
+                    </p>
+                    <div class="doc-box">
+                        <strong>Dirección:</strong> ${data.propertyAddr}<br>
+                        <strong>Legal:</strong> ${data.legalDesc || 'Según escritura adjunta.'}
+                    </div>
+                    <p class="doc-text">
+                        <strong>PRECIO DE COMPRA:</strong> $ ${data.purchasePrice}.<br>
+                        <strong>DEPÓSITO:</strong> $ ${data.earnestMoney} a depositarse en plica (Escrow).
+                    </p>
+                    <p class="doc-text">
+                        <strong>CIERRE:</strong> El cierre de la venta ocurrirá en o antes del: ${data.closingDate}.
+                    </p>
+                    <p class="doc-text">
+                        Esta venta está condicionada a la obtención de financiamiento y a una inspección satisfactoria de la propiedad.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
+                            <div class="sig-label">Vendedor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div>
+                             <div class="sig-label">Comprador</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        non_compete: {
+            title: "ACUERDO DE NO COMPETENCIA (NON-COMPETE)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'employer', label: 'Empresa / Protegido', type: 'text', width: 'full' },
+                        { id: 'employee', label: 'Empleado / Restringido', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Restricciones', fields: [
+                        { id: 'industry', label: 'Industria / Negocio', type: 'text', width: 'full' },
+                        { id: 'duration', label: 'Duración (Años/Meses)', type: 'text', width: 'half' },
+                        { id: 'radius', label: 'Radio Geográfico (Millas)', type: 'text', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE NO COMPETENCIA</h2>
+                    <p class="doc-text">
+                        FECHA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Entre <strong>${data.employer}</strong> y <strong>${data.employee}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El Empleado reconoce que tendrá acceso a información confidencial y clientes de la Empresa.
+                    </p>
+                    <p class="doc-text">
+                        Por la presente, el Empleado acuerda que durante el término de su empleo y por un periodo de <strong>${data.duration || '2 años'}</strong> después de la terminación, no participará directa ni indirectamente en ningún negocio que compita con la Empresa en la industria de: <strong>${data.industry}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Esta restricción aplica dentro de un radio de <strong>${data.radius || '50'} millas</strong> de la ubicación principal de la Empresa.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div>
+                            <div class="sig-label">Empresa</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Empleado"></div>
+                             <div class="sig-label">Empleado/Contratista</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        consulting_agreement: {
+            title: "ACUERDO DE CONSULTORÍA (CONSULTING AGREEMENT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'client', label: 'Cliente', type: 'text', width: 'full' },
+                        { id: 'consultant', label: 'Consultor', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'scope', label: 'Alcance del Trabajo', type: 'textarea', rows: 3 },
+                        { id: 'rate', label: 'Tarifa (Por hora/proyecto)', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE CONSULTORÍA</h2>
+                    <p class="doc-text">
+                        <strong>CLIENTE:</strong> ${data.client}<br>
+                        <strong>CONSULTOR:</strong> ${data.consultant}
+                    </p>
+                    <p class="doc-text">
+                        El Cliente contrata al Consultor para proporcionar los siguientes servicios expertos:
+                    </p>
+                    <div class="doc-box">
+                        ${data.scope || '[Detallar servicios]'}
+                    </div>
+                    <p class="doc-text">
+                        <strong>COMPENSACIÓN:</strong> El Cliente pagará al Consultor a razón de: ${data.rate}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>PROPIEDAD INTELECTUAL:</strong> Todo trabajo creado bajo este contrato será propiedad del Cliente.
+                    </p>
+                    <p class="doc-text">
+                        <strong>CONFIDENCIALIDAD:</strong> El Consultor mantendrá secreta toda la información del Cliente.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div>
+                            <div class="sig-label">Cliente</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Consultor"></div>
+                             <div class="sig-label">Consultor</div>
+                         </div>
+                    </div>
+                </div>
+            `
+        },
+        loi_agreement: {
+            title: "CARTA DE INTENCIÓN (LETTER OF INTENT)",
+            fields: [
+                {
+                    group: 'Propuesta', fields: [
+                        { id: 'sender', label: 'Proponente', type: 'text', width: 'full' },
+                        { id: 'recipient', label: 'Destinatario', type: 'text', width: 'full' },
+                        { id: 'deal', label: 'Descripción del Negocio/Transacción', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE INTENCIÓN (LOI)</h2>
+                    <p class="doc-text" style="text-align:right;">Fecha: ${data.date}</p>
+                    <p class="doc-text">
+                        DE: <strong>${data.sender}</strong><br>
+                        PARA: <strong>${data.recipient}</strong>
+                    </p>
+                    <p class="doc-text">
+                        <strong>RE: ${data.deal ? data.deal.substring(0, 50) + '...' : 'TRANSACCIÓN PROPUESTA'}</strong>
+                    </p>
+                    <p class="doc-text">
+                         Esta carta establece la intención de las partes de proceder con la siguiente transacción propuesta:
+                    </p>
+                    <div class="doc-box">
+                        ${data.deal || '[Descripción detallada de la compra o negocio]'}
+                    </div>
+                    <p class="doc-text">
+                         Esta carta no es vinculante (excepto por las cláusulas de confidencialidad y exclusividad) y sirve como base para redactar un Acuerdo Definitivo formal.
+                    </p>
+                    <p class="doc-text">
+                         Si está de acuerdo con estos términos preliminares, por favor firme a continuación.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proponente"></div>
+                            <div class="sig-label">Proponente</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Destinatario"></div>
+                             <div class="sig-label">Destinatario</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        mou_agreement: {
+            title: "MEMORÁNDUM DE ENTENDIMIENTO (MOU)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'partyA', label: 'Parte A', type: 'text', width: 'full' },
+                        { id: 'partyB', label: 'Parte B', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Objetivos', fields: [
+                        { id: 'goal', label: 'Objetivo de la Colaboración', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">MEMORÁNDUM DE ENTENDIMIENTO</h2>
+                    <p class="doc-text">
+                        Entre <strong>${data.partyA}</strong> y <strong>${data.partyB}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Este Memorándum establece el entendimiento entre las partes para colaborar en:
+                    </p>
+                    <div class="doc-body-text">
+                        ${data.goal || '[Describir proyecto o alianza]'}
+                    </div>
+                    <p class="doc-text">
+                         Este MOU no constituye un contrato legalmente vinculante, sino que refleja la intención de las partes de trabajar juntas de buena fe hacia el objetivo común descrito.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Parte A"></div>
+                            <div class="sig-label">${data.partyA}</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Parte B"></div>
+                             <div class="sig-label">${data.partyB}</div>
+                         </div>
+                    </div>
+                </div>
+            `
+        },
+        affidavit_heirship: {
+            title: "DECLARACIÓN DE HEREDEROS (AFFIDAVIT OF HEIRSHIP)",
+            fields: [
+                {
+                    group: 'Fallecido', fields: [
+                        { id: 'deceased', label: 'Nombre del Difunto', type: 'text', width: 'full' },
+                        { id: 'deathDate', label: 'Fecha de Fallecimiento', type: 'date', width: 'half' },
+                        { id: 'place', label: 'Lugar de Fallecimiento', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Herederos', fields: [
+                        { id: 'heirs', label: 'Lista de Herederos Legales', type: 'textarea', rows: 4, placeholder: 'Nombre, Relación, Edad...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DECLARACIÓN JURADA DE HEREDEROS</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.clientName}</strong>, declaro bajo juramento que:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. <strong>${data.deceased}</strong> (el Difunto) falleció el ${data.deathDate} en ${data.place}.</p>
+                        <p>2. Yo estaba familiarizado con la familia y el estado civil del Difunto.</p>
+                        <p>3. Hasta donde tengo conocimiento, los siguientes son los únicos herederos legales del Difunto:</p>
+                        <div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+                            ${(data.heirs || '').replace(/\n/g, '<br>')}
+                        </div>
+                        <p>4. El Difunto falleció ${data.willExist === 'Sí' ? 'CON' : 'SIN'} dejar testamento (Intestado).</p>
+                    </div>
+                    <p class="doc-text">
+                        Hago esta declaración para establecer la propiedad de los bienes raíces y personales del Difunto.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
+                            <div class="sig-label">${data.clientName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        affidavit_identity: {
+            title: "DECLARACIÓN DE IDENTIDAD (AFFIDAVIT OF IDENTITY)",
+            fields: [
+                {
+                    group: 'Identidad', fields: [
+                        { id: 'fullName', label: 'Nombre Completo', type: 'text', width: 'full' },
+                        { id: 'aka', label: 'También Conocido Como (AKA)', type: 'text', width: 'full' },
+                        { id: 'docNum', label: 'Documento ID (Pasaporte/Licencia)', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DECLARACIÓN JURADA DE IDENTIDAD</h2>
+                    <p class="doc-text">
+                        YO, <strong>${data.fullName || data.clientName}</strong>, declaro bajo pena de perjurio que:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. Soy la misma persona nombrada como <strong>${data.aka}</strong> en ciertos documentos documentos legales o financieros.</p>
+                        <p>2. Mi nombre legal actual es <strong>${data.fullName}</strong>.</p>
+                        <p>3. He presentado al Notario el siguiente documento de identificación gubernamental vigente para probar mi identidad: <strong>${data.docNum}</strong>.</p>
+                    </div>
+                    <p class="doc-text">
+                         Esta declaración se hace para aclarar cualquier discrepancia en mi nombre en los registros públicos.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
+                            <div class="sig-label">${data.fullName}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        lease_renewal: {
+            title: "RENOVACIÓN DE ALQUILER (LEASE RENEWAL)",
+            fields: [
+                {
+                    group: 'Contrato Original', fields: [
+                        { id: 'address', label: 'Dirección Propiedad', type: 'text', width: 'full' },
+                        { id: 'origEnd', label: 'Fecha Fin Original', type: 'date', width: 'half' },
+                        { id: 'newEnd', label: 'Nueva Fecha de Fin', type: 'date', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Cambios', fields: [
+                        { id: 'newRent', label: 'Nueva Renta ($)', type: 'number', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE EXTENSIÓN DE ARRENDAMIENTO</h2>
+                    <p class="doc-text">
+                        REFERENCIA: Contrato de arrendamiento para la propiedad ubicada en: <strong>${data.address}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El Propietario y el Inquilino acuerdan extender el plazo del arrendamiento original, que expiraba el <strong>${data.origEnd}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>NUEVO TÉRMINO:</strong> El arrendamiento se extenderá hasta el: <strong>${data.newEnd}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>NUEVA RENTA:</strong> A partir de la fecha de renovación, la renta mensual será de: <strong>$ ${data.newRent}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Todos los demás términos del contrato original permanecen sin cambios.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
+                            <div class="sig-label">Propietario</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Inquilino"></div>
+                             <div class="sig-label">Inquilino</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        waiver_liability: {
+            title: "RENUNCIA DE RESPONSABILIDAD (WAIVER)",
+            fields: [
+                {
+                    group: 'Participante', fields: [
+                        { id: 'participant', label: 'Participante/Usuario', type: 'text', width: 'full' },
+                        { id: 'organizer', label: 'Organizador/Empresa', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Actividad', fields: [
+                        { id: 'activity', label: 'Detalles de la Actividad', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">RENUNCIA Y EXENCIÓN DE RESPONSABILIDAD</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.participant}</strong>, deseo participar en: <strong>${data.activity}</strong> organizado por <strong>${data.organizer}</strong>.
+                    </p>
+                    <p class="doc-text">
+                         Entiendo que esta actividad conlleva riesgos inherentes. Por la presente asumo todos los riesgos de participación y renuncio a cualquier reclamación por lesiones personales, muerte o daños a la propiedad contra el Organizador.
+                    </p>
+                    <p class="doc-text">
+                         Esta renuncia es vinculante para mí, mis herederos y mis cesionarios legales.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Participante"></div>
+                            <div class="sig-label">${data.participant}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        codicil_will: {
+            title: "CODICILO A TESTAMENTO (CODICIL TO WILL)",
+            fields: [
+                {
+                    group: 'Testador', fields: [
+                        { id: 'testator', label: 'Nombre del Testador', type: 'text', width: 'full' },
+                        { id: 'willDate', label: 'Fecha del Testamento Original', type: 'date', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Enmiendas', fields: [
+                        { id: 'amendments', label: 'Cambios o Adiciones', type: 'textarea', rows: 4, placeholder: 'Ej: Cambio mi albacea a... Añado a mi nieto como beneficiario...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                 <div class="legal-doc" contenteditable="true">
+                     <h2 class="doc-title">CODICILO AL ÚLTIMO TESTAMENTO</h2>
+                     <p class="doc-text">
+                         Yo, <strong>${data.testator}</strong>, siendo de mente sana, declaro que este es el Primer Codicilo a mi Último Testamento fechado el <strong>${data.willDate}</strong>.
+                     </p>
+                     <p class="doc-text">
+                         Por la presente enmiendo mi Testamento de la siguiente manera:
+                     </p>
+                     <div class="doc-body-text">
+                         ${(data.amendments || '').replace(/\n/g, '<br>')}
+                     </div>
+                     <p class="doc-text">
+                         En todos los demás aspectos, ratifico y confirmo mi Testamento original.
+                     </p>
+                     <br>
+                     <div class="sig-section">
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Testador"></div>
+                             <div class="sig-label">${data.testator}</div>
+                         </div>
+                     </div>
+                     <div class="sig-section-row" style="margin-top:20px;">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness1" onclick="NoteGenerator.openSignPad('witness1', this)" data-label="Firma Testigo 1"></div>
+                            <div class="sig-label">Testigo 1</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-witness2" onclick="NoteGenerator.openSignPad('witness2', this)" data-label="Firma Testigo 2"></div>
+                             <div class="sig-label">Testigo 2</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                         <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                         <div class="notary-seal-placeholder">SELLO</div>
+                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                         <div class="sig-label">Notario Público</div>
+                     </div>
+                 </div>
+             `
+        },
+        custody_agreement: {
+            title: "ACUERDO DE CUSTODIA (PARENTING PLAN)",
+            fields: [
+                {
+                    group: 'Padres', fields: [
+                        { id: 'parent1', label: 'Padre/Madre 1', type: 'text', width: 'full' },
+                        { id: 'parent2', label: 'Padre/Madre 2', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Hijos', fields: [
+                        { id: 'children', label: 'Nombre(s) de los Hijos', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Horario', fields: [
+                        { id: 'schedule', label: 'Horario de Custodia Física', type: 'textarea', rows: 4, placeholder: 'Describa días de semana, fines de semana, vacaciones...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE CUSTODIA Y CRIANZA</h2>
+                    <p class="doc-text">
+                        Este Plan de Crianza se acuerda entre <strong>${data.parent1}</strong> y <strong>${data.parent2}</strong> respecto a sus hijos: <strong>${data.children}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. CUSTODIA LEGAL.</strong> Los padres compartirán la custodia legal conjunta, tomando decisiones importantes (educación, salud, religión) juntos.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. CUSTODIA FÍSICA Y HORARIO.</strong> Los niños residirán con los padres según el siguiente horario:
+                    </p>
+                     <div class="doc-body-text">
+                         ${(data.schedule || '').replace(/\n/g, '<br>')}
+                     </div>
+                    <p class="doc-text">
+                        Ambos padres acuerdan fomentar una relación amorosa y estable entre los niños y el otro padre.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre 1"></div>
+                            <div class="sig-label">${data.parent1}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Padre 2"></div>
+                             <div class="sig-label">${data.parent2}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        affidavit_service: {
+            title: "DECLARACIÓN DE SERVICIO (AFFIDAVIT OF SERVICE)",
+            fields: [
+                {
+                    group: 'Servidor', fields: [
+                        { id: 'serverName', label: 'Nombre quien entregó', type: 'text', width: 'full' },
+                        { id: 'serverAge', label: 'Edad', type: 'number', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Entrega', fields: [
+                        { id: 'recipient', label: 'Destinatario', type: 'text', width: 'full' },
+                        { id: 'docName', label: 'Documento Entregado', type: 'text', width: 'full' },
+                        { id: 'deliveryDate', label: 'Fecha Entrega', type: 'date', width: 'half' },
+                        { id: 'deliveryPlace', label: 'Lugar Entrega', type: 'text', width: 'half' },
+                        { id: 'method', label: 'Método', type: 'select', options: ['Personalmente', 'Correo Certificado', 'Dejado en domicilio'], width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DECLARACIÓN JURADA DE SERVICIO/ENTREGA</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.serverName || data.clientName}</strong>, declaro bajo juramento:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. Soy mayor de 18 años y no soy parte en la acción relacionada.</p>
+                        <p>2. El día <strong>${data.deliveryDate}</strong>, serví/entregué una copia del documento: <strong>"${data.docName}"</strong>.</p>
+                        <p>3. Entregado a: <strong>${data.recipient}</strong>.</p>
+                        <p>4. Lugar: <strong>${data.deliveryPlace}</strong>.</p>
+                        <p>5. Método de servicio: <strong>${data.method}</strong>.</p>
+                    </div>
+                    <p class="doc-text">
+                        Declaro bajo pena de perjurio que la información anterior es verdadera y correcta.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Servidor"></div>
+                            <div class="sig-label">${data.serverName}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        translator_affidavit: {
+            title: "CERTIFICACIÓN DE TRADUCTOR (TRANSLATOR AFFIDAVIT)",
+            fields: [
+                {
+                    group: 'Traductor', fields: [
+                        { id: 'translatorName', label: 'Nombre Traductor', type: 'text', width: 'full' },
+                        { id: 'langPair', label: 'Idiomas (Ej: Español a Inglés)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Documento', fields: [
+                        { id: 'docTitle', label: 'Título del Documento Traducido', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                 <div class="legal-doc" contenteditable="true">
+                     <h2 class="doc-title">CERTIFICACIÓN DE PRECISIÓN DE TRADUCCIÓN</h2>
+                     <p class="doc-text">
+                         Yo, <strong>${data.translatorName || data.clientName}</strong>, certifico que:
+                     </p>
+                     <div class="doc-body-text">
+                         <p>1. Soy competente en los idiomas <strong>${data.langPair}</strong>.</p>
+                         <p>2. La traducción adjunta del documento titulado "<strong>${data.docTitle}</strong>" es una traducción verdadera, precisa y completa del original, según mi leal saber y entender.</p>
+                     </div>
+                     <br>
+                     <div class="sig-section">
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Traductor"></div>
+                             <div class="sig-label">${data.translatorName}</div>
+                         </div>
+                     </div>
+                     <div class="notary-block" contenteditable="false">
+                         <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                         <div class="notary-seal-placeholder">SELLO</div>
+                         <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                         <div class="sig-label">Notario Público</div>
+                     </div>
+                 </div>
+             `
+        },
+        gift_deed: {
+            title: "ESCRITURA DE DONACIÓN (GIFT DEED)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'donor', label: 'Donante (Grantor)', type: 'text', width: 'full' },
+                        { id: 'donee', label: 'Donatario (Beneficiario)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Propiedad', fields: [
+                        { id: 'propertyDesc', label: 'Descripción de la Propiedad', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ESCRITURA DE DONACIÓN (DEED OF GIFT)</h2>
+                    <p class="doc-text">
+                        ESTA ESCRITURA se hace el <strong>${data.date}</strong>, por <strong>${data.donor}</strong> (Donante) a favor de <strong>${data.donee}</strong> (Donatario).
+                    </p>
+                    <p class="doc-text">
+                        POR AMOR Y AFECTO, el Donante transmite y regala al Donatario, sin contraprestación monetaria, todo título e interés en la siguiente propiedad:
+                    </p>
+                    <div class="doc-box-highlight">
+                        ${data.propertyDesc || '[Descripción Legal]'}
+                    </div>
+                    <p class="doc-text">
+                        El Donante certifica que es dueño legítimo de la propiedad y tiene derecho a transmitirla.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Donante"></div>
+                            <div class="sig-label">${data.donor}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        board_resolution: {
+            title: "RESOLUCIÓN DE JUNTA (BOARD RESOLUTION)",
+            fields: [
+                {
+                    group: 'Empresa', fields: [
+                        { id: 'companyName', label: 'Nombre de la Empresa', type: 'text', width: 'full' },
+                        { id: 'meetingDate', label: 'Fecha de Reunión', type: 'date', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Resolución', fields: [
+                        { id: 'resolution', label: 'Texto de la Resolución', type: 'textarea', rows: 4, placeholder: 'SE RESUELVE QUE: La empresa abrirá una cuenta bancaria en...' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">RESOLUCIÓN DE LA JUNTA DIRECTIVA</h2>
+                    <p class="doc-center-bold">${data.companyName}</p>
+                    <p class="doc-text">
+                          CERTIFICO QUE, en una reunión de la Junta Directiva celebrada el <strong>${data.meetingDate}</strong>, o por consentimiento unánime por escrito, se adoptó la siguiente resolución:
+                    </p>
+                    <div class="doc-box">
+                        <strong>RESOLUCIÓN:</strong><br>
+                        ${(data.resolution || '').replace(/\n/g, '<br>')}
+                    </div>
+                    <p class="doc-text">
+                        Certifico además que esta resolución está en plena vigencia y no ha sido modificada ni rescindida.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario/Director"></div>
+                            <div class="sig-label">Secretario / Director</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        meeting_minutes: {
+            title: "ACTA DE REUNIÓN (MEETING MINUTES)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'orgName', label: 'Organización', type: 'text', width: 'full' },
+                        { id: 'attendees', label: 'Asistentes', type: 'textarea', rows: 2 },
+                        { id: 'topics', label: 'Temas Discutidos y Decisiones', type: 'textarea', rows: 6 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACTA DE REUNIÓN</h2>
+                    <p class="doc-center-bold">${data.orgName}</p>
+                    <p class="doc-text">
+                        <strong>FECHA:</strong> ${data.date}
+                    </p>
+                    <p class="doc-text">
+                        <strong>ASISTENTES:</strong><br>${data.attendees || 'Junta Directiva'}
+                    </p>
+                    <p class="doc-text" style="border-bottom:1px solid #000; margin-top:10px;"><strong>ACTA Y DECISIONES:</strong></p>
+                    <div class="doc-body-text">
+                        ${(data.topics || '').replace(/\n/g, '<br>')}
+                    </div>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario"></div>
+                            <div class="sig-label">Secretario de Actas</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        rental_application: {
+            title: "SOLICITUD DE ALQUILER (RENTAL APPLICATION)",
+            fields: [
+                {
+                    group: 'Solicitante', fields: [
+                        { id: 'applicantName', label: 'Nombre Completo', type: 'text', width: 'full' },
+                        { id: 'ssn', label: 'SSN (Últimos 4)', type: 'text', width: 'half' },
+                        { id: 'phone', label: 'Teléfono', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Historial', fields: [
+                        { id: 'currentAddr', label: 'Dirección Actual', type: 'text', width: 'full' },
+                        { id: 'employer', label: 'Empleador Actual', type: 'text', width: 'full' },
+                        { id: 'income', label: 'Ingreso Mensual ($)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">SOLICITUD DE ALQUILER DE VIVIENDA</h2>
+                    <p class="doc-text">
+                        <strong>INFORMACIÓN PERSONAL</strong>
+                    </p>
+                    <div class="doc-body-text">
+                        Nombre: <strong>${data.applicantName}</strong><br>
+                        Teléfono: ${data.phone} | SSN: ***-**-${data.ssn}<br>
+                        Dirección Actual: ${data.currentAddr}
+                    </div>
+                    <p class="doc-text">
+                        <strong>EMPLEO E INGRESOS</strong>
+                    </p>
+                     <div class="doc-body-text">
+                        Empleador: ${data.employer}<br>
+                        Ingreso Mensual Bruto: $ ${data.income}
+                    </div>
+                    <p class="doc-text">
+                        <strong>AUTORIZACIÓN</strong>
+                    </p>
+                    <p class="doc-text">
+                        Certifico que la información anterior es verdadera. Autorizo al propietario a verificar mis referencias, empleo y antecedentes crediticios/penales para fines de arrendamiento.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Solicitante"></div>
+                            <div class="sig-label">Solicitante</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        roommate_agreement: {
+            title: "ACUERDO DE COMPAÑEROS DE CUARTO (ROOMMATE)",
+            fields: [
+                {
+                    group: 'Compañeros', fields: [
+                        { id: 'roommate1', label: 'Compañero 1', type: 'text', width: 'full' },
+                        { id: 'roommate2', label: 'Compañero 2', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Gastos', fields: [
+                        { id: 'rentShare', label: 'División de Renta (Ej: 50/50)', type: 'text', width: 'full' },
+                        { id: 'utilities', label: 'Servicios (¿Quién paga qué?)', type: 'textarea', rows: 2 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE CONVIVENCIA (ROOMMATE AGREEMENT)</h2>
+                    <p class="doc-text">
+                        Acuerdo entre <strong>${data.roommate1}</strong> y <strong>${data.roommate2}</strong>, residentes en la misma propiedad.
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. RENTA.</strong> Se acuerda dividir la renta total de la siguiente manera: ${data.rentShare}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>2. SERVICIOS Y UTILITIES.</strong>
+                    </p>
+                    <div class="doc-body-text">
+                        ${data.utilities || 'Electricidad, agua e internet se dividirán equitativamente.'}
+                    </div>
+                    <p class="doc-text">
+                        <strong>3. REGLAS DE LA CASA.</strong> Se acuerda mantener la limpieza de las áreas comunes, respetar el ruido y las visitas nocturnas.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comp. 1"></div>
+                            <div class="sig-label">${data.roommate1}</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Comp. 2"></div>
+                             <div class="sig-label">${data.roommate2}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        pet_addendum: {
+            title: "ANEXO DE MASCOTAS (PET ADDENDUM)",
+            fields: [
+                {
+                    group: 'Mascota', fields: [
+                        { id: 'petName', label: 'Nombre Mascota', type: 'text', width: 'half' },
+                        { id: 'petType', label: 'Tipo/Raza', type: 'text', width: 'half' },
+                        { id: 'color', label: 'Color/Peso', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Cargos', fields: [
+                        { id: 'deposit', label: 'Depósito de Mascota ($)', type: 'number', width: 'half' },
+                        { id: 'fee', label: 'Renta Extra Mascota ($/mes)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ANEXO DE MASCOTAS AL CONTRATO</h2>
+                    <p class="doc-text">
+                         Este anexo modifica el contrato de arrendamiento existente para permitir la siguiente mascota:
+                    </p>
+                    <div class="doc-box">
+                        <strong>Nombre:</strong> ${data.petName}<br>
+                        <strong>Tipo/Raza:</strong> ${data.petType}<br>
+                        <strong>Descripción:</strong> ${data.color}
+                    </div>
+                    <p class="doc-text">
+                        El Inquilino acuerda pagar un depósito adicional de <strong>$ ${data.deposit || '0'}</strong> y una renta mensual adicional de <strong>$ ${data.fee || '0'}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El Inquilino es responsable de cualquier daño causado por la mascota y acepta cumplir con las normas de ruido e higiene.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
+                            <div class="sig-label">Propietario</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Inquilino"></div>
+                             <div class="sig-label">Inquilino</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        lien_waiver: {
+            title: "RENUNCIA DE GRAVAMEN (LIEN WAIVER)",
+            fields: [
+                {
+                    group: 'Proyecto', fields: [
+                        { id: 'project', label: 'Dirección/Proyecto', type: 'text', width: 'full' },
+                        { id: 'contractor', label: 'Contratista (Recibe Pago)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Pago', fields: [
+                        { id: 'amount', label: 'Monto Recibido ($)', type: 'number', width: 'full' },
+                        { id: 'type', label: 'Tipo', type: 'select', options: ['Parcial', 'Final'], width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">RENUNCIA DE GRAVAMEN Y DERECHOS (LIEN WAIVER)</h2>
+                    <p class="doc-text">
+                        PROYECTO: <strong>${data.project}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        El abajo firmante, <strong>${data.contractor}</strong>, certifica haber recibido el pago de <strong>$ ${data.amount}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        En consideración de este pago, el abajo firmante renuncia y libera cualquier derecho de gravamen (Mechanic's Lien), reclamo de pago, o demanda contra la propiedad mencionada y el dueño, hasta la fecha o por el monto especificado.
+                    </p>
+                    <p class="doc-text">
+                        TIPO DE RENUNCIA: <strong>${data.type}</strong>.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div>
+                            <div class="sig-label">${data.contractor}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        separation_agreement: {
+            title: "ACUERDO DE SEPARACIÓN (SEPARATION AGREEMENT)",
+            fields: [
+                {
+                    group: 'Cónyuges', fields: [
+                        { id: 'spouse1', label: 'Cónyuge 1', type: 'text', width: 'full' },
+                        { id: 'spouse2', label: 'Cónyuge 2', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'dateSep', label: 'Fecha de Separación', type: 'date', width: 'full' },
+                        { id: 'assets', label: 'División de Bienes (Resumen)', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE SEPARACIÓN MATRIMONIAL</h2>
+                    <p class="doc-text">
+                        Entre <strong>${data.spouse1}</strong> y <strong>${data.spouse2}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Las partes acuerdan vivir separadas y aparte a partir del <strong>${data.dateSep}</strong>, libre de interferencia marital del otro.
+                    </p>
+                    <p class="doc-text">
+                        <strong>PROPIEDAD Y DEUDAS:</strong> Las partes han acordado dividir sus bienes y deudas de la siguiente manera:
+                    </p>
+                    <div class="doc-body-text">
+                        ${(data.assets || 'Cada parte retendrá los bienes en su posesión actual.').replace(/\n/g, '<br>')}
+                    </div>
+                    <p class="doc-text">
+                        Este acuerdo pretende ser un arreglo final de todos los derechos maritales y patrimoniales hasta que se finalice un divorcio formal o reconciliación.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cónyuge 1"></div>
+                            <div class="sig-label">${data.spouse1}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Cónyuge 2"></div>
+                             <div class="sig-label">${data.spouse2}</div>
+                        </div>
+                    </div>
+                    <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        cohabitation_agreement: {
+            title: "ACUERDO DE COHABITACIÓN (COHABITATION AGREEMENT)",
+            fields: [
+                {
+                    group: 'Pareja', fields: [
+                        { id: 'partner1', label: 'Pareja 1', type: 'text', width: 'full' },
+                        { id: 'partner2', label: 'Pareja 2', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Bienes', fields: [
+                        { id: 'sharedAssets', label: 'Bienes Compartidos', type: 'textarea', rows: 3 },
+                        { id: 'separateAssets', label: 'Bienes que se mantienen separados', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE COHABITACIÓN/CONVIVENCIA</h2>
+                    <p class="doc-text">
+                         Este acuerdo se celebra entre <strong>${data.partner1}</strong> y <strong>${data.partner2}</strong>, quienes han decidido vivir juntos sin estar casados.
+                    </p>
+                    <p class="doc-text">
+                        Es la intención de las partes definir sus derechos de propiedad durante la convivencia.
+                    </p>
+                    <p class="doc-text"><strong>1. PROPIEDAD SEPARADA:</strong> Lo siguiente seguirá siendo propiedad exclusiva de cada individuo:</p>
+                    <div class="doc-body-text">${data.separateAssets || 'Todos los activos adquiridos antes de la convivencia.'}</div>
+                    <p class="doc-text"><strong>2. PROPIEDAD COMPARTIDA:</strong> Lo siguiente se considerará propiedad conjunta:</p>
+                    <div class="doc-body-text">${data.sharedAssets || 'Bienes adquiridos conjuntamente con fondos comunes.'}</div>
+                    <p class="doc-text">
+                        La terminación de la convivencia no dará lugar a derechos de pensión alimenticia ni soporte ("palimony") a menos que se acuerde por escrito.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Pareja 1"></div>
+                            <div class="sig-label">${data.partner1}</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Pareja 2"></div>
+                             <div class="sig-label">${data.partner2}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+             `
+        },
+        invitation_letter: {
+            title: "CARTA DE INVITACIÓN (VISA INVITATION)",
+            fields: [
+                {
+                    group: 'Anfitrión', fields: [
+                        { id: 'hostName', label: 'Nombre Anfitrión', type: 'text', width: 'full' },
+                        { id: 'hostAddr', label: 'Dirección Anfitrión', type: 'text', width: 'full' },
+                        { id: 'status', label: 'Estatus Legal (Ciudadano/Residente)', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Visitante', fields: [
+                        { id: 'guestName', label: 'Nombre Visitante', type: 'text', width: 'full' },
+                        { id: 'passport', label: 'Pasaporte Visitante', type: 'text', width: 'half' },
+                        { id: 'relation', label: 'Relación', type: 'text', width: 'half' },
+                        { id: 'stay', label: 'Duración Estadía', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE INVITACIÓN PARA VISA</h2>
+                    <p class="doc-text" style="text-align:right;">Fecha: ${data.date}</p>
+                    <p class="doc-text">
+                        A: Oficial Consular / Embajada
+                    </p>
+                    <p class="doc-text">
+                        Estimado Señor/Señora:
+                    </p>
+                    <p class="doc-text">
+                        Mi nombre es <strong>${data.hostName}</strong>, con dirección en <strong>${data.hostAddr}</strong>. Soy <strong>${data.status}</strong> de los Estados Unidos.
+                    </p>
+                    <p class="doc-text">
+                        Escribo esta carta para invitar a mi <strong>${data.relation}</strong>, <strong>${data.guestName}</strong> (Pasaporte: ${data.passport}), a visitarme en los EE.UU. por un periodo de <strong>${data.stay}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Durante su estancia, se alojará en mi domicilio y yo cubriré sus gastos de manutención y alojamiento. Garantizo que regresará a su país de origen antes de que expire su visa.
+                    </p>
+                    <p class="doc-text">
+                         Adjunto copia de mis documentos para su revisión.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Anfitrión"></div>
+                            <div class="sig-label">${data.hostName}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Suscrito y jurado ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        debt_settlement: {
+            title: "ACUERDO DE LIQUIDACIÓN DE DEUDA (DEBT SETTLEMENT)",
+            fields: [
+                {
+                    group: 'Deuda', fields: [
+                        { id: 'debtor', label: 'Deudor', type: 'text', width: 'full' },
+                        { id: 'creditor', label: 'Acreedor', type: 'text', width: 'full' },
+                        { id: 'totalDebt', label: 'Deuda Total Original ($)', type: 'number', width: 'half' },
+                        { id: 'settleAmount', label: 'Monto de Liquidación ($)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE LIQUIDACIÓN DE DEUDA</h2>
+                    <p class="doc-text">
+                        FECHA: <strong>${data.date}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ACREEDOR:</strong> ${data.creditor}<br>
+                        <strong>DEUDOR:</strong> ${data.debtor}
+                    </p>
+                    <p class="doc-text">
+                        El Deudor debe actualmente al Acreedor la suma total de <strong>$ ${data.totalDebt}</strong> (la "Deuda").
+                    </p>
+                    <p class="doc-text">
+                        Las partes acuerdan comprometer y liquidar la Deuda bajo los siguientes términos:
+                    </p>
+                    <p class="doc-text">
+                        El Acreedor acepta la suma de <strong>$ ${data.settleAmount}</strong> como pago completo y definitivo de la Deuda. Al recibir este pago, el Acreedor liberará al Deudor de cualquier reclamación adicional relacionada con esta cuenta.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Acreedor"></div>
+                            <div class="sig-label">Acreedor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Deudor"></div>
+                             <div class="sig-label">Deudor</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        indemnification_agreement: {
+            title: "ACUERDO DE INDEMNIZACIÓN (HOLD HARMLESS)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'indemnifier', label: 'Indemnizador (Protege)', type: 'text', width: 'full' },
+                        { id: 'indemnitee', label: 'Indemnizado (Protegido)', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Razón', fields: [
+                        { id: 'activity', label: 'Actividad/Razón', type: 'textarea', rows: 3 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE INDEMNIZACIÓN Y EXENCIÓN</h2>
+                    <p class="doc-text">
+                        Este acuerdo se realiza entre <strong>${data.indemnifier}</strong> (Indemnizador) y <strong>${data.indemnitee}</strong> (Indemnizado).
+                    </p>
+                    <p class="doc-text">
+                        El Indemnizador acepta indemnizar, defender y eximir de responsabilidad al Indemnizado de cualquier y toda demanda, responsabilidad, pérdida, costos o gastos que surjan de lo siguiente:
+                    </p>
+                    <div class="doc-box">
+                        ${data.activity}
+                    </div>
+                    <p class="doc-text">
+                        Esta protección se extiende a todos los agentes, empleados y sucesores del Indemnizado.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Indemnizador"></div>
+                            <div class="sig-label">Indemnizador</div>
+                        </div>
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Indemnizado"></div>
+                             <div class="sig-label">Indemnizado</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        llc_operating_agreement: {
+            title: "ACUERDO OPERATIVO LLC (LLC OPERATING AGREEMENT)",
+            fields: [
+                {
+                    group: 'Empresa', fields: [
+                        { id: 'llcName', label: 'Nombre LLC', type: 'text', width: 'full' },
+                        { id: 'state', label: 'Estado de Registro', type: 'text', width: 'half' },
+                        { id: 'members', label: 'Lista de Miembros', type: 'textarea', rows: 3 }
+                    ]
+                },
+                {
+                    group: 'Gestión', fields: [
+                        { id: 'management', label: 'Gestionada por (Members/Managers)', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                 <div class="legal-doc" contenteditable="true">
+                     <h2 class="doc-title">ACUERDO OPERATIVO DE ${data.llcName.toUpperCase()} LLC</h2>
+                     <p class="doc-text">
+                         Una Compañía de Responsabilidad Limitada organizada bajo las leyes de: <strong>${data.state}</strong>.
+                     </p>
+                     <p class="doc-text">
+                         <strong>1. MIEMBROS.</strong> Los miembros iniciales son:
+                     </p>
+                     <div class="doc-body-text">
+                         ${(data.members || '').replace(/\n/g, '<br>')}
+                     </div>
+                     <p class="doc-text">
+                         <strong>2. GESTIÓN.</strong> La compañía será gestionada por: <strong>${data.management}</strong>.
+                     </p>
+                     <p class="doc-text">
+                         <strong>3. DISTRIBUCIONES.</strong> Las ganancias y pérdidas se asignarán a los miembros en proporción a su porcentaje de interés/propiedad.
+                     </p>
+                     <p class="doc-text">
+                         <strong>4. DISOLUCIÓN.</strong> La LLC se disolverá por voto unánime de los miembros o por decreto judicial.
+                     </p>
+                     <br>
+                     <div class="sig-section">
+                         <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Miembro Admin"></div>
+                             <div class="sig-label">Firma Autorizada</div>
+                         </div>
+                     </div>
+                 </div>
+             `
+        },
+        corporate_bylaws: {
+            title: "ESTATUTOS CORPORATIVOS (CORPORATE BYLAWS)",
+            fields: [
+                {
+                    group: 'Corporación', fields: [
+                        { id: 'corpName', label: 'Nombre Corporación', type: 'text', width: 'full' },
+                        { id: 'state', label: 'Estado', type: 'text', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Reuniones', fields: [
+                        { id: 'annualMeeting', label: 'Fecha Reunión Anual', type: 'text', width: 'full' },
+                        { id: 'quorum', label: 'Quórum Requerido (%)', type: 'text', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ESTATUTOS DE ${data.corpName.toUpperCase()}</h2>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO I: OFICINAS.</strong> La oficina principal estará en el Estado de ${data.state}.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO II: ACCIONISTAS.</strong>
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. <strong>Reunión Anual:</strong> Se celebrará el: ${data.annualMeeting}.</p>
+                        <p>2. <strong>Quórum:</strong> La presencia del ${data.quorum}% de las acciones con derecho a voto constituirá quórum.</p>
+                    </div>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO III: DIRECTORES.</strong> El negocio será gestionado por la Junta Directiva.
+                    </p>
+                    <p class="doc-text">
+                        <strong>ARTÍCULO IV: OFICIALES.</strong> Los oficiales incluirán un Presidente, Secretario y Tesorero.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Secretario"></div>
+                            <div class="sig-label">Secretario Corporativo</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        proxy_form: {
+            title: "FORMULARIO DE REPRESENTACIÓN (PROXY)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'shareholder', label: 'Accionista (Principal)', type: 'text', width: 'full' },
+                        { id: 'proxy', label: 'Representante (Proxy)', type: 'text', width: 'full' },
+                        { id: 'meeting', label: 'Para Reunión de Fecha', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">DESIGNACIÓN DE APODERADO (PROXY)</h2>
+                    <p class="doc-text">
+                        El abajo firmante, <strong>${data.shareholder}</strong>, titular de acciones en la compañía correspondiente, por la presente designa a:
+                    </p>
+                    <p class="doc-center-bold">${data.proxy}</p>
+                    <p class="doc-text">
+                        Como mi apoderado y agente para asistir y votar en mi nombre en la Reunión de Accionistas a celebrarse el <strong>${data.meeting}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        Este poder es revocable en cualquier momento antes de que se ejerza el voto.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Accionista"></div>
+                            <div class="sig-label">${data.shareholder}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        land_contract: {
+            title: "CONTRATO DE TIERRA/VENTA A PLAZOS (LAND CONTRACT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'vendor', label: 'Vendedor', type: 'text', width: 'full' },
+                        { id: 'vendee', label: 'Comprador', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Términos', fields: [
+                        { id: 'price', label: 'Precio Total ($)', type: 'number', width: 'half' },
+                        { id: 'down', label: 'Pago Inicial ($)', type: 'number', width: 'half' },
+                        { id: 'monthly', label: 'Pago Mensual ($)', type: 'number', width: 'half' },
+                        { id: 'interest', label: 'Interés (%)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE VENTA DE TIERRAS A PLAZOS</h2>
+                    <p class="doc-text">
+                        VENDEDOR: ${data.vendor}<br>COMPRADOR: ${data.vendee}
+                    </p>
+                    <p class="doc-text">
+                        El Vendedor acuerda vender la propiedad descrita al Comprador bajo los siguientes términos de financiamiento:
+                    </p>
+                    <div class="doc-body-text">
+                        <p>1. <strong>Precio de Venta:</strong> $ ${data.price}</p>
+                        <p>2. <strong>Pago Inicial:</strong> $ ${data.down}</p>
+                        <p>3. <strong>Financiamiento:</strong> El saldo restante devengará intereses al ${data.interest}% anual.</p>
+                        <p>4. <strong>Pagos:</strong> $ ${data.monthly} mensuales hasta que se pague el total.</p>
+                    </div>
+                    <p class="doc-text">
+                        El Título de la propiedad no se transferirá hasta que se complete el pago total. El Comprador es responsable de impuestos y seguros.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div>
+                            <div class="sig-label">Vendedor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                             <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Comprador"></div>
+                             <div class="sig-label">Comprador</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        notice_enter: {
+            title: "AVISO DE ENTRADA A PROPIEDAD (NOTICE TO ENTER)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' },
+                        { id: 'address', label: 'Dirección', type: 'text', width: 'full' },
+                        { id: 'enterDate', label: 'Fecha de Entrada', type: 'date', width: 'half' },
+                        { id: 'enterTime', label: 'Hora Aprox.', type: 'text', width: 'half' },
+                        { id: 'reason', label: 'Razón', type: 'select', options: ['Inspección', 'Reparaciones', 'Mostrar Propiedad'], width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AVISO DE INTENCIÓN DE ENTRAR</h2>
+                    <p class="doc-text">
+                         A: <strong>${data.tenant}</strong><br>
+                         Propiedad: ${data.address}
+                    </p>
+                    <p class="doc-text">
+                         Por favor tenga en cuenta que el Propietario o su agente necesita acceder a las instalaciones el:
+                    </p>
+                    <p class="doc-center-bold">
+                        ${data.enterDate} a las ${data.enterTime}
+                    </p>
+                    <p class="doc-text">
+                        <strong>Propósito de la entrada:</strong> ${data.reason}.
+                    </p>
+                    <p class="doc-text">
+                        Este aviso se proporciona en cumplimiento con las leyes estatales que requieren notificación previa (generalmente 24 horas).
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario/Agente"></div>
+                            <div class="sig-label">Propietario / Agente</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        rent_increase: {
+            title: "AVISO DE AUMENTO DE ALQUILER",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' },
+                        { id: 'currentRent', label: 'Renta Actual ($)', type: 'number', width: 'half' },
+                        { id: 'newRent', label: 'Nueva Renta ($)', type: 'number', width: 'half' },
+                        { id: 'effectiveDate', label: 'Efectivo a partir de', type: 'date', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AVISO DE CAMBIO EN TÉRMINOS DE ALQUILER</h2>
+                    <p class="doc-text">
+                         A: <strong>${data.tenant}</strong>
+                    </p>
+                    <p class="doc-text">
+                        Este aviso es para informarle que su renta mensual será incrementada.
+                    </p>
+                    <div class="doc-box">
+                        Renta Actual: $ ${data.currentRent}<br>
+                        <strong>NUEVA Renta: $ ${data.newRent}</strong>
+                    </div>
+                    <p class="doc-text">
+                        El nuevo monto será efectivo a partir del: <strong>${data.effectiveDate}</strong>.
+                    </p>
+                    <p class="doc-text">
+                         Todos los demás términos de su acuerdo de arrendamiento permanecen iguales.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div>
+                            <div class="sig-label">Propietario / Administrador</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        employee_termination: {
+            title: "CARTA DE DESPIDO (TERMINATION LETTER)",
+            fields: [
+                {
+                    group: 'Empleado', fields: [
+                        { id: 'employee', label: 'Nombre Empleado', type: 'text', width: 'full' },
+                        { id: 'lastDay', label: 'Último Día', type: 'date', width: 'half' }
+                    ]
+                },
+                {
+                    group: 'Razón', fields: [
+                        { id: 'cause', label: 'Causa (Opcional)', type: 'text', width: 'full', placeholder: 'Razones de desempeño, reducción de personal, etc.' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE TERMINACIÓN DE EMPLEO</h2>
+                    <p class="doc-text" style="text-align:right;">Fecha: ${data.date}</p>
+                    <p class="doc-text">A: <strong>${data.employee}</strong></p>
+                    <p class="doc-text">
+                        Lamentamos informarle que su empleo con la compañía se da por terminado efectivo el: <strong>${data.lastDay}</strong>.
+                    </p>
+                    <p class="doc-text">
+                        ${data.cause ? 'La razón de esta decisión es: ' + data.cause : 'Esta decisión es definitiva.'}
+                    </p>
+                    <p class="doc-text">
+                        Recibirá su pago final y beneficios acumulados de acuerdo con la ley estatal. Por favor devuelva toda la propiedad de la empresa antes de su partida.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Supervisor/HR"></div>
+                            <div class="sig-label">Supervisor / HR</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        employee_warning: {
+            title: "AMONESTACIÓN LABORAL (EMPLOYEE WARNING)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'employee', label: 'Empleado', type: 'text', width: 'full' },
+                        { id: 'violation', label: 'Infracción/Problema', type: 'textarea', rows: 3 },
+                        { id: 'improvement', label: 'Mejora Requerida', type: 'textarea', rows: 2 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AVISO DE DISCIPLINA EMPLEADO</h2>
+                    <p class="doc-text"><strong>EMPLEADO:</strong> ${data.employee}</p>
+                    <p class="doc-text"><strong>FECHA:</strong> ${data.date}</p>
+                    <p class="doc-text"><strong>DESCRIPCIÓN DE LA INFRACCIÓN:</strong></p>
+                    <div class="doc-body-text">${data.violation}</div>
+                    <p class="doc-text"><strong>PLAN DE ACCIÓN CORRECTIVA:</strong></p>
+                    <div class="doc-body-text">${data.improvement}</div>
+                    <p class="doc-text">
+                        La falta de corrección de este comportamiento puede resultar en una acción disciplinaria adicional, hasta e incluyendo la terminación.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Supervisor"></div>
+                            <div class="sig-label">Supervisor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Empleado"></div>
+                            <div class="sig-label">Empleado (Acuse de recibo)</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        general_service_agreement: {
+            title: "CONTRATO DE SERVICIOS GENERAL (SERVICE AGREEMENT)",
+            fields: [
+                {
+                    group: 'Partes', fields: [
+                        { id: 'provider', label: 'Proveedor', type: 'text', width: 'full' },
+                        { id: 'client', label: 'Cliente', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Servicio', fields: [
+                        { id: 'services', label: 'Descripción Servicios', type: 'textarea', rows: 3 },
+                        { id: 'price', label: 'Costo ($)', type: 'number', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE PRESTACIÓN DE SERVICIOS</h2>
+                    <p class="doc-text">
+                        ENTRE: <strong>${data.provider}</strong> (Proveedor) y <strong>${data.client}</strong> (Cliente).
+                    </p>
+                    <p class="doc-text">
+                        <strong>1. SERVICIOS.</strong> El Proveedor acuerda realizar lo siguiente:
+                    </p>
+                    <div class="doc-body-text">${data.services}</div>
+                    <p class="doc-text">
+                        <strong>2. PAGO.</strong> El Cliente acuerda pagar la suma de <strong>$ ${data.price}</strong> por estos servicios.
+                    </p>
+                    <p class="doc-text">
+                        <strong>3. RELACIÓN.</strong> El Proveedor es un contratista independiente, no un empleado.
+                    </p>
+                    <br>
+                    <div class="sig-section-row">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div>
+                            <div class="sig-label">Proveedor</div>
+                        </div>
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Cliente"></div>
+                            <div class="sig-label">Cliente</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        mechanics_lien: {
+            title: "GRAVAMEN DE MECÁNICO (MECHANIC'S LIEN)",
+            fields: [
+                {
+                    group: 'Reclamante', fields: [
+                        { id: 'claimant', label: 'Reclamante (Contratista)', type: 'text', width: 'full' },
+                        { id: 'amount', label: 'Monto NO Pagado ($)', type: 'number', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Propiedad', fields: [
+                        { id: 'owner', label: 'Dueño de la Propiedad', type: 'text', width: 'full' },
+                        { id: 'address', label: 'Dirección Propiedad', type: 'text', width: 'full' },
+                        { id: 'workDesc', label: 'Trabajo Realizado', type: 'textarea', rows: 2 }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">RECLAMO DE GRAVAMEN (MECHANIC'S LIEN)</h2>
+                    <p class="doc-text">
+                        AVISO A TODOS:
+                    </p>
+                    <p class="doc-text">
+                        El abajo firmante, <strong>${data.claimant}</strong>, reclama un gravamen sobre la propiedad descrita a continuación por mano de obra o materiales suministrados para mejoras en dicha propiedad.
+                    </p>
+                    <div class="doc-box">
+                        <strong>Dueño:</strong> ${data.owner}<br>
+                        <strong>Dirección:</strong> ${data.address}<br>
+                        <strong>Trabajo:</strong> ${data.workDesc}
+                    </div>
+                    <p class="doc-text">
+                        El monto total adeudado y no pagado, después de deducir todos los créditos y compensaciones, es: <strong>$ ${data.amount}</strong>.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Reclamante"></div>
+                            <div class="sig-label">${data.claimant}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Jurado y suscrito ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        release_mechanics_lien: {
+            title: "LIBERACIÓN DE GRAVAMEN (RELEASE OF LIEN)",
+            fields: [
+                {
+                    group: 'Detalles', fields: [
+                        { id: 'claimant', label: 'Reclamante', type: 'text', width: 'full' },
+                        { id: 'lienDate', label: 'Fecha del Gravamen Original', type: 'date', width: 'half' },
+                        { id: 'bookPage', label: 'Libro/Página de Registro (Si aplica)', type: 'text', width: 'half' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">LIBERACIÓN DE GRAVAMEN DE MECÁNICO</h2>
+                    <p class="doc-text">
+                        POR LA PRESENTE, el abajo firmante, <strong>${data.claimant}</strong>, certifica que cierta Reclamación de Gravamen fechada el <strong>${data.lienDate}</strong>, (Registrada en ${data.bookPage || 'los registros del condado'}), ha sido SATISFECHA Y PAGADA TOTALMENTE.
+                    </p>
+                    <p class="doc-text">
+                        Por lo tanto, el abajo firmante consiente que el mismo sea cancelado de los registros.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                        <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Reclamante"></div>
+                            <div class="sig-label">${data.claimant}</div>
+                        </div>
+                    </div>
+                     <div class="notary-block" contenteditable="false">
+                        <p class="doc-text">Reconocido ante mí el <strong>${data.date}</strong>.</p>
+                        <div class="notary-seal-placeholder">SELLO</div>
+                        <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                        <div class="sig-label">Notario Público</div>
+                    </div>
+                </div>
+            `
+        },
+        minor_photo_release: {
+            title: "AUTORIZACIÓN FOTO MENORES (MINOR PHOTO RELEASE)",
+            fields: [
+                {
+                    group: 'Menor', fields: [
+                        { id: 'parent', label: 'Padre/Tutor', type: 'text', width: 'full' },
+                        { id: 'child', label: 'Nombre del Menor', type: 'text', width: 'full' }
+                    ]
+                },
+                {
+                    group: 'Uso', fields: [
+                        { id: 'org', label: 'Fotógrafo/Organización', type: 'text', width: 'full' }
+                    ]
+                }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN DE USO DE IMAGEN (MENOR)</h2>
+                    <p class="doc-text">
+                        Yo, <strong>${data.parent}</strong>, soy el padre o tutor legal de <strong>${data.child}</strong> (el "Menor").
+                    </p>
+                    <p class="doc-text">
+                        Por la presente otorgo a <strong>${data.org}</strong> el derecho irrevocable a fotografiar al Menor y utilizar su imagen para fines comerciales, educativos o promocionales.
+                    </p>
+                    <p class="doc-text">
+                        Entiendo que no recibiré compensación y libero al Fotógrafo de cualquier reclamación relacionada con el uso de estas imágenes.
+                    </p>
+                    <br>
+                    <div class="sig-section">
+                         <div class="sig-block" contenteditable="false">
+                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre/Tutor"></div>
+                            <div class="sig-label">${data.parent}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        demand_letter: {
+            title: "CARTA DE DEMANDA (DEMAND LETTER)",
+            fields: [
+                { group: 'Partes', fields: [{ id: 'sender', label: 'Remitente', type: 'text', width: 'full' }, { id: 'recipient', label: 'Destinatario', type: 'text', width: 'full' }] },
+                { group: 'Reclamo', fields: [{ id: 'amount', label: 'Monto ($)', type: 'number', width: 'half' }, { id: 'deadline', label: 'Fecha Límite', type: 'date', width: 'half' }, { id: 'reason', label: 'Razón', type: 'textarea', rows: 2 }] }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE DEMANDA DE PAGO</h2>
+                    <p class="doc-text">Fecha: <strong>${data.date}</strong><br>DE: <strong>${data.sender}</strong><br>PARA: <strong>${data.recipient}</strong></p>
+                    <p class="doc-text">Estimado/a ${data.recipient}:</p>
+                    <p class="doc-text">Esta carta es una demanda formal de pago por <strong>$ ${data.amount}</strong>, adeudado por: ${data.reason}.</p>
+                    <p class="doc-text">Exijo el pago antes del <strong>${data.deadline}</strong>. De lo contrario, procederé legalmente.</p>
+                    <p class="doc-text">Atentamente,</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Remitente"></div><div class="sig-label">${data.sender}</div></div></div>
+                </div>`
+        },
+        resignation_letter: {
+            title: "CARTA DE RENUNCIA (RESIGNATION)",
+            fields: [
+                { group: 'Detalles', fields: [{ id: 'empName', label: 'Empleado', type: 'text', width: 'full' }, { id: 'manager', label: 'Supervisor/Gerente', type: 'text', width: 'full' }, { id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'lastDay', label: 'Último Día', type: 'date', width: 'half' }] }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE RENUNCIA LABORAL</h2>
+                    <p class="doc-text">A: <strong>${data.manager}</strong>, ${data.company}</p>
+                    <p class="doc-text">Por la presente presento mi renuncia formal a mi puesto en <strong>${data.company}</strong>. Mi último día de trabajo será el <strong>${data.lastDay}</strong>.</p>
+                    <p class="doc-text">Agradezco la oportunidad de haber trabajado aquí y haré todo lo posible para asegurar una transición fluida.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.empName}</div></div></div>
+                </div>`
+        },
+        recommendation_letter: {
+            title: "CARTA DE RECOMENDACIÓN",
+            fields: [
+                { group: 'Info', fields: [{ id: 'author', label: 'Recomendador (Yo)', type: 'text', width: 'full' }, { id: 'candidate', label: 'Candidato', type: 'text', width: 'full' }, { id: 'relation', label: 'Relación/Años Conocido', type: 'text', width: 'full' }, { id: 'qualities', label: 'Cualidades', type: 'textarea', rows: 3 }] }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CARTA DE RECOMENDACIÓN PROFESIONAL</h2>
+                    <p class="doc-text">A quien corresponda:</p>
+                    <p class="doc-text">Es un placer recomendar a <strong>${data.candidate}</strong>. He conocido a ${data.candidate} como <strong>${data.relation}</strong> y puedo dar fe de su integridad y habilidades.</p>
+                    <div class="doc-body-text">${data.qualities}</div>
+                    <p class="doc-text">Recomiendo encarecidamente a ${data.candidate} para cualquier oportunidad futura.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma"></div><div class="sig-label">${data.author}</div></div></div>
+                </div>`
+        },
+        offer_letter: {
+            title: "CARTA DE OFERTA DE EMPLEO",
+            fields: [
+                { group: 'Oferta', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'candidate', label: 'Candidato', type: 'text', width: 'full' }, { id: 'role', label: 'Puesto', type: 'text', width: 'half' }, { id: 'salary', label: 'Salario Anual/Hora', type: 'text', width: 'half' }, { id: 'start', label: 'Fecha Inicio', type: 'date', width: 'half' }] }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">OFERTA DE EMPLEO</h2>
+                    <p class="doc-text">Estimado/a <strong>${data.candidate}</strong>,</p>
+                    <p class="doc-text">Nos complace ofrecerle el puesto de <strong>${data.role}</strong> en <strong>${data.company}</strong>.</p>
+                    <ul class="doc-body-text">
+                        <li><strong>Fecha de Inicio:</strong> ${data.start}</li>
+                        <li><strong>Salario:</strong> ${data.salary}</li>
+                        <li><strong>Reporta a:</strong> Gerencia</li>
+                    </ul>
+                    <p class="doc-text">Firme a continuación para aceptar esta oferta.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-emp" onclick="NoteGenerator.openSignPad('emp', this)" data-label="Firma Candidato"></div><div class="sig-label">${data.candidate}</div></div></div>
+                </div>`
+        },
+        joint_venture: {
+            title: "ACUERDO DE EMPRESA CONJUNTA (JOINT VENTURE)",
+            fields: [
+                { group: 'Socios', fields: [{ id: 'partyA', label: 'Socio A', type: 'text', width: 'full' }, { id: 'partyB', label: 'Socio B', type: 'text', width: 'full' }] },
+                { group: 'Proyecto', fields: [{ id: 'purpose', label: 'Propósito/Proyecto', type: 'textarea', rows: 2 }] }
+            ],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE JOINT VENTURE</h2>
+                    <p class="doc-text">Este Acuerdo se celebra entre <strong>${data.partyA}</strong> y <strong>${data.partyB}</strong> con el fin de llevar a cabo una empresa conjunta.</p>
+                    <p class="doc-text"><strong>PROPÓSITO:</strong> ${data.purpose}</p>
+                    <p class="doc-text">Ambas partes acuerdan compartir ganancias, pérdidas y responsabilidades al 50% salvo acuerdo contrario anexo.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Socio A"></div><div class="sig-label">${data.partyA}</div></div><div class="sig-block"><div class="sig-zone" id="sig-partner" onclick="NoteGenerator.openSignPad('partner', this)" data-label="Firma Socio B"></div><div class="sig-label">${data.partyB}</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Notariado el: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        shareholder_agreement: {
+            title: "ACUERDO DE ACCIONISTAS",
+            fields: [{ group: 'Empresa', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'shareholders', label: 'Nombres Accionistas', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE ACCIONISTAS</h2>
+                    <p class="doc-text">Referente a: <strong>${data.company}</strong>.</p>
+                    <p class="doc-text">Los accionistas abajo firmantes acuerdan las reglas de gobernanza, transferencia de acciones y votación descritas en los estatutos adjuntos.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Accionista Principal"></div><div class="sig-label">Accionista</div></div></div>
+                </div>`
+        },
+        stock_purchase: {
+            title: "COMPRAVENTA DE ACCIONES",
+            fields: [{ group: 'Transacción', fields: [{ id: 'buyer', label: 'Comprador', type: 'text', width: 'full' }, { id: 'seller', label: 'Vendedor', type: 'text', width: 'full' }, { id: 'shares', label: 'Número de Acciones', type: 'number', width: 'half' }, { id: 'price', label: 'Precio Total ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE COMPRA DE ACCIONES</h2>
+                    <p class="doc-text">El Vendedor <strong>${data.seller}</strong> vende a <strong>${data.buyer}</strong> un total de <strong>${data.shares}</strong> acciones por el precio de <strong>$ ${data.price}</strong>.</p>
+                    <p class="doc-text">El Vendedor garantiza que posee título claro sobre dichas acciones.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
+                </div>`
+        },
+        asset_purchase: {
+            title: "COMPRAVENTA DE ACTIVOS",
+            fields: [{ group: 'Detalles', fields: [{ id: 'buyer', label: 'Comprador', type: 'text', width: 'full' }, { id: 'seller', label: 'Vendedor', type: 'text', width: 'full' }, { id: 'assets', label: 'Descripción de Activos', type: 'textarea', rows: 3 }, { id: 'price', label: 'Precio ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE COMPRA DE ACTIVOS</h2>
+                    <p class="doc-text"><strong>${data.seller}</strong> (Vendedor) acuerda vender a <strong>${data.buyer}</strong> (Comprador) los siguientes activos:</p>
+                    <div class="doc-body-text">${data.assets}</div>
+                    <p class="doc-text">Precio de compra: <strong>$ ${data.price}</strong>. La venta incluye todo derecho, título e interés sobre los activos.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Vendedor"></div><div class="sig-label">Vendedor</div></div><div class="sig-block"><div class="sig-zone" id="sig-buyer" onclick="NoteGenerator.openSignPad('buyer', this)" data-label="Firma Comprador"></div><div class="sig-label">Comprador</div></div></div>
+                </div>`
+        },
+        ip_assignment: {
+            title: "CESIÓN DE PROPIEDAD INTELECTUAL",
+            fields: [{ group: 'Partes', fields: [{ id: 'assignor', label: 'Cedente (Assignor)', type: 'text', width: 'full' }, { id: 'assignee', label: 'Cesionario (Assignee)', type: 'text', width: 'full' }, { id: 'ipDesc', label: 'Descripción de la PI', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CESIÓN DE PROPIEDAD INTELECTUAL</h2>
+                    <p class="doc-text">Yo, <strong>${data.assignor}</strong>, por valor recibido, cedo y transfiero a <strong>${data.assignee}</strong> todos mis derechos, títulos e intereses en:</p>
+                    <div class="doc-body-text">${data.ipDesc}</div>
+                    <p class="doc-text">Esta cesión es irrevocable y mundial.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        construction_contract: {
+            title: "CONTRATO DE CONSTRUCCIÓN",
+            fields: [{ group: 'Obra', fields: [{ id: 'owner', label: 'Propietario', type: 'text', width: 'full' }, { id: 'contractor', label: 'Contratista', type: 'text', width: 'full' }, { id: 'address', label: 'Dirección Obra', type: 'text', width: 'full' }, { id: 'scope', label: 'Alcance del Trabajo', type: 'textarea', rows: 3 }, { id: 'price', label: 'Costo Total ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE CONSTRUCCIÓN</h2>
+                    <p class="doc-text">Entre: <strong>${data.owner}</strong> y <strong>${data.contractor}</strong>.</p>
+                    <p class="doc-text">El Contratista realizará los siguientes trabajos en ${data.address}:</p>
+                    <div class="doc-body-text">${data.scope}</div>
+                    <p class="doc-text">El Propietario pagará <strong>$ ${data.price}</strong> por los servicios.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">Propietario</div></div><div class="sig-block"><div class="sig-zone" id="sig-contractor" onclick="NoteGenerator.openSignPad('contractor', this)" data-label="Firma Contratista"></div><div class="sig-label">Contratista</div></div></div>
+                </div>`
+        },
+        subcontractor_agreement: {
+            title: "ACUERDO DE SUBCONTRATISTA",
+            fields: [{ group: 'Servicio', fields: [{ id: 'contractor', label: 'Contratista Principal', type: 'text', width: 'full' }, { id: 'sub', label: 'Subcontratista', type: 'text', width: 'full' }, { id: 'service', label: 'Servicios', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE SUBCONTRATISTA INDEPENDIENTE</h2>
+                    <p class="doc-text">El contratista <strong>${data.contractor}</strong> contrata a <strong>${data.sub}</strong> para realizar:</p>
+                    <div class="doc-body-text">${data.service}</div>
+                    <p class="doc-text">El Subcontratista es un contratista independiente, responsable de sus propios impuestos y seguros.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sub" onclick="NoteGenerator.openSignPad('sub', this)" data-label="Firma Subcontratista"></div><div class="sig-label">${data.sub}</div></div></div>
+                </div>`
+        },
+        loan_agreement: {
+            title: "CONTRATO DE PRÉSTAMO DETALLADO",
+            fields: [{ group: 'Términos', fields: [{ id: 'lender', label: 'Prestamista', type: 'text', width: 'full' }, { id: 'borrower', label: 'Prestatario', type: 'text', width: 'full' }, { id: 'amount', label: 'Monto ($)', type: 'number', width: 'half' }, { id: 'rate', label: 'Interés (%)', type: 'number', width: 'half' }, { id: 'term', label: 'Plazo (Meses)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE PRÉSTAMO PERSONAL</h2>
+                    <p class="doc-text">Prestamista: <strong>${data.lender}</strong> | Prestatario: <strong>${data.borrower}</strong></p>
+                    <p class="doc-text">Monto: <strong>$ ${data.amount}</strong> | Interés: <strong>${data.rate}%</strong> anual.</p>
+                    <p class="doc-text">El Prestatario promete pagar el préstamo en <strong>${data.term}</strong> meses. El incumplimiento resultará en la aceleración de la deuda y costos legales.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Prestamista"></div><div class="sig-label">Prestamista</div></div><div class="sig-block"><div class="sig-zone" id="sig-borrower" onclick="NoteGenerator.openSignPad('borrower', this)" data-label="Firma Prestatario"></div><div class="sig-label">Prestatario</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        personal_guarantee: {
+            title: "GARANTÍA PERSONAL",
+            fields: [{ group: 'Garante', fields: [{ id: 'guarantor', label: 'Garante', type: 'text', width: 'full' }, { id: 'debtor', label: 'Deudor', type: 'text', width: 'full' }, { id: 'creditor', label: 'Acreedor', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">GARANTÍA PERSONAL</h2>
+                    <p class="doc-text">Yo, <strong>${data.guarantor}</strong>, garantizo incondicionalmente el pago de todas las deudas contraídas por <strong>${data.debtor}</strong> a favor de <strong>${data.creditor}</strong>.</p>
+                    <p class="doc-text">Esta es una garantía continua y cubre el principal, intereses y costos de cobranza.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Garante"></div><div class="sig-label">${data.guarantor}</div></div></div>
+                    <div class="notary-block"><p class="doc-text">Reconocido ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        security_agreement: {
+            title: "ACUERDO DE SEGURIDAD (COLATERAL)",
+            fields: [{ group: 'Colateral', fields: [{ id: 'debtor', label: 'Deudor', type: 'text', width: 'full' }, { id: 'secured', label: 'Parte Asegurada', type: 'text', width: 'full' }, { id: 'collateral', label: 'Descripción del Colateral', type: 'textarea', rows: 3 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE SEGURIDAD</h2>
+                    <p class="doc-text">Para garantizar el pago, el Deudor <strong>${data.debtor}</strong> otorga a <strong>${data.secured}</strong> un interés de seguridad sobre:</p>
+                    <div class="doc-body-text">${data.collateral}</div>
+                    <p class="doc-text">En caso de incumplimiento, la Parte Asegurada tiene derecho a tomar posesión del colateral.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Deudor"></div><div class="sig-label">${data.debtor}</div></div></div>
+                </div>`
+        },
+        warranty_deed: {
+            title: "ESCRITURA DE GARANTÍA (WARRANTY DEED)",
+            fields: [{ group: 'Propiedad', fields: [{ id: 'grantor', label: 'Otorgante (Grantor)', type: 'text', width: 'full' }, { id: 'grantee', label: 'Beneficiario (Grantee)', type: 'text', width: 'full' }, { id: 'legalDesc', label: 'Desc. Legal Propiedad', type: 'textarea', rows: 3 }, { id: 'county', label: 'Condado', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ESCRITURA DE GARANTÍA GENERAL</h2>
+                    <p class="doc-text">EL OTORGANTE: <strong>${data.grantor}</strong>, por y en consideración de la suma de $10.00 y otras buenas consideraciones, traslada y garantiza a:</p>
+                    <p class="doc-text">EL BENEFICIARIO: <strong>${data.grantee}</strong>, la siguiente propiedad inmobiliaria en el Condado de ${data.county || '___________'}:</p>
+                    <div class="doc-body-text">${data.legalDesc}</div>
+                    <p class="doc-text">El Otorgante garantiza que tiene pleno derecho a vender dicha propiedad y la defenderá contra reclamaciones de todas las personas.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Otorgante"></div><div class="sig-label">${data.grantor}</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Reconocido ante mí este <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        copyright_assignment: {
+            title: "CESIÓN DE DERECHOS DE AUTOR",
+            fields: [{ group: 'Obra', fields: [{ id: 'assignor', label: 'Cedente', type: 'text', width: 'full' }, { id: 'assignee', label: 'Cesionario', type: 'text', width: 'full' }, { id: 'work', label: 'Título de la Obra', type: 'text', width: 'full' }, { id: 'regNum', label: 'No. Registro (Si aplica)', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CESIÓN DE DERECHOS DE AUTOR</h2>
+                    <p class="doc-text">Por valor recibido, <strong>${data.assignor}</strong> cede a <strong>${data.assignee}</strong> todos los derechos, títulos e intereses sobre la obra titulada:</p>
+                    <p class="doc-center-bold">"${data.work}"</p>
+                    <p class="doc-text">Registro No: ${data.regNum || 'N/A'}. Esta cesión incluye todos los derechos de reproducción y distribución.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        trademark_assignment: {
+            title: "CESIÓN DE MARCA REGISTRADA",
+            fields: [{ group: 'Marca', fields: [{ id: 'assignor', label: 'Cedente', type: 'text', width: 'full' }, { id: 'assignee', label: 'Cesionario', type: 'text', width: 'full' }, { id: 'mark', label: 'Nombre de la Marca', type: 'text', width: 'full' }, { id: 'regNum', label: 'No. Registro', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CESIÓN DE MARCA</h2>
+                    <p class="doc-text">El Cedente <strong>${data.assignor}</strong> transfiere al Cesionario <strong>${data.assignee}</strong> todos los derechos sobre la marca:</p>
+                    <p class="doc-center-bold">"${data.mark}"</p>
+                    <p class="doc-text">No. Registro: ${data.regNum}. Incluye el "goodwill" del negocio asociado.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cedente"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        patent_assignment: {
+            title: "CESIÓN DE PATENTE",
+            fields: [{ group: 'Patente', fields: [{ id: 'assignor', label: 'Inventor/Cedente', type: 'text', width: 'full' }, { id: 'assignee', label: 'Cesionario', type: 'text', width: 'full' }, { id: 'title', label: 'Título de la Invención', type: 'text', width: 'full' }, { id: 'patNum', label: 'No. Patente/Aplicación', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CESIÓN DE PATENTE</h2>
+                    <p class="doc-text">Yo, <strong>${data.assignor}</strong>, cedo a <strong>${data.assignee}</strong> todos los derechos sobre la invención titulada "<strong>${data.title}</strong>".</p>
+                    <p class="doc-text">Número de Patente/Aplicación: <strong>${data.patNum}</strong>.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Inventor"></div><div class="sig-label">${data.assignor}</div></div></div>
+                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        domain_assignment: {
+            title: "TRANSFERENCIA DE DOMINIO",
+            fields: [{ group: 'Dominio', fields: [{ id: 'transferor', label: 'Transferente', type: 'text', width: 'full' }, { id: 'transferee', label: 'Adquirente', type: 'text', width: 'full' }, { id: 'domain', label: 'Nombre de Dominio', type: 'text', width: 'full' }, { id: 'price', label: 'Precio ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE TRANSFERENCIA DE DOMINIO</h2>
+                    <p class="doc-text"><strong>${data.transferor}</strong> transfiere a <strong>${data.transferee}</strong> todo control y propiedad sobre el nombre de dominio:</p>
+                    <p class="doc-center-bold">www.${data.domain}</p>
+                    <p class="doc-text">Precio de transferencia: <strong>$ ${data.price}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Transferente"></div><div class="sig-label">${data.transferor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-new" onclick="NoteGenerator.openSignPad('new', this)" data-label="Firma Adquirente"></div><div class="sig-label">${data.transferee}</div></div></div>
+                </div>`
+        },
+        privacy_policy: {
+            title: "POLÍTICA DE PRIVACIDAD",
+            fields: [{ group: 'Sitio', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'url', label: 'URL del Sitio Web', type: 'text', width: 'full' }, { id: 'email', label: 'Email de Contacto', type: 'email', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">POLÍTICA DE PRIVACIDAD</h2>
+                    <p class="doc-text">Última actualización: <strong>${data.date}</strong></p>
+                    <p class="doc-text"><strong>${data.company}</strong> ("nosotros") opera el sitio web ${data.url}. Esta página le informa sobre nuestras políticas con respecto a la recopilación, uso y divulgación de datos personales.</p>
+                    <h3 style="font-size:1rem;margin-top:10px;">Recopilación de Datos</h3>
+                    <p class="doc-text">Recopilamos varios tipos de información para diversos fines para proporcionar y mejorar nuestro servicio.</p>
+                    <h3 style="font-size:1rem;margin-top:10px;">Contacto</h3>
+                    <p class="doc-text">Si tiene preguntas, contáctenos en: ${data.email}.</p>
+                </div>`
+        },
+        terms_service: {
+            title: "TÉRMINOS Y CONDICIONES",
+            fields: [{ group: 'Sitio', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'url', label: 'URL del Sitio Web', type: 'text', width: 'full' }, { id: 'jurisdiction', label: 'Jurisdicción (Estado/País)', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">TÉRMINOS Y CONDICIONES DE USO</h2>
+                    <p class="doc-text">Bienvenido a ${data.url}. Estos términos describen las reglas y regulaciones para el uso del sitio web de <strong>${data.company}</strong>.</p>
+                    <p class="doc-text">Al acceder a este sitio web, asumimos que acepta estos términos y condiciones en su totalidad.</p>
+                    <p class="doc-text">Estos términos se regirán e interpretarán de acuerdo con las leyes de <strong>${data.jurisdiction}</strong>.</p>
+                </div>`
+        },
+        influencer_agreement: {
+            title: "CONTRATO DE INFLUENCER",
+            fields: [{ group: 'Campaña', fields: [{ id: 'brand', label: 'Marca', type: 'text', width: 'full' }, { id: 'influencer', label: 'Influencer', type: 'text', width: 'full' }, { id: 'platform', label: 'Plataforma (IG/TikTok)', type: 'text', width: 'half' }, { id: 'fee', label: 'Tarifa ($)', type: 'number', width: 'half' }, { id: 'deliverables', label: 'Entregables (Posts/Videos)', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE MARKETING DE INFLUENCERS</h2>
+                    <p class="doc-text">Entre <strong>${data.brand}</strong> y <strong>${data.influencer}</strong>.</p>
+                    <p class="doc-text">El Influencer creará contenido para la plataforma <strong>${data.platform}</strong>. Entregables:</p>
+                    <div class="doc-body-text">${data.deliverables}</div>
+                    <p class="doc-text">Compensación total: <strong>$ ${data.fee}</strong>, pagaderos tras la publicación.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Marca"></div><div class="sig-label">${data.brand}</div></div><div class="sig-block"><div class="sig-zone" id="sig-inf" onclick="NoteGenerator.openSignPad('inf', this)" data-label="Firma Influencer"></div><div class="sig-label">${data.influencer}</div></div></div>
+                </div>`
+        },
+        sponsorship_agreement: {
+            title: "ACUERDO DE PATROCINIO",
+            fields: [{ group: 'Detalles', fields: [{ id: 'sponsor', label: 'Patrocinador', type: 'text', width: 'full' }, { id: 'recipient', label: 'Beneficiario', type: 'text', width: 'full' }, { id: 'event', label: 'Evento', type: 'text', width: 'full' }, { id: 'amount', label: 'Aporte ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE PATROCINIO</h2>
+                    <p class="doc-text">El Patrocinador <strong>${data.sponsor}</strong> acuerda apoyar a <strong>${data.recipient}</strong> para el evento: "${data.event}".</p>
+                    <p class="doc-text">Aporte de Patrocinio: <strong>$ ${data.amount}</strong>. A cambio, el Beneficiario proporcionará publicidad y reconocimiento de marca según lo acordado.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Patrocinador"></div><div class="sig-label">${data.sponsor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rec" onclick="NoteGenerator.openSignPad('rec', this)" data-label="Firma Beneficiario"></div><div class="sig-label">${data.recipient}</div></div></div>
+                </div>`
+        },
+        referral_agreement: {
+            title: "ACUERDO DE REFERIDOS",
+            fields: [{ group: 'Comisión', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'referrer', label: 'Referidor', type: 'text', width: 'full' }, { id: 'commission', label: 'Comisión (%) o Monto Fijo', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE REFERENCIA</h2>
+                    <p class="doc-text"><strong>${data.company}</strong> acuerda pagar a <strong>${data.referrer}</strong> una comisión por cada cliente calificado referido.</p>
+                    <p class="doc-text">Términos de Comisión: <strong>${data.commission}</strong> por venta cerrada.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-ref" onclick="NoteGenerator.openSignPad('ref', this)" data-label="Firma Referidor"></div><div class="sig-label">${data.referrer}</div></div></div>
+                </div>`
+        },
+        commission_agreement: {
+            title: "ACUERDO DE COMISIÓN",
+            fields: [{ group: 'Ventas', fields: [{ id: 'principal', label: 'Principal', type: 'text', width: 'full' }, { id: 'agent', label: 'Agente', type: 'text', width: 'full' }, { id: 'structure', label: 'Estructura de Comisión', type: 'textarea', rows: 3 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE COMISIÓN DE VENTAS</h2>
+                    <p class="doc-text">Entre <strong>${data.principal}</strong> y <strong>${data.agent}</strong>.</p>
+                    <p class="doc-text">El Agente venderá productos/servicios del Principal y recibirá una compensación basada en:</p>
+                    <div class="doc-body-text">${data.structure}</div>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div><div class="sig-block"><div class="sig-zone" id="sig-agent" onclick="NoteGenerator.openSignPad('agent', this)" data-label="Firma Agente"></div><div class="sig-label">${data.agent}</div></div></div>
+                </div>`
+        },
+        distributor_agreement: {
+            title: "CONTRATO DE DISTRIBUCIÓN",
+            fields: [{ group: 'Distribución', fields: [{ id: 'supplier', label: 'Proveedor', type: 'text', width: 'full' }, { id: 'distributor', label: 'Distribuidor', type: 'text', width: 'full' }, { id: 'territory', label: 'Territorio Exclusivo', type: 'text', width: 'full' }, { id: 'products', label: 'Productos', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE DISTRIBUCIÓN EXCLUSIVA</h2>
+                    <p class="doc-text">El Proveedor <strong>${data.supplier}</strong> otorga a <strong>${data.distributor}</strong> el derecho exclusivo de distribuir los siguientes productos:</p>
+                    <div class="doc-body-text">${data.products}</div>
+                    <p class="doc-text">En el territorio de: <strong>${data.territory}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div><div class="sig-block"><div class="sig-zone" id="sig-dist" onclick="NoteGenerator.openSignPad('dist', this)" data-label="Firma Distribuidor"></div><div class="sig-label">${data.distributor}</div></div></div>
+                </div>`
+        },
+        manufacturing_agreement: {
+            title: "CONTRATO DE MANUFACTURA",
+            fields: [{ group: 'Producción', fields: [{ id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'manufacturer', label: 'Fabricante', type: 'text', width: 'full' }, { id: 'product', label: 'Producto a Fabricar', type: 'text', width: 'full' }, { id: 'price', label: 'Precio por Unidad', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE MANUFACTURA</h2>
+                    <p class="doc-text">El Fabricante <strong>${data.manufacturer}</strong> acuerda producir <strong>${data.product}</strong> para el Cliente <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Precio acordado: <strong>$ ${data.price}</strong> por unidad. El Fabricante garantiza la calidad y especificaciones del producto.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div><div class="sig-block"><div class="sig-zone" id="sig-man" onclick="NoteGenerator.openSignPad('man', this)" data-label="Firma Fabricante"></div><div class="sig-label">${data.manufacturer}</div></div></div>
+                </div>`
+        },
+        supply_agreement: {
+            title: "CONTRATO DE SUMINISTRO",
+            fields: [{ group: 'Suministro', fields: [{ id: 'purchaser', label: 'Comprador', type: 'text', width: 'full' }, { id: 'supplier', label: 'Proveedor', type: 'text', width: 'full' }, { id: 'goods', label: 'Bienes', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SUMINISTRO</h2>
+                    <p class="doc-text">El Proveedor <strong>${data.supplier}</strong> se compromete a suministrar a <strong>${data.purchaser}</strong> los siguientes bienes de manera recurrente:</p>
+                    <div class="doc-body-text">${data.goods}</div>
+                    <p class="doc-text">Este acuerdo asegura la disponibilidad y precio de los bienes durante el término del contrato.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.purchaser}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sup" onclick="NoteGenerator.openSignPad('sup', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.supplier}</div></div></div>
+                </div>`
+        },
+        agency_agreement: {
+            title: "CONTRATO DE AGENCIA",
+            fields: [{ group: 'Relación', fields: [{ id: 'principal', label: 'Principal', type: 'text', width: 'full' }, { id: 'agent', label: 'Agente', type: 'text', width: 'full' }, { id: 'scope', label: 'Alcance de la Autoridad', type: 'textarea', rows: 3 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE AGENCIA Y REPRESENTACIÓN</h2>
+                    <p class="doc-text">Yo, <strong>${data.principal}</strong>, nombro a <strong>${data.agent}</strong> como mi agente legal para actuar en mi nombre con respecto a:</p>
+                    <div class="doc-body-text">${data.scope}</div>
+                    <p class="doc-text">El Agente acepta actuar con lealtad y cuidado en el mejor interés del Principal.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Principal"></div><div class="sig-label">${data.principal}</div></div></div>
+                    <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        vehicle_lease: {
+            title: "ARRENDAMIENTO DE VEHÍCULO",
+            fields: [{ group: 'Vehículo', fields: [{ id: 'lessor', label: 'Arrendador', type: 'text', width: 'full' }, { id: 'lessee', label: 'Arrendatario', type: 'text', width: 'full' }, { id: 'vehicle', label: 'Vehículo (Marca/Modelo/Año/VIN)', type: 'textarea', rows: 2 }, { id: 'payment', label: 'Pago Mensual ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ARRENDAMIENTO DE VEHÍCULO</h2>
+                    <p class="doc-text">Arrendador: <strong>${data.lessor}</strong> | Arrendatario: <strong>${data.lessee}</strong></p>
+                    <p class="doc-text">Vehículo arrendado:</p>
+                    <div class="doc-body-text">${data.vehicle}</div>
+                    <p class="doc-text">El Arrendatario pagará <strong>$ ${data.payment}</strong> por mes. El vehículo debe ser devuelto en buenas condiciones al final del plazo.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.lessee}</div></div></div>
+                </div>`
+        },
+        internship_agreement: {
+            title: "ACUERDO DE PASANTÍA",
+            fields: [{ group: 'Pasantía', fields: [{ id: 'company', label: 'Empresa', type: 'text', width: 'full' }, { id: 'intern', label: 'Pasante', type: 'text', width: 'full' }, { id: 'role', label: 'Puesto/Rol', type: 'text', width: 'full' }, { id: 'compensation', label: 'Compensación (Si aplica)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE PASANTÍA</h2>
+                    <p class="doc-text">Entre: <strong>${data.company}</strong> y <strong>${data.intern}</strong>.</p>
+                    <p class="doc-text">Este acuerdo confirma que el Pasante realizará una pasantía como <strong>${data.role}</strong>.</p>
+                    <p class="doc-text">Compensación: ${data.compensation || 'Pasantía no remunerada'}.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empresa"></div><div class="sig-label">${data.company}</div></div><div class="sig-block"><div class="sig-zone" id="sig-intern" onclick="NoteGenerator.openSignPad('intern', this)" data-label="Firma Pasante"></div><div class="sig-label">${data.intern}</div></div></div>
+                </div>`
+        },
+        volunteer_agreement: {
+            title: "ACUERDO DE VOLUNTARIADO",
+            fields: [{ group: 'Voluntariado', fields: [{ id: 'org', label: 'Organización', type: 'text', width: 'full' }, { id: 'volunteer', label: 'Voluntario', type: 'text', width: 'full' }, { id: 'tasks', label: 'Tareas', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE SERVICIO VOLUNTARIO</h2>
+                    <p class="doc-text">El Voluntario <strong>${data.volunteer}</strong> acuerda donar su tiempo a <strong>${data.org}</strong>.</p>
+                    <p class="doc-text">Tareas: ${data.tasks}</p>
+                    <p class="doc-text">El Voluntario entiende que no recibirá compensación financiera alguna.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Voluntario"></div><div class="sig-label">${data.volunteer}</div></div></div>
+                </div>`
+        },
+        remote_work_agreement: {
+            title: "ACUERDO DE TRABAJO REMOTO",
+            fields: [{ group: 'Trabajo Remoto', fields: [{ id: 'emp', label: 'Empleado', type: 'text', width: 'full' }, { id: 'manager', label: 'Supervisor', type: 'text', width: 'full' }, { id: 'schedule', label: 'Horario de Trabajo', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">POLÍTICA DE TRABAJO REMOTO</h2>
+                    <p class="doc-text">Empleado: <strong>${data.emp}</strong>. Aprobado por: <strong>${data.manager}</strong>.</p>
+                    <p class="doc-text">Se autoriza al empleado a trabajar desde casa bajo el siguiente horario/condiciones:</p>
+                    <div class="doc-body-text">${data.schedule}</div>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
+                </div>`
+        },
+        employee_handbook_ack: {
+            title: "ACUSE DE RECIBO DE MANUAL",
+            fields: [{ group: 'Confirmación', fields: [{ id: 'emp', label: 'Empleado', type: 'text', width: 'full' }, { id: 'version', label: 'Versión del Manual (Fecha/Año)', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUSE DE RECIBO DE MANUAL DEL EMPLEADO</h2>
+                    <p class="doc-text">Yo, <strong>${data.emp}</strong>, certifico que he recibido y leído el Manual del Empleado (Versión: ${data.version}).</p>
+                    <p class="doc-text">Entiendo que es mi responsabilidad familiarizarme con las políticas de la empresa.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Empleado"></div><div class="sig-label">${data.emp}</div></div></div>
+                </div>`
+        },
+        property_management: {
+            title: "ADMINISTRACIÓN DE PROPIEDADES",
+            fields: [{ group: 'Contrato', fields: [{ id: 'owner', label: 'Propietario', type: 'text', width: 'full' }, { id: 'manager', label: 'Administrador (Manager)', type: 'text', width: 'full' }, { id: 'address', label: 'Propiedad', type: 'text', width: 'full' }, { id: 'fee', label: 'Honorarios (% o Fijo)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ADMINISTRACIÓN DE PROPIEDAD</h2>
+                    <p class="doc-text">El Propietario <strong>${data.owner}</strong> designa a <strong>${data.manager}</strong> como agente exclusivo para administrar la propiedad en:</p>
+                    <p class="doc-center-bold">${data.address}</p>
+                    <p class="doc-text">El Administrador recibirá: <strong>${data.fee}</strong> por sus servicios.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-mgr" onclick="NoteGenerator.openSignPad('mgr', this)" data-label="Firma Administrador"></div><div class="sig-label">${data.manager}</div></div></div>
+                </div>`
+        },
+        storage_lease: {
+            title: "ALQUILER DE ALMACENAMIENTO",
+            fields: [{ group: 'Almacén', fields: [{ id: 'landlord', label: 'Arrendador', type: 'text', width: 'full' }, { id: 'tenant', label: 'Arrendatario', type: 'text', width: 'full' }, { id: 'unit', label: 'Unidad #', type: 'text', width: 'half' }, { id: 'rent', label: 'Renta Mensual ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ALQUILER DE ESPACIO DE ALMACENAMIENTO</h2>
+                    <p class="doc-text">Arrendador: <strong>${data.landlord}</strong>. Arrendatario: <strong>${data.tenant}</strong>.</p>
+                    <p class="doc-text">Se alquila la unidad de almacenamiento #: <strong>${data.unit}</strong>.</p>
+                    <p class="doc-text">Renta mensual: <strong>$ ${data.rent}</strong>. Solo para almacenamiento de bienes personales.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div><div class="sig-block"><div class="sig-zone" id="sig-ten" onclick="NoteGenerator.openSignPad('ten', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.tenant}</div></div></div>
+                </div>`
+        },
+        parking_lease: {
+            title: "ALQUILER DE ESTACIONAMIENTO",
+            fields: [{ group: 'Espacio', fields: [{ id: 'lessor', label: 'Arrendador', type: 'text', width: 'full' }, { id: 'lessee', label: 'Usuario', type: 'text', width: 'full' }, { id: 'spot', label: 'Espacio # / Ubicación', type: 'text', width: 'full' }, { id: 'rent', label: 'Renta Mensual ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE ALQUILER DE ESTACIONAMIENTO</h2>
+                    <p class="doc-text">Entre <strong>${data.lessor}</strong> y <strong>${data.lessee}</strong>.</p>
+                    <p class="doc-text">Se alquila el espacio de estacionamiento ubicado en: <strong>${data.spot}</strong>.</p>
+                    <p class="doc-text">Tarifa mensual: <strong>$ ${data.rent}</strong>. El usuario asume responsabilidad por su vehículo.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.lessor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-lessee" onclick="NoteGenerator.openSignPad('lessee', this)" data-label="Firma Usuario"></div><div class="sig-label">${data.lessee}</div></div></div>
+                </div>`
+        },
+        lease_violation: {
+            title: "AVISO DE VIOLACIÓN DE ALQUILER",
+            fields: [{ group: 'Violación', fields: [{ id: 'landlord', label: 'Arrendador', type: 'text', width: 'full' }, { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' }, { id: 'violation', label: 'Descripción de la Violación', type: 'textarea', rows: 3 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AVISO DE VIOLACIÓN DE CONTRATO</h2>
+                    <p class="doc-text">PARA: <strong>${data.tenant}</strong>.</p>
+                    <p class="doc-text">Usted está en violación de su contrato de arrendamiento debido a:</p>
+                    <div class="doc-body-text">${data.violation}</div>
+                    <p class="doc-text">Debe corregir esta violación inmediatamente para evitar acciones legales o de desalojo.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Arrendador"></div><div class="sig-label">${data.landlord}</div></div></div>
+                </div>`
+        },
+        rent_receipt: {
+            title: "RECIBO DE RENTA",
+            fields: [{ group: 'Pago', fields: [{ id: 'landlord', label: 'Arrendador/Recibido Por', type: 'text', width: 'full' }, { id: 'tenant', label: 'Inquilino', type: 'text', width: 'full' }, { id: 'amount', label: 'Monto Recibido ($)', type: 'number', width: 'half' }, { id: 'period', label: 'Periodo de Renta (Mes)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">RECIBO DE PAGO DE RENTA</h2>
+                    <p class="doc-text">Fecha: <strong>${data.date}</strong></p>
+                    <p class="doc-text">Recibí de <strong>${data.tenant}</strong> la suma de <strong>$ ${data.amount}</strong>.</p>
+                    <p class="doc-text">Por el alquiler correspondiente al periodo: <strong>${data.period}</strong>.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Recipiente"></div><div class="sig-label">${data.landlord}</div></div></div>
+                </div>`
+        },
+        photography_contract: {
+            title: "CONTRATO DE FOTOGRAFÍA",
+            fields: [{ group: 'Evento', fields: [{ id: 'photographer', label: 'Fotógrafo', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'eventDate', label: 'Fecha del Evento', type: 'date', width: 'half' }, { id: 'fee', label: 'Tarifa Total ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS DE FOTOGRAFÍA</h2>
+                    <p class="doc-text">Cliente: <strong>${data.client}</strong> | Fotógrafo: <strong>${data.photographer}</strong></p>
+                    <p class="doc-text">Fecha del Evento: <strong>${data.eventDate}</strong>.</p>
+                    <p class="doc-text">El Cliente acuerda pagar <strong>$ ${data.fee}</strong> por los servicios. El Fotógrafo conserva los derechos de autor.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Fotógrafo"></div><div class="sig-label">${data.photographer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        venue_rental: {
+            title: "ALQUILER DE EVENTOS",
+            fields: [{ group: 'Evento', fields: [{ id: 'venue', label: 'Propietario del Salón', type: 'text', width: 'full' }, { id: 'renter', label: 'Arrendatario', type: 'text', width: 'full' }, { id: 'eventDate', label: 'Fecha Evento', type: 'date', width: 'half' }, { id: 'cost', label: 'Costo Alquiler ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ALQUILER DE SALÓN DE EVENTOS</h2>
+                    <p class="doc-text">El Propietario <strong>${data.venue}</strong> alquila el espacio a <strong>${data.renter}</strong> para el evento del día <strong>${data.eventDate}</strong>.</p>
+                    <p class="doc-text">Costo total: <strong>$ ${data.cost}</strong>. El Arrendatario es responsable de cualquier daño a la propiedad.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.venue}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
+                </div>`
+        },
+        catering_agreement: {
+            title: "CONTRATO DE CATERING",
+            fields: [{ group: 'Catering', fields: [{ id: 'caterer', label: 'Empresa de Catering', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'menu', label: 'Detalles del Menú', type: 'textarea', rows: 2 }, { id: 'pax', label: 'Número de Personas', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE SERVICIOS DE CATERING</h2>
+                    <p class="doc-text">Proveedor: <strong>${data.caterer}</strong>. Cliente: <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Servicio para aprox. <strong>${data.pax}</strong> personas. Menú acordado:</p>
+                    <div class="doc-body-text">${data.menu}</div>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.caterer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        dj_contract: {
+            title: "CONTRATO DE DJ",
+            fields: [{ group: 'Servicio', fields: [{ id: 'dj', label: 'Nombre Artístico/DJ', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'hours', label: 'Horas de Servicio', type: 'text', width: 'half' }, { id: 'fee', label: 'Tarifa ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS DE ENTRETENIMIENTO (DJ)</h2>
+                    <p class="doc-text">El Artista <strong>${data.dj}</strong> proveerá servicios musicales a <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Duración: <strong>${data.hours}</strong>. Tarifa acordada: <strong>$ ${data.fee}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma DJ"></div><div class="sig-label">${data.dj}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        model_release_adult: {
+            title: "MODEL RELEASE (ADULTO)",
+            fields: [{ group: 'Modelo', fields: [{ id: 'model', label: 'Nombre del Modelo', type: 'text', width: 'full' }, { id: 'photographer', label: 'Fotógrafo', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN DE USO DE IMAGEN (MODELO ADULTO)</h2>
+                    <p class="doc-text">Yo, <strong>${data.model}</strong>, otorgo a <strong>${data.photographer}</strong> permiso irrevocable para usar mi imagen en fotografías/videos para cualquier fin legal (incluyendo comercial y promocional).</p>
+                    <p class="doc-text">Libero al Fotógrafo de cualquier responsabilidad derivada de dicho uso.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Modelo"></div><div class="sig-label">${data.model}</div></div></div>
+                </div>`
+        },
+        consignment_agreement: {
+            title: "ACUERDO DE CONSIGNACIÓN",
+            fields: [{ group: 'Venta', fields: [{ id: 'owner', label: 'Dueño del Producto', type: 'text', width: 'full' }, { id: 'shop', label: 'Tienda/Consignatario', type: 'text', width: 'full' }, { id: 'items', label: 'Artículos', type: 'textarea', rows: 2 }, { id: 'split', label: 'División (%)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE CONSIGNACIÓN</h2>
+                    <p class="doc-text">El Dueño <strong>${data.owner}</strong> entrega a <strong>${data.shop}</strong> los siguientes artículos para su venta:</p>
+                    <div class="doc-body-text">${data.items}</div>
+                    <p class="doc-text">División de ganancias: <strong>${data.split}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-shop" onclick="NoteGenerator.openSignPad('shop', this)" data-label="Firma Tienda"></div><div class="sig-label">${data.shop}</div></div></div>
+                </div>`
+        },
+        purchase_order: {
+            title: "ORDEN DE COMPRA",
+            fields: [{ group: 'Orden', fields: [{ id: 'buyer', label: 'Comprador', type: 'text', width: 'full' }, { id: 'vendor', label: 'Vendedor', type: 'text', width: 'full' }, { id: 'items', label: 'Lista de Productos', type: 'textarea', rows: 3 }, { id: 'total', label: 'Total ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ORDEN DE COMPRA</h2>
+                    <p class="doc-text">DE: <strong>${data.buyer}</strong><br>PARA: <strong>${data.vendor}</strong></p>
+                    <p class="doc-text">Por favor suministrar los siguientes artículos:</p>
+                    <div class="doc-body-text">${data.items}</div>
+                    <p class="doc-text"><strong>PRECIO TOTAL: $ ${data.total}</strong>.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Comprador"></div><div class="sig-label">${data.buyer}</div></div></div>
+                </div>`
+        },
+        invoice_template: {
+            title: "FACTURA DE SERVICIOS",
+            fields: [{ group: 'Factura', fields: [{ id: 'provider', label: 'Proveedor', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'desc', label: 'Descripción Servicios', type: 'textarea', rows: 2 }, { id: 'amount', label: 'Monto a Pagar ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">FACTURA</h2>
+                    <p class="doc-text">A: <strong>${data.client}</strong><br>DE: <strong>${data.provider}</strong></p>
+                    <p class="doc-text">Por servicios profesionales prestados:</p>
+                    <div class="doc-body-text">${data.desc}</div>
+                    <p class="doc-center-bold" style="font-size:1.5em; border-top:2px solid #000; margin-top:20px;">TOTAL: $ ${data.amount}</p>
+                </div>`
+        },
+        hipaa_release: {
+            title: "AUTORIZACIÓN HIPAA",
+            fields: [{ group: 'Paciente', fields: [{ id: 'patient', label: 'Paciente', type: 'text', width: 'full' }, { id: 'provider', label: 'Proveedor Médico/Hospital', type: 'text', width: 'full' }, { id: 'recipient', label: 'Persona Autorizada a Recibir Info', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">AUTORIZACIÓN HIPAA PARA DIVULGACIÓN</h2>
+                    <p class="doc-text">Yo, <strong>${data.patient}</strong>, autorizo a <strong>${data.provider}</strong> a divulgar mi información de salud protegida (PHI) a:</p>
+                    <p class="doc-center-bold">${data.recipient}</p>
+                    <p class="doc-text">Entiendo que puedo revocar esta autorización por escrito en cualquier momento.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Paciente"></div><div class="sig-label">${data.patient}</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Notariado: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        medical_consent_caregiver: {
+            title: "CONSENTIMIENTO MÉDICO CUIDADOR",
+            fields: [{ group: 'Permiso', fields: [{ id: 'parent', label: 'Padre/Tutor', type: 'text', width: 'full' }, { id: 'caregiver', label: 'Cuidador Autorizado', type: 'text', width: 'full' }, { id: 'child', label: 'Menor', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONSENTIMIENTO MÉDICO PARA CUIDADOR</h2>
+                    <p class="doc-text">Yo, <strong>${data.parent}</strong>, padre/tutor de <strong>${data.child}</strong>, autorizo a:</p>
+                    <p class="doc-center-bold">${data.caregiver}</p>
+                    <p class="doc-text">A tomar decisiones médicas de emergencia y tratamiento para el Menor en mi ausencia.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Padre"></div><div class="sig-label">${data.parent}</div></div></div>
+                     <div class="notary-block"><p class="doc-text">Jurado ante mí: <strong>${data.date}</strong>.</p><div class="notary-seal-placeholder">SELLO</div><div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div></div>
+                </div>`
+        },
+        equipment_rental_personal: {
+            title: "ALQUILER DE EQUIPO",
+            fields: [{ group: 'Equipo', fields: [{ id: 'owner', label: 'Dueño', type: 'text', width: 'full' }, { id: 'renter', label: 'Arrendatario', type: 'text', width: 'full' }, { id: 'equip', label: 'Equipo (Cámaras/Herramientas/Etc)', type: 'textarea', rows: 2 }, { id: 'fee', label: 'Tarifa Diaria/Total ($)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ALQUILER DE EQUIPO</h2>
+                    <p class="doc-text">El Dueño <strong>${data.owner}</strong> alquila el siguiente equipo a <strong>${data.renter}</strong>:</p>
+                    <div class="doc-body-text">${data.equip}</div>
+                    <p class="doc-text">Tarifa: <strong>${data.fee}</strong>. El Arrendatario acepta devolver el equipo en las mismas condiciones.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-rent" onclick="NoteGenerator.openSignPad('rent', this)" data-label="Firma Arrendatario"></div><div class="sig-label">${data.renter}</div></div></div>
+                </div>`
+        },
+        music_license: {
+            title: "LICENCIA MUSICAL",
+            fields: [{ group: 'Licencia', fields: [{ id: 'licensor', label: 'Licenciante (Compositor)', type: 'text', width: 'full' }, { id: 'licensee', label: 'Licenciatario (Usuario)', type: 'text', width: 'full' }, { id: 'song', label: 'Título de la Canción', type: 'text', width: 'full' }, { id: 'usage', label: 'Uso Permitido', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE LICENCIA DE USO MUSICAL</h2>
+                    <p class="doc-text">El Licenciante <strong>${data.licensor}</strong> otorga a <strong>${data.licensee}</strong> una licencia no exclusiva para usar la canción "<strong>${data.song}</strong>".</p>
+                    <p class="doc-text">Uso permitido:</p>
+                    <div class="doc-body-text">${data.usage}</div>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Licenciante"></div><div class="sig-label">${data.licensor}</div></div></div>
+                </div>`
+        },
+        artwork_commission: {
+            title: "COMISIÓN DE ARTE",
+            fields: [{ group: 'Obra', fields: [{ id: 'artist', label: 'Artista', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'description', label: 'Descripción de la Obra', type: 'textarea', rows: 3 }, { id: 'price', label: 'Precio ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE COMISIÓN DE OBRA DE ARTE</h2>
+                    <p class="doc-text">El Cliente <strong>${data.client}</strong> comisiona al Artista <strong>${data.artist}</strong> para crear:</p>
+                    <div class="doc-body-text">${data.description}</div>
+                    <p class="doc-text">Precio acordado: <strong>$ ${data.price}</strong>. El Artista conserva los derechos de exhibición en portafolio.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Artista"></div><div class="sig-label">${data.artist}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        video_production: {
+            title: "PRODUCCIÓN DE VIDEO",
+            fields: [{ group: 'Proyecto', fields: [{ id: 'producer', label: 'Productor', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'project', label: 'Detalles del Proyecto', type: 'textarea', rows: 3 }, { id: 'deadline', label: 'Fecha de Entrega', type: 'date', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE PRODUCCIÓN DE VIDEO</h2>
+                    <p class="doc-text">Entre <strong>${data.producer}</strong> y <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">El Productor creará un video basado en las siguientes especificaciones:</p>
+                    <div class="doc-body-text">${data.project}</div>
+                    <p class="doc-text">Entrega final programada para: <strong>${data.deadline}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Productor"></div><div class="sig-label">${data.producer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        podcast_guest: {
+            title: "INVITADO DE PODCAST",
+            fields: [{ group: 'Podcast', fields: [{ id: 'host', label: 'Anfitrión/Podcast', type: 'text', width: 'full' }, { id: 'guest', label: 'Invitado', type: 'text', width: 'full' }, { id: 'topic', label: 'Tema', type: 'text', width: 'full' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE INVITADO A PODCAST</h2>
+                    <p class="doc-text">El Invitado <strong>${data.guest}</strong> consiente ser grabado por <strong>${data.host}</strong>.</p>
+                    <p class="doc-text">El Invitado otorga todos los derechos de distribución y edición del episodio sobre "${data.topic}" al Anfitrión.</p>
+                    <br><div class="sig-section"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Invitado"></div><div class="sig-label">${data.guest}</div></div></div>
+                </div>`
+        },
+        house_sitting: {
+            title: "CUIDADO DE CASA",
+            fields: [{ group: 'Casa', fields: [{ id: 'owner', label: 'Propietario', type: 'text', width: 'full' }, { id: 'sitter', label: 'Cuidador', type: 'text', width: 'full' }, { id: 'dates', label: 'Fechas', type: 'text', width: 'full' }, { id: 'duties', label: 'Deberes (Plantas, Correo, etc)', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ACUERDO DE "HOUSE SITTING"</h2>
+                    <p class="doc-text">El Cuidador <strong>${data.sitter}</strong> cuidará la casa de <strong>${data.owner}</strong> durante: ${data.dates}.</p>
+                    <p class="doc-text">Responsabilidades:</p>
+                    <div class="doc-body-text">${data.duties}</div>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Propietario"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
+                </div>`
+        },
+        pet_sitting: {
+            title: "CUIDADO DE MASCOTAS",
+            fields: [{ group: 'Mascota', fields: [{ id: 'owner', label: 'Dueño', type: 'text', width: 'full' }, { id: 'sitter', label: 'Cuidador', type: 'text', width: 'full' }, { id: 'pets', label: 'Mascotas (Nombres/Razas)', type: 'text', width: 'full' }, { id: 'instructions', label: 'Instrucciones Especiales', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE CUIDADO DE MASCOTAS</h2>
+                    <p class="doc-text">El Cuidador <strong>${data.sitter}</strong> asume la responsabilidad temporal de: <strong>${data.pets}</strong>, propiedad de <strong>${data.owner}</strong>.</p>
+                    <p class="doc-text">Instrucciones de cuidado:</p>
+                    <div class="doc-body-text">${data.instructions}</div>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Dueño"></div><div class="sig-label">${data.owner}</div></div><div class="sig-block"><div class="sig-zone" id="sig-sit" onclick="NoteGenerator.openSignPad('sit', this)" data-label="Firma Cuidador"></div><div class="sig-label">${data.sitter}</div></div></div>
+                </div>`
+        },
+        tutoring_contract: {
+            title: "CONTRATO DE TUTORÍA",
+            fields: [{ group: 'Clases', fields: [{ id: 'tutor', label: 'Tutor', type: 'text', width: 'full' }, { id: 'student', label: 'Estudiante/Padre', type: 'text', width: 'full' }, { id: 'subject', label: 'Materia', type: 'text', width: 'half' }, { id: 'rate', label: 'Tarifa por Hora ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS DE TUTORÍA</h2>
+                    <p class="doc-text">El Tutor <strong>${data.tutor}</strong> proveerá instrucción en <strong>${data.subject}</strong> a <strong>${data.student}</strong>.</p>
+                    <p class="doc-text">Tarifa: <strong>$ ${data.rate}</strong>/hora. Las cancelaciones deben hacerse con 24h de anticipación.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Tutor"></div><div class="sig-label">${data.tutor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-st" onclick="NoteGenerator.openSignPad('st', this)" data-label="Firma Estudiante/Padre"></div><div class="sig-label">${data.student}</div></div></div>
+                </div>`
+        },
+        personal_trainer: {
+            title: "ENTRENADOR PERSONAL",
+            fields: [{ group: 'Entrenamiento', fields: [{ id: 'trainer', label: 'Entrenador', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'package', label: 'Paquete de Sesiones', type: 'text', width: 'full' }, { id: 'waiver', label: 'Incluir Renuncia Médica', type: 'select', options: ['Sí', 'No'] }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE ENTRENAMIENTO PERSONAL</h2>
+                    <p class="doc-text">Entrenador: <strong>${data.trainer}</strong> | Cliente: <strong>${data.client}</strong></p>
+                    <p class="doc-text">Servicio contratado: <strong>${data.package}</strong>.</p>
+                    <p class="doc-text">El cliente certifica que está en condiciones físicas para realizar ejercicio. ${data.waiver === 'Sí' ? 'El cliente renuncia a reclamaciones por lesiones durante el entrenamiento.' : ''}</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Entrenador"></div><div class="sig-label">${data.trainer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        cleaning_services: {
+            title: "SERVICIOS DE LIMPIEZA",
+            fields: [{ group: 'Limpieza', fields: [{ id: 'provider', label: 'Proveedor', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'address', label: 'Dirección', type: 'text', width: 'full' }, { id: 'frequency', label: 'Frecuencia', type: 'text', width: 'half' }, { id: 'price', label: 'Precio ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS DE LIMPIEZA</h2>
+                    <p class="doc-text"><strong>${data.provider}</strong> realizará servicios de limpieza en: ${data.address}.</p>
+                    <p class="doc-text">Frecuencia: <strong>${data.frequency}</strong>. Costo: <strong>$ ${data.price}</strong> por visita.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Proveedor"></div><div class="sig-label">${data.provider}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        gardening_contract: {
+            title: "CONTRATO DE JARDINERÍA",
+            fields: [{ group: 'Jardín', fields: [{ id: 'gardener', label: 'Jardinero/Empresa', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'services', label: 'Servicios (Corte, Poda, Riego)', type: 'textarea', rows: 2 }, { id: 'price', label: 'Tarifa Mensual/Por Visita ($)', type: 'text', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE MANTENIMIENTO DE JARDINES</h2>
+                    <p class="doc-text">Empresa: <strong>${data.gardener}</strong> para el Cliente: <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Servicios incluidos:</p>
+                    <div class="doc-body-text">${data.services}</div>
+                    <p class="doc-text">Pago acordado: <strong>${data.price}</strong>.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Jardinero"></div><div class="sig-label">${data.gardener}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        general_contractor: {
+            title: "CONTRATO GENERAL DE OBRA",
+            fields: [{ group: 'Obra', fields: [{ id: 'contractor', label: 'Contratista', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'project', label: 'Descripción del Proyecto', type: 'textarea', rows: 3 }, { id: 'total', label: 'Costo Total ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE OBRA Y SERVICIOS</h2>
+                    <p class="doc-text">El Contratista <strong>${data.contractor}</strong> ejecutará el siguiente proyecto para <strong>${data.client}</strong>:</p>
+                    <div class="doc-body-text">${data.project}</div>
+                    <p class="doc-text">El Cliente pagará un total de <strong>$ ${data.total}</strong> según el cronograma de pagos adjunto.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Contratista"></div><div class="sig-label">${data.contractor}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        hvac_service: {
+            title: "CONTRATO SERVICIO HVAC",
+            fields: [{ group: 'HVAC', fields: [{ id: 'technician', label: 'Técnico/Empresa', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'system', label: 'Sistema/Unidad', type: 'text', width: 'full' }, { id: 'work', label: 'Trabajo a Realizar', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">ORDEN DE SERVICIO HVAC (AIRE ACONDICIONADO)</h2>
+                    <p class="doc-text">Técnico: <strong>${data.technician}</strong>. Cliente: <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Unidad: ${data.system}</p>
+                    <p class="doc-text">Trabajo realizado / Diagnóstico:</p>
+                    <div class="doc-body-text">${data.work}</div>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Técnico"></div><div class="sig-label">${data.technician}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        plumbing_contract: {
+            title: "CONTRATO DE PLOMERÍA",
+            fields: [{ group: 'Plomería', fields: [{ id: 'plumber', label: 'Plomero', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'problem', label: 'Problema/Instalación', type: 'textarea', rows: 2 }, { id: 'estimate', label: 'Estimado ($)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS DE PLOMERÍA</h2>
+                    <p class="doc-text">El Plomero <strong>${data.plumber}</strong> realizará los siguientes trabajos para <strong>${data.client}</strong>:</p>
+                    <div class="doc-body-text">${data.problem}</div>
+                    <p class="doc-text">Costo estimado: <strong>$ ${data.estimate}</strong> (sujeto a cambios por materiales imprevistos).</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Plomero"></div><div class="sig-label">${data.plumber}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        electrical_service: {
+            title: "SERVICIO ELÉCTRICO",
+            fields: [{ group: 'Electricidad', fields: [{ id: 'electrician', label: 'Electricista', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'scope', label: 'Alcance del Trabajo', type: 'textarea', rows: 2 }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE SERVICIOS ELÉCTRICOS</h2>
+                    <p class="doc-text">Electricista Autorizado: <strong>${data.electrician}</strong>.</p>
+                    <p class="doc-text">Cliente: <strong>${data.client}</strong>.</p>
+                    <p class="doc-text">Descripción del trabajo:</p>
+                    <div class="doc-body-text">${data.scope}</div>
+                    <p class="doc-text">Todo el trabajo cumplirá con los códigos eléctricos locales.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Electricista"></div><div class="sig-label">${data.electrician}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        },
+        roofing_contract: {
+            title: "CONTRATO DE TECHADO",
+            fields: [{ group: 'Techo', fields: [{ id: 'roofer', label: 'Techador/Empresa', type: 'text', width: 'full' }, { id: 'client', label: 'Cliente', type: 'text', width: 'full' }, { id: 'material', label: 'Materiales (Tejas/Metal/Etc)', type: 'text', width: 'full' }, { id: 'warranty', label: 'Garantía (Años)', type: 'number', width: 'half' }] }],
+            content: (data) => `
+                <div class="legal-doc" contenteditable="true">
+                    <h2 class="doc-title">CONTRATO DE REPARACIÓN/INSTALACIÓN DE TECHO</h2>
+                    <p class="doc-text">Empresa: <strong>${data.roofer}</strong> | Cliente: <strong>${data.client}</strong></p>
+                    <p class="doc-text">Materiales a utilizar: <strong>${data.material}</strong>.</p>
+                    <p class="doc-text">Se ofrece una garantía de mano de obra de <strong>${data.warranty}</strong> años.</p>
+                    <br><div class="sig-section-row"><div class="sig-block"><div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Techador"></div><div class="sig-label">${data.roofer}</div></div><div class="sig-block"><div class="sig-zone" id="sig-cli" onclick="NoteGenerator.openSignPad('cli', this)" data-label="Firma Cliente"></div><div class="sig-label">${data.client}</div></div></div>
+                </div>`
+        }
+    },
 
-                    <h4 style="margin-bottom: 0.5rem; text-decoration: underline;">TÉRMINOS ESPECÍFICOS:</h4>
-                    <p style="text-align: justify; margin-bottom: 2rem;">
-                         ${data.body || '[Detalles de los poderes otorgados...]'}
-                    </p>
-                    
-                    <p>EN FE DE LO CUAL, he firmado este documento el día <strong>${data.date}</strong>.</p>
-                    
-                    <br><br><br>
-                    
-                    <div style="width: 50%; border-top: 1px solid #000; padding-top: 5px;">
-                        Firma del Otorgante<br>
-                        <strong>${data.clientName}</strong>
-                    </div>
-                </div>
-            `
-        },
-        contract: {
-            title: "CONTRATO DE SERVICIOS",
-            content: (data) => `
-                <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: #000;">
-                    <h2 style="text-align: center; margin-bottom: 2rem;">ACUERDO DE SERVICIOS PROFESIONALES</h2>
-                    
-                    <p>Este acuerdo se celebra el <strong>${data.date}</strong> entre:</p>
-                    
-                    <p><strong>PROVEEDOR:</strong> Notary Public Services<br>
-                    <strong>CLIENTE:</strong> ${data.clientName}</p>
-                    
-                    <br>
-                    
-                    <h4 style="text-decoration: underline;">ALCANCE DEL SERVICIO:</h4>
-                    <p style="text-align: justify; margin-bottom: 1.5rem;">
-                         ${data.body || '[Descripción de los servicios notariales a prestar...]'}
-                    </p>
-                    
-                    <p>El Cliente acepta pagar los honorarios acordados por estos servicios profesionales.</p>
-                    
-                    <br><br>
-                    
-                    <div style="display: flex; gap: 2rem;">
-                        <div style="flex: 1;">
-                            <br><br><br>
-                            <div style="border-top: 1px solid #000; padding-top: 5px;">
-                                Firma del Cliente<br>
-                                <strong>${data.clientName}</strong>
-                            </div>
-                        </div>
-                         <div style="flex: 1;">
-                            <br><br><br>
-                            <div style="border-top: 1px solid #000; padding-top: 5px;">
-                                Firma del Proveedor<br>
-                                <strong>Notary Public</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `
+    renderTemplateFields(templateKey) {
+        const container = document.getElementById('doc-dynamic-fields');
+        const bodyContainer = document.getElementById('doc-body-container');
+        if (!container || !bodyContainer) return;
+
+        container.innerHTML = '';
+        container.style.display = 'block';
+        bodyContainer.style.display = 'none';
+
+        const template = this.templates[templateKey];
+        if (!template) return;
+
+        if (template.fields) {
+            const isGrouped = template.fields[0].group !== undefined;
+            const groups = isGrouped ? template.fields : [{ group: 'Información General', fields: template.fields }];
+
+            groups.forEach(group => {
+                const groupDiv = document.createElement('div');
+                groupDiv.style.marginBottom = '1.5rem';
+                groupDiv.style.border = '1px solid #e2e8f0';
+                groupDiv.style.borderRadius = '8px';
+                groupDiv.style.padding = '1rem';
+                groupDiv.style.backgroundColor = '#f8fafc';
+
+                const title = document.createElement('h5');
+                title.textContent = group.group;
+                title.style.marginBottom = '1rem';
+                title.style.color = '#475569';
+                title.style.borderBottom = '1px solid #e2e8f0';
+                title.style.paddingBottom = '0.5rem';
+                groupDiv.appendChild(title);
+
+                const grid = document.createElement('div');
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                grid.style.gap = '1rem';
+
+                group.fields.forEach(field => {
+                    const wrapper = document.createElement('div');
+                    if (field.width === 'full') wrapper.style.gridColumn = 'span 2';
+
+                    wrapper.innerHTML = `<label class="form-label" style="font-size:0.85rem;">${field.label}</label>`;
+
+                    let input;
+                    if (field.type === 'select') {
+                        input = document.createElement('select');
+                        input.className = 'form-input dynamic-doc-field';
+                        field.options.forEach(opt => {
+                            const option = document.createElement('option');
+                            option.value = opt;
+                            option.textContent = opt;
+                            input.appendChild(option);
+                        });
+                    } else if (field.type === 'textarea') {
+                        input = document.createElement('textarea');
+                        input.className = 'form-input dynamic-doc-field';
+                        input.rows = field.rows || 3;
+                    } else {
+                        input = document.createElement('input');
+                        input.type = field.type || 'text';
+                        input.className = 'form-input dynamic-doc-field';
+                    }
+
+                    input.dataset.key = field.id;
+                    if (field.placeholder) input.placeholder = field.placeholder;
+                    input.id = 'field-' + field.id;
+
+                    input.addEventListener('input', () => this.updatePreview());
+                    wrapper.appendChild(input);
+                    grid.appendChild(wrapper);
+                });
+
+                groupDiv.appendChild(grid);
+                container.appendChild(groupDiv);
+            });
+        }
+    },
+
+    switchSigTab(mode) {
+        this.activeSigMode = mode;
+        const drawBtn = document.getElementById('tab-draw-btn');
+        const typeBtn = document.getElementById('tab-type-btn');
+        const drawSec = document.getElementById('sig-draw-section');
+        const typeSec = document.getElementById('sig-type-section');
+
+        if (mode === 'draw') {
+            drawBtn.classList.add('active');
+            drawBtn.style.borderBottomColor = 'var(--color-primary)';
+            drawBtn.style.color = '';
+
+            typeBtn.classList.remove('active');
+            typeBtn.style.borderBottomColor = 'transparent';
+            typeBtn.style.color = '#64748b';
+
+            drawSec.style.display = 'block';
+            typeSec.style.display = 'none';
+            setTimeout(() => this.resizeCanvas(), 50);
+        } else {
+            typeBtn.classList.add('active');
+            typeBtn.style.borderBottomColor = 'var(--color-primary)';
+            typeBtn.style.color = '';
+
+            drawBtn.classList.remove('active');
+            drawBtn.style.borderBottomColor = 'transparent';
+            drawBtn.style.color = '#64748b';
+
+            drawSec.style.display = 'none';
+            typeSec.style.display = 'block';
+
+            // Focus input
+            setTimeout(() => document.getElementById('sig-type-input')?.focus(), 50);
         }
     },
 
     init() {
-        if (document.getElementById('signature-pad')) {
-            this.resizeCanvas();
-
-            // Add resize listener
+        window.NoteGenerator = this; // Fix for inline event handlers
+        this.currentSigElement = null;
+        this.activeSigMode = 'draw';
+        this.signatures = {}; // Store signature data: { 'role': 'dataUrl' }
+        if (document.getElementById('modal-signature-pad')) {
+            this.initSignaturePad();
             window.addEventListener('resize', () => this.resizeCanvas());
 
-            document.getElementById('clear-signature').addEventListener('click', () => {
-                if (this.signaturePad) this.signaturePad.clear();
-            });
+            const clearBtn = document.getElementById('modal-clear-sig');
+            if (clearBtn) clearBtn.addEventListener('click', () => { if (this.signaturePad) this.signaturePad.clear(); });
 
-            // Set default date
-            const dateInput = document.getElementById('doc-date');
-            if (dateInput) dateInput.valueAsDate = new Date();
+            const saveBtn = document.getElementById('modal-save-sig');
+            if (saveBtn) saveBtn.addEventListener('click', () => this.handleSaveSignature());
         }
 
+        const dateInput = document.getElementById('doc-date');
+        if (dateInput) dateInput.valueAsDate = new Date();
+
         this.attachListeners();
+        const initialTemplate = document.getElementById('doc-template-select')?.value || 'affidavit';
+        this.renderTemplateFields(initialTemplate);
         this.updatePreview();
     },
 
-    resizeCanvas() {
-        const canvas = document.getElementById('signature-pad');
+    initSignaturePad() {
+        const canvas = document.getElementById('modal-signature-pad');
         if (!canvas) return;
-
-        // Verify visibility before resizing to avoid 0x0
-        if (canvas.offsetWidth === 0) return;
-
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-
-        // Check if library loaded
-        if (typeof SignaturePad === 'undefined') {
-            console.warn('SignaturePad library not loaded (blocked by browser?)');
-            const ctx = canvas.getContext('2d');
-            ctx.font = '14px sans-serif';
-            ctx.fillText('Firma digital no disponible (librería bloqueada)', 10, 30);
-            return;
-        }
-
-        // Re-init pad to handle new context scaling
         try {
-            if (this.signaturePad) {
-                const data = this.signaturePad.toData();
-                this.signaturePad.off(); // Remove old listeners
-                this.signaturePad = new SignaturePad(canvas, {
-                    backgroundColor: 'rgba(255, 255, 255, 0)',
-                    penColor: 'rgb(0, 0, 0)'
-                });
-                this.signaturePad.fromData(data); // Put data back
-            } else {
-                // First time initialization
+            if (typeof SignaturePad !== 'undefined') {
                 this.signaturePad = new SignaturePad(canvas, {
                     backgroundColor: 'rgba(255, 255, 255, 0)',
                     penColor: 'rgb(0, 0, 0)'
                 });
             }
-        } catch (e) {
-            console.error('SignaturePad init error:', e);
+        } catch (e) { }
+    },
+
+    openSignPad(role, element) {
+        console.log('Opening signature pad for role:', role);
+        this.currentSigElement = element;
+        this.currentRole = role; // Store role for persistence
+        const roleNames = { 'client': 'Cliente', 'witness1': 'Testigo 1', 'witness2': 'Testigo 2', 'buyer': 'Comprador', 'notary': 'Notario', 'partner': 'Socio/Apoderado' };
+        const label = document.getElementById('sig-role-display');
+        if (label) label.textContent = 'Firmando como: ' + (roleNames[role] || role);
+
+        if (this.signaturePad) this.signaturePad.clear();
+
+        // Robust Modal Opening
+        const modal = document.getElementById('signature-modal');
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex'; // Force display
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        } else {
+            console.error('Signature modal not found in DOM');
+            alert('Error: No se encuentra el modal de firma');
+        }
+
+        setTimeout(() => this.resizeCanvas(), 100);
+    },
+
+    resizeCanvas() {
+        const canvas = document.getElementById('modal-signature-pad');
+        if (!canvas || canvas.offsetParent === null) return;
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * ratio;
+        canvas.height = rect.height * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        if (this.signaturePad) this.signaturePad.clear();
+    },
+
+    handleSaveSignature() {
+        let dataUrl = null;
+
+        if (this.activeSigMode === 'type') {
+            const text = document.getElementById('sig-type-input').value;
+            if (!text || !text.trim()) return alert('Por favor escriba su nombre para firmar.');
+
+            // Create canvas for text signature
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 600;
+            canvas.height = 150;
+
+            // Draw text
+            ctx.font = "italic 60px 'Great Vibes', cursive";
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            dataUrl = canvas.toDataURL('image/png');
+        } else {
+            // Draw mode
+            if (!this.signaturePad || this.signaturePad.isEmpty()) return alert('Firme antes de confirmar.');
+            dataUrl = this.signaturePad.toDataURL('image/png');
+        }
+
+        if (this.currentSigElement && dataUrl) {
+            // Save to state persistence
+            if (this.currentRole) {
+                this.signatures[this.currentRole] = dataUrl;
+            }
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            this.currentSigElement.innerHTML = '';
+            this.currentSigElement.appendChild(img);
+            this.currentSigElement.classList.add('signed');
+            NotaryCRM.closeModal('signature-modal');
         }
     },
 
-    attachListeners() {
-        const inputs = ['doc-template-select', 'doc-date', 'doc-location', 'doc-body', 'doc-client-id'];
+    populateDemoData() {
+        const templateKey = document.getElementById('doc-template-select').value;
+        const template = this.templates[templateKey];
+        if (!template || !template.fields) return;
 
+        document.getElementById('doc-location').value = 'Miami-Dade, Florida';
+        document.getElementById('doc-client-id').value = 'Demo Client';
+
+        const demoValues = {
+            affiantName: 'Juan Pérez',
+            address: '123 Ocean Drive, Apt 4B, Miami Beach, FL 33139',
+            age: '45',
+            occupation: 'Ingeniero de Software',
+            statement: '1. Que he residido en la dirección mencionada por los últimos 5 años consecutivos.\n2. Que soy ciudadano respetuoso de la ley y no poseo antecedentes penales.\n3. Que realizo esta declaración voluntariamente para fines administrativos.',
+
+            sellerName: 'Concesionario AutoPremium LLC',
+            sellerAddress: '500 Brickell Ave, Miami, FL',
+            buyerName: 'Roberto Comprador',
+            buyerAddress: '800 Collins Ave, Miami Beach, FL',
+            price: '18500.00',
+            make: 'Toyota',
+            model: 'Camry XSE',
+            year: '2021',
+            vin: '4T1B11HK8MU123456',
+            odometer: '32,500 millas',
+
+            amount: '10000.00',
+            rate: '4.5',
+            lender: 'Inversiones Rápidas S.A.',
+            borrower: 'Empresa StartUp Inc.',
+            installment: '450.00',
+
+            childName: 'Sofía Martínez',
+            passport: 'P987654321',
+            dest: 'París, Francia y Roma, Italia',
+            guardian: 'Marta Martínez',
+            relation: 'Madre',
+            dates: '10 de Julio al 25 de Agosto, 2024',
+
+            granteeName: 'Inmobiliaria Futuro Corp.',
+            propertyDesc: 'Lote 4, Manzana 12, de la subdivisión Coral Gables Section A, según consta en el Libro de Plats 45, Página 12, de los Registros Públicos del Condado de Miami-Dade, Florida. Dirección conocida como: 555 Miracle Mile.'
+        };
+
+        const groups = template.fields[0].group ? template.fields : [{ fields: template.fields }];
+        groups.forEach(g => {
+            g.fields.forEach(f => {
+                const el = document.getElementById('field-' + f.id);
+                if (el) {
+                    if (demoValues[f.id]) {
+                        el.value = demoValues[f.id];
+                    } else if (f.type === 'date') {
+                        el.value = new Date().toISOString().split('T')[0];
+                    } else if (f.type === 'select') {
+                        el.selectedIndex = 1;
+                    }
+                    // Dispatch input event to update preview
+                    el.dispatchEvent(new Event('input'));
+                }
+            });
+        });
+
+        this.updatePreview();
+        Toast.success('Datos Cargados', 'Formulario rellenado con ejemplo.');
+    },
+
+    clearFields() {
+        if (!confirm('¿Borrar todos los campos?')) return;
+        document.querySelectorAll('.dynamic-doc-field').forEach(el => el.value = '');
+        document.getElementById('doc-location').value = '';
+
+        // Clear signatures
+        this.signatures = {};
+
+        this.updatePreview();
+        Toast.info('Limpio', 'Campos y firmas borrados.');
+    },
+
+    attachListeners() {
+        const inputs = ['doc-date', 'doc-location', 'doc-body', 'doc-client-id'];
         inputs.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', () => this.updatePreview());
         });
 
-        // Client Autocomplete Logic
+        const templateSelect = document.getElementById('doc-template-select');
+        if (templateSelect) {
+            templateSelect.addEventListener('change', (e) => {
+                this.renderTemplateFields(e.target.value);
+                this.updatePreview();
+            });
+        }
+
         const searchInput = document.getElementById('doc-client-search');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => this.handleClientSearch(e.target.value));
-
-            // Close autocomplete on click outside
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#doc-client-search-results') && e.target !== searchInput) {
                     const list = document.getElementById('doc-client-search-results');
@@ -5246,213 +9552,254 @@ const DocumentsManager = {
             });
         }
 
-        // Generate PDF
         const genBtn = document.getElementById('generate-pdf-btn');
         if (genBtn) genBtn.addEventListener('click', () => this.generatePDF());
+
+        const demoBtn = document.getElementById('btn-fill-demo');
+        if (demoBtn) demoBtn.addEventListener('click', () => this.populateDemoData());
+
+        const clearBtn = document.getElementById('btn-clear-fields');
+        if (clearBtn) clearBtn.addEventListener('click', () => this.clearFields());
+
+        const typeInput = document.getElementById('sig-type-input');
+        if (typeInput) {
+            typeInput.addEventListener('input', (e) => {
+                const preview = document.getElementById('sig-type-preview');
+                if (preview) preview.textContent = e.target.value || 'Su Firma Aquí';
+            });
+        }
     },
 
     handleClientSearch(query) {
         // Remove existing list
-        const existing = document.getElementById('doc-client-search-results');
-        if (existing) existing.remove();
+        const existingList = document.getElementById('doc-client-search-results');
+        if (existingList) existingList.remove();
 
         if (!query || query.length < 2) return;
 
-        const results = NotaryCRM.state.clients.filter(c =>
-            c.name.toLowerCase().includes(query.toLowerCase()) ||
-            c.email.toLowerCase().includes(query.toLowerCase())
-        );
+        let clients = [];
+        // Prioritize Cases as they have client info
+        if (NotaryCRM.state && NotaryCRM.state.cases && NotaryCRM.state.cases.length > 0) {
+            const uniqueClients = new Map();
+            NotaryCRM.state.cases.forEach(c => {
+                if (c.clientName && !uniqueClients.has(c.clientName)) {
+                    uniqueClients.set(c.clientName, { id: c.id, name: c.clientName });
+                }
+            });
+            clients = Array.from(uniqueClients.values());
+        }
 
-        if (results.length === 0) return;
+        // Add from direct clients list if empty or if needed
+        if (clients.length === 0 && NotaryCRM.state && NotaryCRM.state.clients) {
+            clients = NotaryCRM.state.clients;
+        }
 
+        // Fallback mock
+        if (clients.length === 0) {
+            clients = [
+                { id: '1', name: 'Juan Perez - Ejemplo', email: 'juan@example.com' },
+                { id: '2', name: 'Maria Lopez - Ejemplo', email: 'maria@example.com' }
+            ];
+        }
+
+        const matches = clients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
+        if (matches.length === 0) return;
+
+        const container = document.getElementById('doc-client-search').parentNode;
         const list = document.createElement('div');
         list.id = 'doc-client-search-results';
-        list.style.cssText = `
-            position: absolute;
-            z-index: 1000;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            width: ${document.getElementById('doc-client-search').offsetWidth}px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            max-height: 200px;
-            overflow-y: auto;
-        `;
+        list.className = 'autocomplete-list';
+        list.style.position = 'absolute';
+        list.style.zIndex = '1000';
+        list.style.background = 'white';
+        list.style.width = '100%';
+        list.style.border = '1px solid #cbd5e1';
+        list.style.borderRadius = '0.5rem';
+        list.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
+        list.style.maxHeight = '200px';
+        list.style.overflowY = 'auto';
 
-        // Position relative to input
-        const input = document.getElementById('doc-client-search');
-        input.parentNode.style.position = 'relative'; // Ensure parent is relative
-        input.parentNode.appendChild(list);
-
-        results.forEach(client => {
+        matches.forEach(client => {
             const item = document.createElement('div');
-            item.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background-color: #f8fafc;';
+            item.className = 'autocomplete-item';
             item.textContent = client.name;
-            item.onmouseover = () => item.style.backgroundColor = '#f8fafc';
-            item.onmouseout = () => item.style.backgroundColor = 'white';
+            item.style.padding = '0.75rem 1rem';
+            item.style.cursor = 'pointer';
+            item.style.borderBottom = '1px solid #f1f5f9';
+            item.onmouseover = () => item.style.background = '#f8fafc';
+            item.onmouseout = () => item.style.background = 'white';
 
-            item.onclick = () => {
-                input.value = client.name;
+            item.addEventListener('click', () => {
+                document.getElementById('doc-client-search').value = client.name;
                 document.getElementById('doc-client-id').value = client.id;
-                // Auto-fill address if location empty
-                if (client.address && !document.getElementById('doc-location').value) {
-                    // Try to extract city/state or just put full address
-                    document.getElementById('doc-location').value = client.address;
-                }
-                list.remove();
                 this.updatePreview();
-            };
+                list.remove();
+            });
             list.appendChild(item);
         });
+
+        container.appendChild(list);
     },
 
     updatePreview() {
-        const previewEl = document.getElementById('doc-preview');
         const templateKey = document.getElementById('doc-template-select').value;
         const template = this.templates[templateKey];
-
         if (!template) return;
 
+        const previewEl = document.getElementById('doc-preview');
         const data = {
             clientName: document.getElementById('doc-client-search').value || '__________________',
             date: document.getElementById('doc-date').value || '__________',
-            location: document.getElementById('doc-location').value || '__________',
-            body: document.getElementById('doc-body').value.replace(/\n/g, '<br>')
+            location: document.getElementById('doc-location').value || '__________, __________',
+            body: document.getElementById('doc-body') ? document.getElementById('doc-body').value.replace(/\n/g, '<br>') : ''
         };
 
+        // Dynamic fields
+        document.querySelectorAll('.dynamic-doc-field').forEach(input => {
+            data[input.dataset.key] = input.value;
+        });
+
         previewEl.innerHTML = template.content(data);
+
+        // Re-apply persisted signatures
+        if (this.signatures) {
+            const roleToIdMap = {
+                'client': 'sig-client',
+                'notary': 'sig-notary',
+                'buyer': 'sig-buyer',
+                'seller': 'sig-client', // Mapped in template
+                'partner': 'sig-partner'
+            };
+
+            Object.keys(this.signatures).forEach(role => {
+                const id = roleToIdMap[role] || 'sig-' + role;
+                // Special handling for shared IDs (e.g. client/seller sharing sig-client)
+                // In templates: sig-client is used for Affiant, Seller, Borrower, Parent.
+                // So if we signed as 'client', we look for 'sig-client'.
+                // If we signed as 'buyer', we look for 'sig-buyer'.
+
+                // Better approach: Since openSignPad is called with specific roles like 'client', 'buyer', 'notary'
+                // and the IDs in HTML are hardcoded (e.g. id="sig-client").
+                // We need to match the role passed to openSignPad to the ID in the DOM.
+                // The template calls: onclick="NoteGenerator.openSignPad('client', this)" -> Role is 'client'. ID is 'sig-client'.
+                // So basic mapping is id = 'sig-' + role.
+
+                let targetId = 'sig-' + role;
+                const el = document.getElementById(targetId);
+                if (el && this.signatures[role]) {
+                    const img = document.createElement('img');
+                    img.src = this.signatures[role];
+                    el.innerHTML = '';
+                    el.appendChild(img);
+                    el.classList.add('signed');
+                }
+            });
+        }
     },
 
     async generatePDF() {
-        if (!window.jspdf) return alert('Librería PDF no cargada. Recarga la página.');
+        if (!window.jspdf) return alert('Librería PDF no cargada. Por favor recarga la página.');
 
-        const templateKey = document.getElementById('doc-template-select').value;
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const btn = document.getElementById('generate-pdf-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generando PDF...';
+        btn.disabled = true;
 
-        // Settings
-        doc.setFont("times", "normal");
-        doc.setFontSize(12);
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
 
-        // Get HTML content - simplified extraction for PDF
-        // In a real app we might use .html() but let's replicate the text structure for reliability
+            const source = document.getElementById('doc-preview');
+            const clone = source.cloneNode(true);
 
-        const clientName = document.getElementById('doc-client-search').value || '__________________';
-        const date = document.getElementById('doc-date').value || new Date().toLocaleDateString();
-        const location = document.getElementById('doc-location').value || 'Miami, FL';
-        const bodyText = document.getElementById('doc-body').value;
+            // Fix styles for PDF - Ensure High Quality
+            clone.style.width = '595pt';
+            clone.style.minHeight = '842pt'; // A4 height
+            clone.style.height = 'auto';
+            clone.style.padding = '40pt';
+            clone.style.margin = '0';
+            clone.style.overflow = 'visible';
+            clone.style.background = 'white';
+            clone.style.border = 'none';
+            clone.style.boxShadow = 'none';
+            clone.style.fontSize = '12pt'; // Normalized font size
+            clone.style.fontFamily = "'Times New Roman', serif";
 
-        let y = 20;
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.appendChild(clone);
+            document.body.appendChild(container);
 
-        // Header
-        doc.setFontSize(16);
-        doc.setFont("times", "bold");
-        doc.text(this.templates[templateKey].title, 105, y, { align: "center" });
-        y += 20;
+            await doc.html(clone, {
+                callback: function (pdf) {
+                    const clientName = document.getElementById('doc-client-search').value || 'Document';
+                    pdf.save(`LegalDoc_${clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+                    document.body.removeChild(container);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    try { Toast.success('PDF Generado', 'Documento listo para imprimir/enviar.'); } catch (e) { }
+                },
+                x: 0,
+                y: 0,
+                html2canvas: {
+                    scale: 2, // High resolution (300dpi approx effect)
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true,
+                    windowWidth: 800
+                },
+                autoPaging: 'text',
+                width: 595,
+                windowWidth: 800
+            });
 
-        doc.setFontSize(12);
-        doc.setFont("times", "normal");
-
-        if (templateKey === 'affidavit') {
-            doc.text(`ESTADO DE: ${location.split(',')[1] || '___________'}`, 20, y);
-            y += 10;
-            doc.text(`CONDADO DE: ${location.split(',')[0] || '___________'}`, 20, y);
-            y += 20;
-
-            const intro = `ANTES DE MÍ, la autoridad que suscribe, compareció personalmente ${clientName}, quien siendo debidamente juramentado, depone y dice:`;
-            const splitIntro = doc.splitTextToSize(intro, 170);
-            doc.text(splitIntro, 20, y);
-            y += splitIntro.length * 7 + 10;
-
-            if (bodyText) {
-                const splitBody = doc.splitTextToSize(bodyText, 170);
-                doc.text(splitBody, 20, y);
-                y += splitBody.length * 7 + 20;
-            } else {
-                y += 40; // Space for body
-            }
-
-            doc.text('BAJO PROTESTA DE DECIR VERDAD.', 20, y);
-            y += 30;
-
-            // Signature Logic
-            if (!this.signaturePad.isEmpty()) {
-                const imgData = this.signaturePad.toDataURL('image/png');
-                doc.addImage(imgData, 'PNG', 20, y - 25, 50, 25);
-            }
-
-            doc.line(20, y, 100, y);
-            doc.text(`Firma: ${clientName}`, 20, y + 5);
-
-            y += 20;
-            doc.text(`JURADO y SUSCRITO ante mí el ${date}.`, 20, y);
-            y += 30;
-
-            doc.line(20, y, 100, y);
-            doc.text(`Notario Público`, 20, y + 5);
-
-        } else if (templateKey === 'power_attorney') {
-            const p1 = `SEPASE POR TODOS LOS PRESENTES, que yo, ${clientName}, residente de ${location}, por la presente nombro y constituyo a un representante legal...`;
-            doc.text(doc.splitTextToSize(p1, 170), 20, y);
-            y += 30;
-
-            if (bodyText) {
-                doc.setFont("times", "bold");
-                doc.text("TÉRMINOS ESPECÍFICOS:", 20, y);
-                y += 10;
-                doc.setFont("times", "normal");
-                doc.text(doc.splitTextToSize(bodyText, 170), 20, y);
-                y += 50;
-            }
-
-            // Signature
-            if (!this.signaturePad.isEmpty()) {
-                const imgData = this.signaturePad.toDataURL('image/png');
-                doc.addImage(imgData, 'PNG', 20, y - 25, 50, 25);
-            }
-            doc.line(20, y, 100, y);
-            doc.text(`Firma: ${clientName}`, 20, y + 5);
-            y += 10;
-            doc.text(`Fecha: ${date}`, 20, y + 15);
-        } else {
-            // Generic fallback
-            doc.text("Documento Generado", 20, y);
-            y += 10;
-            doc.text(`Cliente: ${clientName}`, 20, y);
-            y += 10;
-            doc.text(doc.splitTextToSize(bodyText, 170), 20, y);
+        } catch (err) {
+            console.error('PDF Error:', err);
+            alert('Error al generar PDF: ' + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
-
-        doc.save(`${templateKey}_${clientName.replace(/\s/g, '_')}.pdf`);
-        Toast.success('PDF Generado', 'El documento se ha descargado correctamente.');
     }
 };
 
 // Expose to global for onclick handlers
 window.Reminders = Reminders;
-window.DocumentsManager = DocumentsManager;
+window.DocumentsManager = NoteGenerator;
 window.NotaryCRM = NotaryCRM;
-
-// Ensure escapeHtml exists (safety patch)
-if (window.NotaryCRM && !window.NotaryCRM.escapeHtml) {
-    window.NotaryCRM.escapeHtml = function (text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    };
-}
+window.NoteGenerator = NoteGenerator;
 
 // Initialize app when DOM is ready
+// Initialize app when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => NotaryCRM.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            if (window.NotaryCRM && NotaryCRM.init) {
+                NotaryCRM.init();
+            } else {
+                console.error('NotaryCRM core not assigned');
+            }
+        } catch (e) {
+            console.error('Init Error:', e);
+            if (window.showFatalError) showFatalError('Error al iniciar la aplicación: ' + e.message);
+        }
+    });
 } else {
-    NotaryCRM.init();
+    try {
+        if (window.NotaryCRM && NotaryCRM.init) {
+            NotaryCRM.init();
+        } else {
+            console.error('NotaryCRM core not assigned');
+        }
+    } catch (e) {
+        console.error('Init Error:', e);
+        if (window.showFatalError) showFatalError('Error al iniciar la aplicación: ' + e.message);
+    }
 }
 
 // Helper to determine API base for SQL backend
 function getApiBase() {
-    // If running on localhost, target port 5000; otherwise assume same origin and path /api
     try {
         const host = window.location.hostname;
         if (host === 'localhost' || host === '127.0.0.1') {

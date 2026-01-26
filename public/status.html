@@ -288,6 +288,40 @@
             text-align: center;
             padding: 2rem 0;
         }
+
+        .signature-container {
+            display: none;
+            margin-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 2rem;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        canvas {
+            border: 2px dashed #94a3b8;
+            border-radius: 0.75rem;
+            cursor: crosshair;
+            background: #f8fafc;
+            width: 100%;
+            height: 200px;
+            touch-action: none;
+            margin-bottom: 1rem;
+        }
+
+        .sign-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-save {
+            background: #10b981;
+            color: white;
+        }
     </style>
 </head>
 
@@ -382,6 +416,18 @@
                     </svg>
                     Contactar vía WhatsApp
                 </a>
+
+                <div id="signature-section" class="signature-container">
+                    <h3 style="margin-bottom: 0.5rem; font-weight: 700;">Firma Digital Requerida</h3>
+                    <p style="font-size: 0.9rem; color: var(--secondary); margin-bottom: 1rem;">
+                        Por favor dibuje su firma en el recuadro para autorizar el trámite.
+                    </p>
+                    <canvas id="sig-canvas" width="400" height="200"></canvas>
+                    <div class="sign-controls">
+                        <button type="button" class="btn-search btn-clear" id="clear-sig">Borrar</button>
+                        <button type="button" class="btn-search btn-save" id="save-sig">Confirmar Firma</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -398,14 +444,30 @@
         const loadingDiv = document.getElementById('loading');
         const caseInput = document.getElementById('case-number');
 
+        // References for Signature
+        const sigSection = document.getElementById('signature-section');
+        const canvas = document.getElementById('sig-canvas');
+        const ctx = canvas.getContext('2d');
+        const clearBtn = document.getElementById('clear-sig');
+        const saveBtn = document.getElementById('save-sig');
+
+        let currentCaseId = null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        /**
+         * Main Search Function
+         */
         async function performSearch(caseNum) {
             if (!window.firebaseDB) {
-                // Wait for firebase to initialize
                 setTimeout(() => performSearch(caseNum), 500);
                 return;
             }
 
+            // Reset View
             resultDiv.style.display = 'none';
+            sigSection.style.display = 'none';
             loadingDiv.style.display = 'block';
 
             try {
@@ -421,20 +483,24 @@
                     return;
                 }
 
-                const data = snapshot.docs[0].data();
+                // Get Data
+                const docSnap = snapshot.docs[0];
+                const data = docSnap.data();
+                currentCaseId = docSnap.id;
 
-                // Status Mapping
+                // --- 1. Render Basic Info ---
                 const statusMap = {
                     'pending': 'Pendiente',
                     'in-progress': 'En Proceso',
                     'completed': 'Completado'
                 };
 
-                document.getElementById('res-status').textContent = statusMap[data.status] || 'Pendiente';
-                document.getElementById('res-status').className = 'status-badge status-' + (data.status || 'pending');
-                document.getElementById('res-type').textContent = data.type;
+                const statusEl = document.getElementById('res-status');
+                statusEl.textContent = statusMap[data.status] || 'Pendiente';
+                statusEl.className = 'status-badge status-' + (data.status || 'pending');
 
-                // Date Formatting
+                document.getElementById('res-type').textContent = data.type || 'Trámite General';
+
                 let dueDate = 'N/A';
                 if (data.dueDate) {
                     dueDate = new Date(data.dueDate).toLocaleDateString('es-ES', {
@@ -443,26 +509,57 @@
                 }
                 document.getElementById('res-date').textContent = dueDate;
 
-                const msg = data.status === 'completed'
-                    ? '¡Buenas noticias! Su trámite ha finalizado. Puede pasar a nuestra oficina para recoger sus documentos originales.'
-                    : 'Su expediente está siendo procesado por nuestro equipo legal. Le notificaremos en cuanto existan novedades.';
-                document.getElementById('res-msg').textContent = msg;
+                // Message Logic
+                let msg = 'Su expediente está siendo procesado por nuestro equipo legal.';
+                if (data.status === 'completed') {
+                    msg = '¡Buenas noticias! Su trámite ha finalizado.';
+                }
+                const msgEl = document.getElementById('res-msg');
+                msgEl.textContent = msg;
 
+                // Show Results
                 resultDiv.style.display = 'block';
+
+                // --- 2. Digital Signature Logic ---
+                // Check if URL has action=sign AND case is not completed (or we allow resealing?)
+                // Let's allow signing if status is not 'completed' OR if explicitly requested via param unless already signed.
+
+                const params = new URLSearchParams(window.location.search);
+                const action = params.get('action');
+
+                if (data.signature) {
+                    // Already signed
+                    msgEl.innerHTML += '<br><br><strong style="color:var(--success)">✓ Este documento ya cuenta con firma digital registrada.</strong>';
+                } else if (action === 'sign' && data.status !== 'completed') {
+                    // Needs signature
+                    sigSection.style.display = 'block';
+                    // Canvas needs resize after being displayed
+                    setTimeout(resizeCanvas, 50);
+                    // Update message
+                    msgEl.innerHTML = '<strong>Acción Requerida:</strong> Por favor firme en el recuadro inferior para autorizar el avance de su trámite.';
+                    msgEl.style.borderLeftColor = 'var(--warning)';
+                    msgEl.style.background = '#fffbeb';
+                    msgEl.style.color = '#92400e';
+                }
+
             } catch (err) {
                 console.error(err);
-                alert('Error de conexión. Por favor intente más tarde.');
+                alert('Error de conexión. Por favor verifique su internet.');
             } finally {
                 loadingDiv.style.display = 'none';
             }
         }
 
+        // --- Event Listeners ---
+
+        // 1. Form Submit
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            performSearch(caseInput.value.trim());
+            const val = caseInput.value.trim();
+            if (val) performSearch(val);
         });
 
-        // Check for URL parameters on load
+        // 2. Initial Load Check
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
             const caseParam = params.get('case');
@@ -471,6 +568,145 @@
                 performSearch(caseParam);
             }
         });
+
+        // --- Signature Pad Implementation (High-DPI & Touch Friendly) ---
+
+        function resizeCanvas() {
+            // High-DPI support
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const rect = canvas.getBoundingClientRect();
+
+            if (rect.width === 0) return; // Not visible yet
+
+            // Set actual size in memory (scaled to account for extra pixel density)
+            canvas.width = rect.width * ratio;
+            canvas.height = rect.height * ratio;
+
+            // Normalize coordinate system to use css pixels
+            ctx.scale(ratio, ratio);
+
+            // Reset context styles because resizing clears them
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#000000';
+
+            // Debug info
+            console.log('Canvas resized:', rect.width, 'x', rect.height, 'Ratio:', ratio);
+        }
+
+        // Resize on window resize
+        window.addEventListener('resize', resizeCanvas);
+
+        // Helper to get coordinates relative to the canvas
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        // --- Drawing Events ---
+
+        function startDrawing(e) {
+            isDrawing = true;
+            // Ensure styles are set (redundant check)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+
+            // Important for mobile to avoid scrolling while signing
+            if (e.type === 'touchstart') {
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            // Prevent scrolling on touch devices entirely while drawing
+            e.preventDefault();
+
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDrawing(e) {
+            isDrawing = false;
+            if (e.type === 'touchend') {
+                document.body.style.overflow = 'auto'; // Restore scrolling
+            }
+        }
+
+        // Attach Events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchmove', draw, { passive: false });
+
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Buttons
+        clearBtn.addEventListener('click', () => {
+            // Clear entire canvas (account for scale)
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            if (!currentCaseId) return;
+
+            // Simple check: is canvas empty?
+            // (Skipping complex pixel check for simplicity, relying on user action)
+
+            const confirmSave = confirm("¿Está seguro de guardar esta firma? Esta acción cierra el documento.");
+            if (!confirmSave) return;
+
+            loadingDiv.style.display = 'block';
+
+            // To save, we can grab the dataURL. The scale doesn't affect the output image size logically, 
+            // but it does affect resolution. It will be high-res.
+            const signatureData = canvas.toDataURL('image/png');
+
+            try {
+                const { doc, updateDoc, serverTimestamp } = window.dbFuncs;
+                const caseRef = doc(window.firebaseDB, 'cases', currentCaseId);
+
+                await updateDoc(caseRef, {
+                    signature: signatureData,
+                    status: 'completed',
+                    signedAt: new Date().toISOString(),
+                    lastUpdated: serverTimestamp()
+                });
+
+                alert('Firma recibida correctamente. Gracias.');
+                performSearch(caseInput.value);
+
+            } catch (err) {
+                console.error("Error saving signature:", err);
+                alert('Error al guardar. Intente nuevamente.');
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        });
+
     </script>
 </body>
 

@@ -10,8 +10,8 @@ Este documento detalla oportunidades de mejora y nuevas funcionalidades sugerida
 ### ✅ Funcionalidad & Productividad
 - [ ] **Sincronización Bidireccional con Google Calendar API:** Actualmente usamos enlaces estáticos. Implementar la API real permitiría leer eventos externos (ej: reuniones personales) para evitar conflictos automáticamente.
 - [ ] **Gestor Documental con OCR:** Permitir subir fotos de DNI/Pasaportes y que el sistema extraiga automáticamente nombre, cédula y fecha de nacimiento.
-- [ ] **Generador de Documentos PDF:** Crear plantillas (Poderes, Affidavits) donde se rellenen automáticamente los datos del cliente seleccionado y se descargue el PDF listo para firmar.
-- [ ] **Firma Digital Integrada:** Integrar DocuSign o una solución nativa de firma en pantalla (canvas) para que los clientes firmen en la tablet del notario.
+- [x] **Generador de Documentos PDF:** Crear plantillas (Poderes, Affidavits) donde se rellenen automáticamente los datos del cliente seleccionado y se descargue el PDF listo para firmar.
+- [x] **Firma Digital Integrada:** Integrar DocuSign o una solución nativa de firma en pantalla (canvas) para que los clientes firmen en la tablet del notario.
 
 ### 🎨 UI/UX (Interfaz)
 - [ ] **Modo Oscuro "True Black":** Optimizar el tema oscuro para pantallas OLED (actualmente fuerza modo claro en algunas secciones).

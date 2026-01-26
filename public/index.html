@@ -19,6 +19,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
@@ -145,7 +146,6 @@
                     Reminders
                 </button>
                 <button class="tab-btn" data-tab="emails" id="emails-tab-btn">
-                    <i data-lucide="mail-plus"></i>
                     Docs & Email
                 </button>
                 <button class="tab-btn" data-tab="reports" data-i18n="nav_reports">
@@ -713,9 +713,140 @@
                             <div class="form-group">
                                 <label class="form-label">Tipo de Documento</label>
                                 <select id="doc-template-select" class="form-input">
-                                    <option value="affidavit">Affidavit General</option>
-                                    <option value="power_attorney">Poder Notarial (Power of Attorney)</option>
-                                    <option value="contract">Contrato de Servicios</option>
+                                    <option value="affidavit">Declaración Jurada (Affidavit)</option>
+                                    <option value="bill_of_sale">Factura de Venta (Bill of Sale)</option>
+                                    <option value="promissory_note">Pagaré (Promissory Note)</option>
+                                    <option value="last_will">Última Voluntad y Testamento</option>
+                                    <option value="child_travel_consent">Consentimiento de Viaje para Menores</option>
+                                    <option value="power_of_attorney">Poder Notarial General (Power of Attorney)
+                                    </option>
+                                    <option value="medical_poa">Poder Médico (Medical POA)</option>
+                                    <option value="living_will">Testamento Vital (Living Will)</option>
+                                    <option value="contractor_agreement">Contrato de Contratista Indep.</option>
+                                    <option value="hold_harmless">Exención de Responsabilidad (Hold Harmless)</option>
+                                    <option value="quitclaim_deed">Escritura de Renuncia (Quitclaim Deed)</option>
+                                    <option value="residential_lease">Contrato de Alquiler Residencial</option>
+                                    <option value="lease_termination">Terminación de Alquiler</option>
+                                    <option value="residency_affidavit">Prueba de Residencia (Residency Affidavit)
+                                    </option>
+                                    <option value="cease_desist">Carta de Cese y Desistimiento (Cease & Desist)</option>
+                                    <option value="partnership_agreement">Acuerdo de Asociación (Partnership)</option>
+                                    <option value="employment_contract">Contrato de Empleo</option>
+                                    <option value="eviction_notice">Aviso de Desalojo (Eviction Notice)</option>
+                                    <option value="prenuptial_agreement">Acuerdo Prenupcial (Prenup)</option>
+                                    <option value="media_release">Autorización de Uso de Imagen (Media Release)</option>
+                                    <option value="contract_amendment">Enmienda a Contrato (Contract Amendment)</option>
+                                    <option value="payment_agreement">Plan de Pago (Payment Agreement)</option>
+                                    <option value="sublease_agreement">Contrato de Subarriendo</option>
+                                    <option value="equipment_lease">Alquiler de Equipo (Equipment Lease)</option>
+                                    <option value="commercial_lease">Contrato de Alquiler Comercial</option>
+                                    <option value="real_estate_purchase">Compraventa de Bienes Raíces</option>
+                                    <option value="non_compete">Acuerdo de No Competencia (Non-Compete)</option>
+                                    <option value="consulting_agreement">Contrato de Consultoría</option>
+                                    <option value="loi_agreement">Carta de Intención (LOI)</option>
+                                    <option value="mou_agreement">Memorándum de Entendimiento (MOU)</option>
+                                    <option value="affidavit_heirship">Declaración de Herederos (Heirship)</option>
+                                    <option value="affidavit_identity">Declaración de Identidad</option>
+                                    <option value="lease_renewal">Renovación de Contrato de Alquiler</option>
+                                    <option value="waiver_liability">Renuncia de Responsabilidad (Waiver)</option>
+                                    <option value="codicil_will">Codicilo a Testamento (Enmienda)</option>
+                                    <option value="custody_agreement">Acuerdo de Custodia (Parenting Plan)</option>
+                                    <option value="affidavit_service">Declaración de Servicio (Proof of Service)
+                                    </option>
+                                    <option value="translator_affidavit">Certificación de Traductor</option>
+                                    <option value="gift_deed">Escritura de Donación (Gift Deed)</option>
+                                    <option value="board_resolution">Resolución de Junta Directiva</option>
+                                    <option value="meeting_minutes">Acta de Reunión (Minutes)</option>
+                                    <option value="rental_application">Solicitud de Alquiler</option>
+                                    <option value="roommate_agreement">Acuerdo de Compañeros de Cuarto</option>
+                                    <option value="pet_addendum">Anexo de Mascotas</option>
+                                    <option value="lien_waiver">Renuncia de Gravamen (Lien Waiver)</option>
+                                    <option value="separation_agreement">Acuerdo de Separación Matrimonial</option>
+                                    <option value="cohabitation_agreement">Acuerdo de Cohabitación</option>
+                                    <option value="invitation_letter">Carta de Invitación para Visa</option>
+                                    <option value="debt_settlement">Acuerdo de Liquidación de Deuda</option>
+                                    <option value="indemnification_agreement">Acuerdo de Indemnización (Hold Harmless)
+                                    </option>
+                                    <option value="llc_operating_agreement">Acuerdo Operativo LLC</option>
+                                    <option value="corporate_bylaws">Estatutos Corporativos (Bylaws)</option>
+                                    <option value="proxy_form">Formulario de Representación (Proxy Vote)</option>
+                                    <option value="land_contract">Contrato de Tierra/Venta a Plazos</option>
+                                    <option value="notice_enter">Aviso de Entrada a Propiedad (Landlord)</option>
+                                    <option value="rent_increase">Aviso de Aumento de Alquiler</option>
+                                    <option value="employee_termination">Carta de Despido/Terminación</option>
+                                    <option value="employee_warning">Amonestación Laboral Escrita</option>
+                                    <option value="general_service_agreement">Contrato General de Servicios</option>
+                                    <option value="mechanics_lien">Gravamen de Mecánico (Claim of Lien)</option>
+                                    <option value="release_mechanics_lien">Liberación de Gravamen de Mecánico</option>
+                                    <option value="minor_photo_release">Autorización de Uso de Imagen (Menores)</option>
+                                    <option value="demand_letter">Carta de Demanda de Pago/Acción</option>
+                                    <option value="resignation_letter">Carta de Renuncia Laboral</option>
+                                    <option value="recommendation_letter">Carta de Recomendación Profesional</option>
+                                    <option value="offer_letter">Carta de Oferta de Empleo</option>
+                                    <option value="joint_venture">Acuerdo de Empresa Conjunta (Joint Venture)</option>
+                                    <option value="shareholder_agreement">Acuerdo de Accionistas</option>
+                                    <option value="stock_purchase">Compraventa de Acciones</option>
+                                    <option value="asset_purchase">Compraventa de Activos Empresariales</option>
+                                    <option value="ip_assignment">Cesión de Propiedad Intelectual</option>
+                                    <option value="construction_contract">Contrato de Construcción/Remodelación</option>
+                                    <option value="subcontractor_agreement">Acuerdo de Subcontratista</option>
+                                    <option value="loan_agreement">Contrato de Préstamo (Detallado)</option>
+                                    <option value="personal_guarantee">Garantía Personal</option>
+                                    <option value="security_agreement">Acuerdo de Seguridad (Colateral)</option>
+                                    <option value="warranty_deed">Escritura de Garantía (Warranty Deed)</option>
+                                    <option value="copyright_assignment">Cesión de Derechos de Autor</option>
+                                    <option value="trademark_assignment">Cesión de Marca Registrada</option>
+                                    <option value="patent_assignment">Cesión de Patente</option>
+                                    <option value="domain_assignment">Transferencia de Nombre de Dominio</option>
+                                    <option value="privacy_policy">Política de Privacidad (Sitio Web)</option>
+                                    <option value="terms_service">Términos y Condiciones (Sitio Web)</option>
+                                    <option value="influencer_agreement">Contrato de Influencer</option>
+                                    <option value="sponsorship_agreement">Acuerdo de Patrocinio</option>
+                                    <option value="referral_agreement">Acuerdo de Referidos</option>
+                                    <option value="commission_agreement">Acuerdo de Comisión</option>
+                                    <option value="distributor_agreement">Contrato de Distribución</option>
+                                    <option value="manufacturing_agreement">Contrato de Manufactura</option>
+                                    <option value="supply_agreement">Contrato de Suministro</option>
+                                    <option value="agency_agreement">Contrato de Agencia/Representación</option>
+                                    <option value="vehicle_lease">Arrendamiento de Vehículo</option>
+                                    <option value="internship_agreement">Acuerdo de Pasantía/Internship</option>
+                                    <option value="volunteer_agreement">Acuerdo de Voluntariado</option>
+                                    <option value="remote_work_agreement">Acuerdo de Trabajo Remoto</option>
+                                    <option value="employee_handbook_ack">Acuse de Recibo de Manual del Empleado
+                                    </option>
+                                    <option value="property_management">Contrato de Administración de Propiedades
+                                    </option>
+                                    <option value="storage_lease">Alquiler de Espacio de Almacenamiento</option>
+                                    <option value="parking_lease">Alquiler de Estacionamiento</option>
+                                    <option value="lease_violation">Aviso de Violación de Contrato (Alquiler)</option>
+                                    <option value="rent_receipt">Recibo de Renta</option>
+                                    <option value="photography_contract">Contrato de Servicios de Fotografía</option>
+                                    <option value="venue_rental">Contrato de Alquiler de Eventos/Salón</option>
+                                    <option value="catering_agreement">Contrato de Catering</option>
+                                    <option value="dj_contract">Contrato de Servicios de DJ</option>
+                                    <option value="model_release_adult">Autorización de Uso de Imagen (Adulto)</option>
+                                    <option value="consignment_agreement">Acuerdo de Consignación</option>
+                                    <option value="purchase_order">Orden de Compra (Purchase Order)</option>
+                                    <option value="invoice_template">Factura de Servicios (Invoice)</option>
+                                    <option value="hipaa_release">Autorización HIPAA (Historial Médico)</option>
+                                    <option value="medical_consent_caregiver">Consentimiento Médico para Cuidador
+                                    </option>
+                                    <option value="equipment_rental_personal">Alquiler de Equipo Personal</option>
+                                    <option value="music_license">Licencia de Uso Musical</option>
+                                    <option value="artwork_commission">Comisión de Obra de Arte</option>
+                                    <option value="video_production">Contrato de Producción de Video</option>
+                                    <option value="podcast_guest">Acuerdo de Invitado a Podcast</option>
+                                    <option value="house_sitting">Acuerdo de Cuidado de Casa (House Sitting)</option>
+                                    <option value="pet_sitting">Acuerdo de Cuidado de Mascotas (Pet Sitting)</option>
+                                    <option value="tutoring_contract">Contrato de Tutoría Privada</option>
+                                    <option value="personal_trainer">Contrato de Entrenador Personal</option>
+                                    <option value="cleaning_services">Contrato de Servicios de Limpieza</option>
+                                    <option value="gardening_contract">Contrato de Jardinería</option>
+                                    <option value="general_contractor">Contrato General de Obra</option>
+                                    <option value="hvac_service">Contrato de Servicio HVAC</option>
+                                    <option value="plumbing_contract">Contrato de Plomería</option>
+                                    <option value="electrical_service">Contrato de Servicios Eléctricos</option>
+                                    <option value="roofing_contract">Contrato de Techado (Roofing)</option>
                                 </select>
                             </div>
                             <div class="form-group" style="position: relative;">
@@ -735,7 +866,20 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <!-- Helper Actions -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: flex-end;">
+                            <button class="btn btn-sm btn-outline" id="btn-fill-demo"
+                                title="Rellenar con datos de prueba">🪄 Ejemplo</button>
+                            <button class="btn btn-sm btn-outline" id="btn-clear-fields"
+                                title="Borrar todos los campos">🗑️ Limpiar</button>
+                        </div>
+
+                        <!-- Dynamic Fields Container -->
+                        <div id="doc-dynamic-fields"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        </div>
+
+                        <div class="form-group" id="doc-body-container">
                             <label class="form-label">Contenido Específico (Cuerpo de la Declaración/Contrato)</label>
                             <textarea id="doc-body" class="form-input" rows="5"
                                 placeholder="Ingrese aquí los detalles específicos, términos de la declaración o cláusulas adicionales..."></textarea>
@@ -754,24 +898,7 @@
                             </div>
                         </div>
 
-                        <!-- Signature Pad Area -->
-                        <div
-                            style="margin-top: 1.5rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; background: #fff;">
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-                                <label class="form-label" style="display:block; margin-bottom: 0;">Firma Digital del
-                                    Cliente</label>
-                                <button id="clear-signature" class="btn btn-sm"
-                                    style="font-size: 0.75rem; border: 1px solid #cbd5e1;">Borrar Firma</button>
-                            </div>
-                            <div
-                                style="border: 2px dashed #cbd5e1; border-radius: 8px; background: #fff; position: relative; height: 200px; cursor: crosshair;">
-                                <canvas id="signature-pad"
-                                    style="width: 100%; height: 100%; touch-action: none;"></canvas>
-                            </div>
-                            <p style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">* Firme dentro del recuadro
-                                usando mouse o pantalla táctil.</p>
-                        </div>
+
 
                         <!-- Actions -->
                         <div
@@ -2039,93 +2166,78 @@
                 </div>
             </div>
 
-            <!-- Documents Tab -->
-            <div class="tab-content" id="documents-tab" style="display: none;">
-                <div class="actions-bar" style="margin-bottom: 1.5rem;">
-                    <h2 class="section-title">Generador de Documentos</h2>
-                </div>
 
-                <div class="documents-layout">
-                    <!-- Controls -->
-                    <div class="card" style="padding: 1.5rem; height: fit-content;">
-                        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Configuración</h3>
-
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label class="form-label">Plantilla</label>
-                            <select id="doc-template-select" class="form-input">
-                                <option value="affidavit">Affidavit General</option>
-                                <option value="power_attorney">Poder Notarial (Power of Attorney)</option>
-                                <option value="contract">Contrato de Servicios</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label class="form-label">Cliente (Autocompletar)</label>
-                            <input type="text" id="doc-client-search" class="form-input"
-                                placeholder="Buscar cliente...">
-                            <input type="hidden" id="doc-client-id">
-                        </div>
-
-                        <h4 style="margin: 1.5rem 0 0.5rem; font-size: 0.9rem; color: var(--color-gray-500);">Datos del
-                            Documento</h4>
-
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label class="form-label">Fecha del Documento</label>
-                            <input type="date" id="doc-date" class="form-input">
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label class="form-label">Estado / Condado</label>
-                            <input type="text" id="doc-location" class="form-input" placeholder="Ej: Miami-Dade, FL"
-                                value="Miami-Dade, FL">
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label class="form-label">Cuerpo / Detalles</label>
-                            <textarea id="doc-body" class="form-input" rows="6"
-                                placeholder="Escriba los detalles específicos del documento aquí..."></textarea>
-                        </div>
-
-                        <h4 style="margin: 1.5rem 0 0.5rem; font-size: 0.9rem; color: var(--color-gray-500);">Firma
-                            Digital</h4>
-                        <div
-                            style="border: 2px dashed #cbd5e1; border-radius: 8px; margin-bottom: 0.5rem; background: #fff;">
-                            <canvas id="signature-pad" width="400" height="150"
-                                style="width: 100%; touch-action: none;"></canvas>
-                        </div>
-                        <div
-                            style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                            <span>Firme en el recuadro</span>
-                            <button type="button" id="clear-signature"
-                                style="color: var(--color-danger); border: none; background: none; cursor: pointer;">Borrar
-                                Firma</button>
-                        </div>
-
-                        <button class="btn btn-primary" id="generate-pdf-btn" style="width: 100%;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" style="margin-right: 8px;">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="12" y1="18" x2="12" y2="12"></line>
-                                <line x1="9" y1="15" x2="15" y2="15"></line>
+            <!-- Dynamic Signature Modal -->
+            <div class="modal" id="signature-modal">
+                <div class="modal-backdrop" onclick="NotaryCRM.closeModal('signature-modal')"></div>
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Firma Digital</h3>
+                        <button class="modal-close" data-modal="signature-modal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
-                            Generar PDF Firmado
                         </button>
                     </div>
+                    <div class="modal-body">
+                        <p id="sig-role-display"
+                            style="margin-bottom: 1rem; color: var(--color-primary); font-weight: 600;">Firmando...</p>
 
-                    <!-- Preview -->
-                    <div class="card"
-                        style="padding: 2rem; background: #f8fafc; overflow-y: auto; height: 800px; display: flex; justify-content: center;">
-                        <div id="doc-preview"
-                            style="background: white; width: 100%; max-width: 600px; height: fit-content; min-height: 800px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); font-family: 'Times New Roman', serif; color: #000;">
-                            <!-- Content injected by JS -->
-                            <div style="text-align: center; color: #94a3b8; margin-top: 50%;">
-                                Seleccione una plantilla y complete los datos para ver la previsualización
+                        <!-- Tabs -->
+                        <div class="tabs"
+                            style="display:flex; gap:10px; margin-bottom:1rem; border-bottom:1px solid #e2e8f0;">
+                            <button class="tab-btn active" onclick="NoteGenerator.switchSigTab('draw')"
+                                id="tab-draw-btn"
+                                style="padding:8px 16px; border:none; background:none; border-bottom:2px solid var(--color-primary); font-weight:600; cursor:pointer;">🖋️
+                                Dibujar</button>
+                            <button class="tab-btn" onclick="NoteGenerator.switchSigTab('type')" id="tab-type-btn"
+                                style="padding:8px 16px; border:none; background:none; border-bottom:2px solid transparent; color:#64748b; cursor:pointer;">⌨️
+                                Escribir</button>
+                        </div>
+
+                        <!-- Draw Section -->
+                        <div id="sig-draw-section">
+                            <div
+                                style="border: 2px dashed #94a3b8; border-radius: 8px; background: #fff; height: 200px; position: relative;">
+                                <canvas id="modal-signature-pad"
+                                    style="width: 100%; height: 100%; touch-action: none;"></canvas>
                             </div>
+                            <div style="text-align:right; margin-top:5px;">
+                                <button class="btn btn-sm btn-text" id="modal-clear-sig">Limpiar</button>
+                            </div>
+                        </div>
+
+                        <!-- Type Section -->
+                        <div id="sig-type-section" style="display:none;">
+                            <label class="form-label">Escriba su nombre completo:</label>
+                            <input type="text" id="sig-type-input" class="form-input" placeholder="Su Nombre"
+                                style="margin-bottom:1rem;">
+
+                            <label class="form-label">Vista Previa:</label>
+                            <div id="sig-type-preview" style="
+                        font-family: 'Great Vibes', cursive; 
+                        font-size: 3rem; 
+                        color: #000; 
+                        text-align: center; 
+                        padding: 2rem; 
+                        background: #f8fafc; 
+                        border-radius: 8px; 
+                        min-height: 120px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">Firma Aquí</div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                            <button class="btn btn-primary" id="modal-save-sig" style="width:100%;">Confirmar e
+                                Insertar</button>
                         </div>
                     </div>
                 </div>
             </div>
+
             <!-- Scripts -->
             <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
@@ -2134,6 +2246,7 @@
             <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
 
             <!-- PDF & Signature Libs -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
