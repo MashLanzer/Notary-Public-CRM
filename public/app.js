@@ -1808,6 +1808,31 @@ window.NotaryCRM = {
                 appQuery = query(appointmentsCol, where('ownerId', '==', this.currentUser.uid));
             }
 
+            // Store separate lists to merge them
+            this.state.appointmentsPrivate = [];
+            this.state.appointmentsPublic = [];
+
+            const mergeAppointments = () => {
+                // Avoid duplicates if any overlap exists (though queries are disjoint)
+                const all = [...this.state.appointmentsPrivate];
+                this.state.appointmentsPublic.forEach(pub => {
+                    if (!all.find(priv => priv.id === pub.id)) {
+                        all.push(pub);
+                    }
+                });
+                this.state.appointments = all;
+                this.renderCalendar();
+                this.renderDashboard();
+            };
+
+            // Public Appointments Listener
+            const publicAppQuery = query(appointmentsCol, where('source', '==', 'public_web'));
+            onSnapshot(publicAppQuery, snapshot => {
+                this.state.appointmentsPublic = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                mergeAppointments();
+                console.log('Public apps synced:', this.state.appointmentsPublic.length);
+            });
+
             onSnapshot(clientsQuery, snapshot => {
                 this.state.isLoadingClients = false;
                 this.state.clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1826,11 +1851,11 @@ window.NotaryCRM = {
                 console.log('Real-time cases update received');
             }, err => console.error('Cases snapshot failed', err));
 
-            // (Appointments query defined above)
+            // (Private Appointments query)
             onSnapshot(appQuery, snapshot => {
-                this.state.appointments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                this.renderCalendar();
-                console.log('Real-time appointments update received');
+                this.state.appointmentsPrivate = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                mergeAppointments();
+                console.log('Private apps synced:', this.state.appointmentsPrivate.length);
             }, err => console.error('Appointments snapshot failed', err));
 
             // Users listener is only attached for admins

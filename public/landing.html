@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notaría Publica - Servicios Profesionales</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Existing CSS (for variables/utility classes) -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* LANDING PAGE SPECIFIC STYLES */
+        .landing-body {
+            background-color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .landing-nav {
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1e3a8a;
+            /* var(--color-primary) */
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a:not(.btn) {
+            text-decoration: none;
+            color: #111827;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:not(.btn):hover {
+            color: #1e3a8a;
+        }
+
+        .hero-section {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: #111827;
+        }
+
+        .hero-text h1 span {
+            background: linear-gradient(to right, #1e3a8a, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            font-size: 1.25rem;
+            color: #6b7280;
+            /* text-light */
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .services-section {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        .section-subtitle {
+            color: #6b7280;
+            margin-bottom: 3rem;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            padding: 2rem;
+            border-radius: 0.75rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #dbeafe;
+        }
+
+        .service-icon {
+            width: 64px;
+            height: 64px;
+            background: #dbeafe;
+            color: #1e3a8a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .service-icon .icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        .about-section {
+            padding: 4rem 0;
+            background-color: #f9fafb;
+        }
+
+        .landing-footer {
+            padding: 3rem 0 2rem;
+            background-color: #111827;
+            color: #9ca3af;
+        }
+
+        .landing-footer h3 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .landing-footer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .landing-footer li {
+            margin-bottom: 0.5rem;
+        }
+
+        .landing-footer a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .landing-footer a:hover {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text p {
+                margin: 0 auto 2rem;
+            }
+
+            .hero-actions {
+                justify-content: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="landing-body">
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    style="width:32px;height:32px;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Notaría Pública</span>
+            </a>
+            <div class="nav-links">
+                <a href="#inicio">Inicio</a>
+                <a href="#servicios">Servicios</a>
+                <a href="#faq">Preguntas</a>
+                <!-- Link to Status Page -->
+                <a href="status.html" class="btn btn-primary btn-sm">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width:16px;height:16px;margin-right:4px;">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Consultar Trámite
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="inicio" class="hero-section">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1>Seguridad Jurídica y <span>Confianza</span> para sus Trámites</h1>
+                <p>Ofrecemos servicios notariales integrales con la máxima eficiencia y profesionalismo. Su tranquilidad
+                    legal es nuestra prioridad.</p>
+                <div class="hero-actions">
+                    <a href="booking.html" class="btn btn-primary btn-lg">
+                        Agendar Cita
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="margin-left:8px;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </a>
+                    <a href="#servicios" class="btn btn-outline btn-lg">Ver Servicios</a>
+                </div>
+                <div
+                    style="margin-top: 2rem; display: flex; align-items: center; gap: 1rem; color: #6b7280; font-size: 0.9rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #16a34a;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Certificado</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #16a34a;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Seguro</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: #16a34a;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Rápido</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-graphic">
+                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
+                    style="width: 100%; height: auto; max-width: 500px; display: block; margin: 0 auto; filter: drop-shadow(0 20px 30px rgba(30, 58, 138, 0.15));">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#eff6ff;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="50" y="40" width="300" height="360" rx="16" fill="url(#grad1)" stroke="#bfdbfe"
+                        stroke-width="2" />
+                    <rect x="80" y="80" width="240" height="20" rx="4" fill="#1e3a8a" opacity="0.1" />
+                    <rect x="80" y="120" width="180" height="12" rx="4" fill="#9ca3af" opacity="0.2" />
+                    <rect x="80" y="145" width="220" height="12" rx="4" fill="#9ca3af" opacity="0.2" />
+                    <rect x="80" y="170" width="200" height="12" rx="4" fill="#9ca3af" opacity="0.2" />
+
+                    <!-- Decorative Circle/Seal -->
+                    <circle cx="280" cy="320" r="40" fill="#1e40af" opacity="0.1" />
+                    <circle cx="280" cy="320" r="30" fill="none" stroke="#1e40af" stroke-width="2"
+                        stroke-dasharray="4 4" />
+                    <path d="M270 320L278 328L295 310" stroke="#1e40af" stroke-width="3" fill="none" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Services -->
+    <section id="servicios" class="services-section">
+        <div class="container">
+            <div class="text-center">
+                <h2 class="section-title">Nuestros Servicios</h2>
+                <p class="section-subtitle">Soluciones legales adaptadas a sus necesidades personales y corporativas</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <path d="M14 2v6h6"></path>
+                            <path d="M16 13H8"></path>
+                            <path d="M16 17H8"></path>
+                            <path d="M10 9H8"></path>
+                        </svg>
+                    </div>
+                    <h3>Poderes Notariales</h3>
+                    <p class="text-muted">Otorgamiento de facultades para representación legal, pleitos y cobranzas.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <polyline points="17 11 19 13 23 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Testamentos</h3>
+                    <p class="text-muted">Proteja su patrimonio y asegure el bienestar de sus seres queridos.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14"></path>
+                            <path d="M9 10a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"></path>
+                        </svg>
+                    </div>
+                    <h3>Bienes Raíces</h3>
+                    <p class="text-muted">Compraventas, constitución de hipotecas, y cancelaciones.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                    </div>
+                    <h3>Fe de Hechos</h3>
+                    <p class="text-muted">Constancia oficial sobre hechos físicos o declaraciones ante notario.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <h3>Sucesiones</h3>
+                    <p class="text-muted">Trámites sucesorios testamentarios e intestamentarios.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                            <path
+                                d="M9 20a15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10 15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10z">
+                            </path>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                        </svg>
+                    </div>
+                    <h3>Constitución de Empresas</h3>
+                    <p class="text-muted">Formalización de sociedades civiles y mercantiles (S.A., S. de R.L.).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="container">
+            <div class="hero-content">
+                <div>
+                    <h2 class="section-title">Experiencia y Compromiso</h2>
+                    <p class="text-lg text-muted">Con más de 15 años de experiencia, nuestra notaría se ha consolidado
+                        como un referente de confianza y profesionalismo. Nos dedicamos a brindar certeza jurídica en
+                        cada uno de sus trámites.</p>
+                    <ul
+                        style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; list-style: none;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="color: #1e3a8a;">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Atención personalizada</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="color: #1e3a8a;">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Tecnología avanzada para gestión</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: #374151;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="color: #1e3a8a;">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Transparencia en honorarios</span>
+                        </li>
+                    </ul>
+                </div>
+                <div style="display: flex; justify-content: center;">
+                    <!-- Simple graphic for "Trust" -->
+                    <svg viewBox="0 0 200 200" style="width: 100%; max-width: 300px;">
+                        <circle cx="100" cy="100" r="80" fill="#dbeafe" opacity="0.3" />
+                        <path d="M60 100 L90 130 L140 70" stroke="#1e3a8a" stroke-width="12" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="services-section">
+        <div class="container">
+            <h2 class="section-title text-center">Preguntas Frecuentes</h2>
+            <div class="services-grid" style="grid-template-columns: 1fr 1fr; margin-top: 2rem; align-items: start;">
+                <div>
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Qué necesito para un testamento?</h4>
+                    <p class="text-muted">Solo necesita una identificación oficial vigente y agendar una cita para
+                        asesoría. Nosotros le guiaremos.</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Cuánto tarda una certificación?</h4>
+                    <p class="text-muted">Dependiendo del documento, el proceso puede tomar desde 24 a 48 horas hábiles.
+                    </p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Pueden acudir a domicilio?</h4>
+                    <p class="text-muted">Sí, ofrecemos servicio a domicilio para personas con movilidad reducida
+                        (aplica cargo extra).</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 0.5rem; font-weight: 600;">¿Cómo agendo una cita?</h4>
+                    <p class="text-muted">Puede utilizar nuestro botón de "Iniciar Trámite" o contactarnos por teléfono
+                        o email.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="container">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-bottom: 3rem; text-align: left;">
+                <div>
+                    <h3>Notaría Pública</h3>
+                    <p>Su aliado legal de confianza.</p>
+                </div>
+                <div>
+                    <h3>Enlaces</h3>
+                    <ul>
+                        <li><a href="#inicio">Inicio</a></li>
+                        <li><a href="#servicios">Servicios</a></li>
+                        <li><a href="status.html">Acceso Clientes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Contacto</h3>
+                    <ul>
+                        <li>contacto@notaria.com</li>
+                        <li>(555) 123-4567</li>
+                        <li>Calle Principal #123</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; text-align: center;">
+                <p>&copy; 2024 Notaría Pública. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

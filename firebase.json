@@ -8,6 +8,18 @@
     ],
     "rewrites": [
       {
+        "source": "/booking",
+        "destination": "/booking.html"
+      },
+      {
+        "source": "/landing",
+        "destination": "/landing.html"
+      },
+      {
+        "source": "/status",
+        "destination": "/status.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

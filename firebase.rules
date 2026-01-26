@@ -40,10 +40,11 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Appointments: only owner or admin can access
+    // Appointments: public can CREATE (booking) and READ (calendar availability)
     match /appointments/{appId} {
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow read, update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if true; // Public booking allowed
+      allow read: if true;   // Public availability check allowed
+      allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // Reminders: only owner or admin can access
