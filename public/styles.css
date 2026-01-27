@@ -1299,6 +1299,27 @@ textarea:focus-visible,
     background-color: var(--color-danger-light);
 }
 
+.btn-secondary {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--border-base);
+    color: var(--color-gray-700);
+}
+
+.btn-outline:hover {
+    background-color: var(--color-gray-50);
+    border-color: var(--color-gray-300);
+}
+
 /* ============================================
    CLIENTS GRID
    ============================================ */

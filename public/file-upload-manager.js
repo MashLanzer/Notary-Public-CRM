@@ -22,14 +22,20 @@ const FileUploadManager = {
             this.addFileInputToForm(caseForm, 'case-file-input', 'Adjuntar Documentos');
         }
 
-        // Create file input for clients
+        // Create file input for clients - specifically in Step 3
         const clientForm = document.getElementById('client-form');
         if (clientForm && !document.getElementById('client-file-input')) {
-            this.addFileInputToForm(clientForm, 'client-file-input', 'Adjuntar Documentos');
+            // Target step 3 specifically
+            const step3 = clientForm.querySelector('.form-step[data-step="3"]');
+            if (step3) {
+                this.addFileInputToForm(step3, 'client-file-input', 'Adjuntar Documentos (Identificación, Poderes, etc.)');
+            } else {
+                this.addFileInputToForm(clientForm, 'client-file-input', 'Adjuntar Documentos');
+            }
         }
     },
 
-    addFileInputToForm(form, inputId, label) {
+    addFileInputToForm(parent, inputId, label) {
         const fileGroup = document.createElement('div');
         fileGroup.className = 'form-group';
         fileGroup.innerHTML = `
@@ -57,12 +63,12 @@ const FileUploadManager = {
             </div>
         `;
 
-        // Insert before submit button
-        const submitBtn = form.querySelector('button[type="submit"]');
+        // Insert before submit button or at the end
+        const submitBtn = parent.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.parentElement.insertBefore(fileGroup, submitBtn);
         } else {
-            form.appendChild(fileGroup);
+            parent.appendChild(fileGroup);
         }
 
         // Attach event listener
