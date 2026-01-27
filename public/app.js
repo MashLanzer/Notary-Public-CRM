@@ -1647,6 +1647,102 @@ window.NotaryCRM = {
         }, 2000);
     },
 
+    async initSettings() {
+        if (!this.useFirestore) return;
+        const { doc, getDoc, setDoc } = window.dbFuncs;
+        const db = window.firebaseDB;
+
+        try {
+            const settingsRef = doc(db, 'settings', 'fields');
+            const snap = await getDoc(settingsRef);
+            if (snap.exists()) {
+                this.state.customFields = snap.data();
+            } else {
+                // Initialize default empty
+                await setDoc(settingsRef, this.state.customFields);
+            }
+            this.renderCustomFieldsConfig('client');
+            this.renderCustomFieldsConfig('case');
+        } catch (e) {
+            console.error('Error loading settings', e);
+        }
+    },
+
+    renderCustomFieldsConfig(type = 'client') {
+        const listId = type === 'client' ? 'custom-fields-list' : 'case-custom-fields-list';
+        const previewId = type === 'client' ? 'custom-fields-preview' : 'case-custom-fields-preview';
+
+        const listEl = document.getElementById(listId);
+        const previewEl = document.getElementById(previewId);
+        if (!listEl || !previewEl) return;
+
+        const fields = this.state.customFields[type === 'client' ? 'clients' : 'cases'] || [];
+
+        listEl.innerHTML = fields.map((f, index) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:0.75rem; border-radius:8px; border:1px solid #e2e8f0;">
+                <span style="font-weight:600;">${f}</span>
+                <button class="btn btn-sm btn-danger-link" onclick="NotaryCRM.removeCustomField('${f}', '${type}')">Eliminar</button>
+            </div>
+        `).join('') || '<p style="font-size:0.85rem; color:#94a3b8;">No hay campos extra.</p>';
+
+        previewEl.innerHTML = fields.map(f => `
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">${f}</label>
+                <input type="text" class="form-input" placeholder="Ej: Dato para ${f}" disabled>
+            </div>
+        `).join('') || '<p style="text-align:center; color:#94a3b8; padding:1rem;">No hay campos personalizados configurados.</p>';
+    },
+
+    async addCustomField(type = 'client') {
+        const inputId = type === 'client' ? 'new-custom-field-name' : 'new-case-custom-field-name';
+        const input = document.getElementById(inputId);
+        const name = input.value.trim();
+        if (!name) return;
+
+        const targetArr = type === 'client' ? 'clients' : 'cases';
+        if (this.state.customFields[targetArr].includes(name)) {
+            return Toast.warning('Duplicado', 'Ese campo ya existe.');
+        }
+
+        this.state.customFields[targetArr].push(name);
+        input.value = '';
+
+        await this.syncCustomFields();
+        this.renderCustomFieldsConfig(type);
+        Toast.success('Campo Añadido', `Se ha creado el campo "${name}" para ${type === 'client' ? 'clientes' : 'expedientes'}.`);
+    },
+
+    async removeCustomField(name, type = 'client') {
+        const targetArr = type === 'client' ? 'clients' : 'cases';
+        this.state.customFields[targetArr] = this.state.customFields[targetArr].filter(f => f !== name);
+        await this.syncCustomFields();
+        this.renderCustomFieldsConfig(type);
+        Toast.info('Campo Eliminado', `El campo "${name}" ha sido removido.`);
+    },
+
+    async syncCustomFields() {
+        if (!this.useFirestore) return;
+        const { doc, setDoc } = window.dbFuncs;
+        const db = window.firebaseDB;
+        try {
+            await setDoc(doc(db, 'settings', 'fields'), this.state.customFields);
+        } catch (e) { console.error(e); }
+    },
+
+    renderCustomFieldsInForm(type) {
+        const container = document.getElementById(`${type === 'client' ? 'client' : 'case'}-custom-fields-container`);
+        if (!container) return;
+
+        const fields = (type === 'client' ? this.state.customFields.clients : this.state.customFields.cases) || [];
+
+        container.innerHTML = fields.map(f => `
+            <div class="form-group">
+                <label class="form-label">${f}</label>
+                <input type="text" class="form-input custom-field-input" data-field="${f}" name="cf_${f.replace(/\s+/g, '_')}" placeholder="Ingrese ${f.toLowerCase()}">
+            </div>
+        `).join('');
+    },
+
     // Initialize form validation
     initFormValidation() {
         // Client form validation
