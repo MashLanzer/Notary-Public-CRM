@@ -1442,6 +1442,33 @@ const ThemeManager = {
 };
 
 // ============================================
+// SPECIALIZED NOTARY MANAGER
+// ============================================
+
+const SpecializedManager = {
+    init() {
+        const typeSelect = document.querySelector('#case-form select[name="type"]');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', (e) => this.toggleFields(e.target.value));
+        }
+    },
+
+    toggleFields(type) {
+        const apostilleSection = document.getElementById('specialized-apostille');
+        const lsaSection = document.getElementById('specialized-lsa');
+        const weddingSection = document.getElementById('specialized-wedding');
+
+        if (apostilleSection) apostilleSection.style.display = (type === 'Apostille') ? 'block' : 'none';
+        if (lsaSection) lsaSection.style.display = (type === 'Loan Signing') ? 'block' : 'none';
+        if (weddingSection) weddingSection.style.display = (type === 'Wedding') ? 'block' : 'none';
+    },
+
+    reset() {
+        document.querySelectorAll('[id^="specialized-"]').forEach(el => el.style.display = 'none');
+    }
+};
+
+// ============================================
 // EXPORT MANAGERS
 // ============================================
 
@@ -1456,7 +1483,10 @@ if (typeof window !== 'undefined') {
     window.TaskManager = TaskManager;
     window.NoteManager = NoteManager;
     window.FormMasks = FormMasks;
+    window.FileUploadManager = FileUploadManager;
+    window.SpecializedManager = SpecializedManager;
 }
+
 
 // Application State
 window.NotaryCRM = {
@@ -1482,6 +1512,20 @@ window.NotaryCRM = {
         }
     },
     currentUser: null,
+
+    // Helper for specialized fields
+    copyText(id) {
+        const text = document.getElementById(id)?.innerText;
+        if (text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            Toast.success('Copiado', 'Texto copiado al portapapeles');
+        }
+    },
 
     // Initialize application
     init() {
@@ -1593,6 +1637,9 @@ window.NotaryCRM = {
             PerformanceOptimizer.init();
         }
 
+        // Initialize Specialized Manager
+        SpecializedManager.init();
+
         // Initialize Advanced Analytics
         if (window.AdvancedAnalytics) {
             AdvancedAnalytics.init();
@@ -1617,6 +1664,8 @@ window.NotaryCRM = {
         if (window.CommunicationManager) {
             CommunicationManager.init();
         }
+
+        this.checkCommissionExpiry();
 
         // Initialize Payment Manager
         if (window.PaymentManager) {
@@ -2074,12 +2123,13 @@ window.NotaryCRM = {
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                         </button>
                         <div class="dropdown-menu" id="dropdown-case-${c.id}">
-                            <a href="#" onclick="NotaryCRM.openEditCaseModal('${c.id}')">Edit</a>
-                            <a href="#" onclick="NotaryCRM.deleteCase('${c.id}')" style="color:var(--color-danger)">Delete</a>
+                            <a href="#" onclick="NotaryCRM.showCaseDetails('${c.id}')">Detalles</a>
+                            <a href="#" onclick="NotaryCRM.openEditCaseModal('${c.id}')">Editar</a>
+                            <a href="#" onclick="NotaryCRM.deleteCase('${c.id}')" style="color:var(--color-danger)">Eliminar</a>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div onclick="NotaryCRM.showCaseDetails('${c.id}')" style="cursor:pointer;">
                     <h3 style="margin:0 0 .5rem 0; font-size:1rem; color:var(--text-primary)">${c.clientName}</h3>
                     <p style="color:var(--text-secondary); font-size:0.875rem;">${c.type}</p>
                     <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center; font-size:0.875rem;">
@@ -2489,8 +2539,8 @@ window.NotaryCRM = {
 
                     const data = userSnap.data();
                     this.currentUserRole = data.role || 'viewer';
-                    // Force admin false for UI purposes unless explicitly super admin (which is disabled)
-                    this.isAdmin = false;
+                    // Allow admin flag if role is admin
+                    this.isAdmin = (this.currentUserRole === 'admin');
 
                     // Update role display
                     const roleDisplay = document.getElementById('current-user-role-display');
@@ -2500,22 +2550,22 @@ window.NotaryCRM = {
                         roleDisplay.className = `user-role-tag role-${this.currentUserRole}`;
                     }
 
-                    // Strict Isolation: Always hide sensitive sidebar items for standard users
+                    // Sidebar items visibility based on user request (Permanently Hidden)
                     const usersBtn = document.getElementById('users-tab-btn');
-                    const auditBtn = document.getElementById('audit-tab-btn'); // Assuming ID, check HTML if needed
+                    const auditBtn = document.getElementById('audit-tab-btn');
                     if (usersBtn) usersBtn.style.display = 'none';
                     if (auditBtn) auditBtn.style.display = 'none';
-                    const auditLink = document.querySelector('button[onclick*="audit"]'); // finding by handler or ID
-                    // The sidebar buttons usually have IDs like 'dashboard-tab-btn'.
-                    // I will search for them in next step if I can't find ID.
 
                     // Apply permissions to UI immediately
                     this.applyUIPermissions();
 
-                    if (this.isAdmin) {
-                        // this.startUsersListener(); // Disabled for independent accounts
-                        AuditManager.startListener();
-                    }
+                    /* 
+                       Listeners for Users and Audit disabled per user request to hide these sections.
+                       if (this.isAdmin) {
+                           this.startUsersListener();
+                           AuditManager.startListener();
+                       }
+                    */
 
                     this.render(); // Re-render everything with new permissions
                     this.checkAutomations();
@@ -2700,11 +2750,140 @@ window.NotaryCRM = {
         if (tabName === 'clients') this.renderClients();
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
+        if (tabName === 'journal') this.renderJournal();
         if (tabName === 'emails') EmailManager.renderTemplates();
 
         // Refresh icons on tab switch
         if (window.lucide) {
             window.lucide.createIcons();
+        }
+    },
+
+    async mockScanID() {
+        Toast.info('Escaneando...', 'Procesando licencia de conducir (OCR Simulado)');
+        await new Promise(r => setTimeout(r, 2000));
+
+        const form = document.getElementById('client-form');
+        if (form) {
+            form.name.value = "John Doe (Escaneado)";
+            form.email.value = "john.doe.ocr@example.com";
+            form.phone.value = "(555) 000-0000";
+            form.address.value = "123 Scan Way, Digital City, 99999";
+            Toast.success('Éxito', 'Datos extraídos correctamente del ID');
+        }
+    },
+
+    renderJournal() {
+        const completedCases = this.state.cases.filter(c => c.status === 'completed');
+        const container = document.getElementById('journal-table-body');
+        if (!container) return;
+
+        if (completedCases.length === 0) {
+            container.innerHTML = '<tr><td colspan="7" class="empty-state">No se han registrado actos notariales oficiales aún.</td></tr>';
+            return;
+        }
+
+        container.innerHTML = completedCases.map(c => `
+            <tr>
+                <td style="font-size: 0.8rem;">${c.dueDate || 'N/A'}</td>
+                <td><span class="badge" style="background:#fef3c7; color:#92400e; font-size: 0.75rem;">${c.type}</span></td>
+                <td><strong>${c.clientName}</strong></td>
+                <td style="font-size: 0.8rem; color: #64748b;">${c.witness1_id || 'ID Escaneado'}</td>
+                <td style="font-size: 0.8rem;">${c.witness1 || '---'}</td>
+                <td style="font-weight: 600;">$${c.amount.toFixed(2)}</td>
+                <td style="text-align:right;">
+                    <button class="btn-icon" title="Ver Expediente" onclick="window.NotaryCRM.showCaseDetails('${c.id}')">
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    exportJournal() {
+        Toast.info('Exportando...', 'Generando diario notarial oficial en PDF');
+
+        // Robust jsPDF detection
+        let jsPDFClass = null;
+        if (window.jspdf && window.jspdf.jsPDF) {
+            jsPDFClass = window.jspdf.jsPDF;
+        } else if (window.jsPDF) {
+            jsPDFClass = window.jsPDF;
+        }
+
+        if (!jsPDFClass) {
+            return Toast.error('Error', 'La librería PDF no se cargó correctamente.');
+        }
+
+        try {
+            const doc = new jsPDFClass({ orientation: 'landscape' });
+            const completedCases = this.state.cases.filter(c => c.status === 'completed' || c.status === 'Completado');
+
+            if (completedCases.length === 0) {
+                return Toast.warning('Sin Datos', 'No hay expedientes completados para exportar al diario.');
+            }
+
+            // Header
+            doc.setFontSize(18);
+            doc.setTextColor(30, 58, 138);
+            doc.text('DIARIO NOTARIAL OFICIAL', 14, 20);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 27);
+            doc.text(`Notario: ${this.currentUser?.displayName || 'Profesional'}`, 14, 32);
+
+            // Table Data
+            const tableHeaders = [['Fecha', 'Caso #', 'Cliente', 'Tipo de Acto', 'Identificación', 'Testigos', 'Monto']];
+            const tableRows = completedCases.map(c => [
+                this.formatDate(c.createdAt),
+                c.caseNumber || 'N/A',
+                c.clientName || 'N/A',
+                c.type || 'N/A',
+                c.idType ? `${c.idType}: ${c.idNumber || '-'}` : 'N/A',
+                c.witness1 ? `${c.witness1}${c.witness2 ? ', ' + c.witness2 : ''}` : 'N/A',
+                this.formatCurrency(c.amount)
+            ]);
+
+            // Use autoTable if available
+            if (doc.autoTable) {
+                doc.autoTable({
+                    head: tableHeaders,
+                    body: tableRows,
+                    startY: 40,
+                    theme: 'striped',
+                    headStyles: { fillColor: [30, 58, 138] },
+                    styles: { fontSize: 8 },
+                    columnStyles: {
+                        0: { cellWidth: 25 },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 40 },
+                        3: { cellWidth: 40 },
+                        4: { cellWidth: 40 },
+                        5: { cellWidth: 40 },
+                        6: { cellWidth: 20 }
+                    }
+                });
+            } else {
+                // Fallback basic draw if autoTable fails to load
+                let y = 45;
+                doc.setFontSize(9);
+                tableHeaders[0].forEach((h, i) => doc.text(h, 14 + (i * 35), y));
+                y += 10;
+                tableRows.forEach(row => {
+                    row.forEach((cell, i) => doc.text(String(cell), 14 + (i * 35), y));
+                    y += 7;
+                    if (y > 180) { doc.addPage(); y = 20; }
+                });
+            }
+
+            doc.save(`Diario_Notarial_${new Date().toISOString().split('T')[0]}.pdf`);
+            Toast.success('Exportado', 'El diario ha sido descargado exitosamente.');
+        } catch (err) {
+            console.error('Export Journal Error:', err);
+            Toast.error('Error', 'Falló la generación del PDF: ' + err.message);
         }
     },
 
@@ -2742,6 +2921,9 @@ window.NotaryCRM = {
         }
         if (modalId === 'case-modal') {
             this.renderCustomFieldsInForm('case');
+            SpecializedManager.reset();
+            const form = document.getElementById('case-form');
+            if (form) form.reset();
         }
         if (modalId === 'client-custom-fields-modal') {
             this.renderCustomFieldsConfig('client');
@@ -2777,6 +2959,32 @@ window.NotaryCRM = {
         if (modalId === 'help-center-modal') {
             this.filterFAQs('all');
         }
+
+        // Refresh Journal data if opening journal modal
+        if (modalId === 'journal-modal') {
+            this.renderJournal();
+        }
+    },
+
+    addPaperStock() {
+        const start = parseInt(document.getElementById('paper-start').value);
+        const end = parseInt(document.getElementById('paper-end').value);
+        if (isNaN(start) || isNaN(end) || end < start) {
+            Toast.error('Error', 'Rango de folios inválido');
+            return;
+        }
+        const count = end - start + 1;
+        const current = parseInt(localStorage.getItem('notary_paper_stock') || '0');
+        const total = current + count;
+        localStorage.setItem('notary_paper_stock', total);
+        document.getElementById('paper-stock-count').textContent = total;
+        Toast.success('Inventario Actualizado', `Se han añadido ${count} hojas de seguridad.`);
+    },
+
+    updatePaperStockDisplay() {
+        const count = localStorage.getItem('notary_paper_stock') || '0';
+        const el = document.getElementById('paper-stock-count');
+        if (el) el.textContent = count;
     },
 
     closeModal(modalId) {
@@ -2791,6 +2999,33 @@ window.NotaryCRM = {
         if (form) form.reset();
     },
 
+
+    saveCommission(form) {
+        const data = {
+            number: form.commissionNumber.value,
+            state: form.commissionState.value,
+            expiry: form.commissionExpiry.value
+        };
+        localStorage.setItem('notary_commission', JSON.stringify(data));
+        Toast.success('Configuración Guardada', 'Tus credenciales notariales han sido actualizadas.');
+        this.closeModal('notary-commission-modal');
+        this.checkCommissionExpiry();
+    },
+
+    checkCommissionExpiry() {
+        const dataStr = localStorage.getItem('notary_commission');
+        if (!dataStr) return;
+        const data = JSON.parse(dataStr);
+        const expiry = new Date(data.expiry);
+        const today = new Date();
+        const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 0 && diffDays <= 90) {
+            Toast.warning('Vencimiento de Comisión', `Tu comisión notarial vence en ${diffDays} días. ¡Inicia tu proceso de renovación!`);
+        } else if (diffDays <= 0) {
+            Toast.error('Comisión Vencida', 'Tu comisión notarial ha expirado. Debes renovarla para continuar ejerciendo.');
+        }
+    },
     switchHelpTab(tabName) {
         // Nav buttons
         const btns = document.querySelectorAll('.help-nav-item');
@@ -3142,9 +3377,23 @@ window.NotaryCRM = {
             amount: parseFloat(formData.get('amount')) || 0,
             paymentStatus: formData.get('paymentStatus') || 'pending',
             dueDate: formData.get('dueDate'),
+            mileage: parseFloat(formData.get('mileage')) || 0,
             description: formData.get('description'),
             status: formData.get('status') || 'pending',
-            customFields: customFields // SAVE CUSTOM FIELDS
+            customFields: customFields,
+            // Specialized Notary Fields
+            apostilleDestination: formData.get('apostilleDestination'),
+            apostilleTracking: formData.get('apostilleTracking'),
+            lsa_closing_disclosure: formData.get('lsa_closing_disclosure') === 'on',
+            lsa_the_note: formData.get('lsa_the_note') === 'on',
+            lsa_deed_of_trust: formData.get('lsa_deed_of_trust') === 'on',
+            lsa_pcor: formData.get('lsa_pcor') === 'on',
+            weddingSpouse1: formData.get('weddingSpouse1'),
+            weddingSpouse2: formData.get('weddingSpouse2'),
+            weddingLicense: formData.get('weddingLicense'),
+            weddingCounty: formData.get('weddingCounty'),
+            witness1: formData.get('witness1'),
+            witness1_id: formData.get('witness1_id')
         };
 
         if (id) {
@@ -3308,7 +3557,8 @@ window.NotaryCRM = {
             const ref = doc(window.firebaseDB, 'clients', id);
             try {
                 await updateDoc(ref, updates);
-                AuditManager.logAction('Actualización de Cliente', updates.name || id, `ID: ${id}`);
+                const clientItem = this.state.clients.find(c => c.id === id);
+                AuditManager.logAction('Actualización de Cliente', updates.name || (clientItem ? clientItem.name : id), `ID: ${id}`);
                 Toast.success('Cliente Actualizado', 'Los datos del cliente han sido actualizados.');
             } catch (err) {
                 console.error('Update client failed', err);
@@ -3362,18 +3612,50 @@ window.NotaryCRM = {
             });
         }
 
+        // Populate Specialized Notary Fields
+        if (form.querySelector('input[name="mileage"]')) form.querySelector('input[name="mileage"]').value = caseItem.mileage || 0;
+        if (form.querySelector('input[name="apostilleDestination"]')) form.querySelector('input[name="apostilleDestination"]').value = caseItem.apostilleDestination || '';
+        if (form.querySelector('input[name="apostilleTracking"]')) form.querySelector('input[name="apostilleTracking"]').value = caseItem.apostilleTracking || '';
+
+        if (form.querySelector('input[name="lsa_closing_disclosure"]')) form.querySelector('input[name="lsa_closing_disclosure"]').checked = !!caseItem.lsa_closing_disclosure;
+        if (form.querySelector('input[name="lsa_the_note"]')) form.querySelector('input[name="lsa_the_note"]').checked = !!caseItem.lsa_the_note;
+        if (form.querySelector('input[name="lsa_deed_of_trust"]')) form.querySelector('input[name="lsa_deed_of_trust"]').checked = !!caseItem.lsa_deed_of_trust;
+        if (form.querySelector('input[name="lsa_pcor"]')) form.querySelector('input[name="lsa_pcor"]').checked = !!caseItem.lsa_pcor;
+
+        if (form.querySelector('input[name="weddingSpouse1"]')) form.querySelector('input[name="weddingSpouse1"]').value = caseItem.weddingSpouse1 || '';
+        if (form.querySelector('input[name="weddingSpouse2"]')) form.querySelector('input[name="weddingSpouse2"]').value = caseItem.weddingSpouse2 || '';
+        if (form.querySelector('input[name="weddingLicense"]')) form.querySelector('input[name="weddingLicense"]').value = caseItem.weddingLicense || '';
+        if (form.querySelector('input[name="weddingCounty"]')) form.querySelector('input[name="weddingCounty"]').value = caseItem.weddingCounty || '';
+
+        if (form.querySelector('input[name="witness1"]')) form.querySelector('input[name="witness1"]').value = caseItem.witness1 || '';
+        if (form.querySelector('input[name="witness1_id"]')) form.querySelector('input[name="witness1_id"]').value = caseItem.witness1_id || '';
+
+        // Trigger toggle fields based on type
+        if (window.SpecializedManager) SpecializedManager.toggleFields(caseItem.type);
+
         this.openModal('case-modal');
     },
 
     async updateCase(id, updates) {
         if (this.useFirestore) {
             if (!this.currentUser) return alert('Debes iniciar sesión para editar casos.');
-            const { doc, updateDoc, getDoc } = window.dbFuncs;
+            const { doc, updateDoc } = window.dbFuncs;
             const ref = doc(window.firebaseDB, 'cases', id);
+
+            // Get current case for better logging
+            const caseItem = this.state.cases.find(c => c.id === id);
+            const caseName = caseItem ? `Expediente #${caseItem.caseItem || caseItem.caseNumber}` : id;
+
             try {
-                // update basic fields
                 await updateDoc(ref, updates);
-                AuditManager.logAction('Actualización de Caso', updates.caseNumber || id, `ID: ${id}`);
+
+                // Detailed audit details
+                let details = [`ID: ${id}`];
+                if (updates.status) details.push(`Estado: ${updates.status.toUpperCase()}`);
+                if (updates.paymentStatus) details.push(`Pago: ${updates.paymentStatus.toUpperCase()}`);
+                if (updates.amount) details.push(`Monto: ${this.formatCurrency(updates.amount)}`);
+
+                AuditManager.logAction('Actualización de Caso', caseName, details.join(' | '));
                 Toast.success('Caso Actualizado', 'Los datos del expediente han sido actualizados.');
             } catch (err) {
                 console.error('Update case failed', err);
@@ -3403,8 +3685,267 @@ window.NotaryCRM = {
     // Aliases for compatibility with HTML onclick handlers
     openEditCaseModal(id) { this.editCasePrompt(id); },
     openEditModal(id) { this.editClientPrompt(id); },
-    showClientDetails(id) { this.editClientPrompt(id); }, // Reusing edit modal for details for now
-    showCaseDetails(id) { this.editCasePrompt(id); }, // Reusing edit modal for details for now
+    // Consolidated showClientDetails below
+    showCaseDetails(id) {
+        console.log('Attempting to show details for case ID:', id);
+        // Use loose equality to handle string/number mismatches
+        const caseItem = this.state.cases.find(c => c.id == id);
+
+        if (!caseItem) {
+            console.error('Case not found for ID:', id);
+            // Optionally try debugging state
+            console.log('Available cases:', this.state.cases.length);
+            return;
+        }
+
+        console.log('Case found:', caseItem);
+
+        try {
+            // Ensure modal is open or elements exist
+            if (!document.getElementById('detail-case-number')) {
+                this.openModal('case-details-modal');
+                // Small delay for DOM to be ready if needed, though openModal usually just toggles class
+            }
+
+            // Fill basic info
+            // Fill basic info
+            const setField = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+                else console.warn(`Element not found: ${id}`);
+            };
+
+            setField('detail-case-number', `Expediente #${caseItem.caseNumber}`);
+            setField('detail-client-name', caseItem.clientName);
+            setField('detail-case-type', caseItem.type);
+            setField('detail-due-date', caseItem.dueDate || 'Sin fecha');
+            setField('detail-amount', this.formatCurrency(caseItem.amount));
+            setField('detail-location', caseItem.location || 'N/A');
+            setField('detail-mileage', caseItem.mileage || 0);
+            setField('detail-description', caseItem.description || 'Sin notas.');
+
+            // Status badge
+            const statusEl = document.getElementById('detail-case-status');
+            if (statusEl) {
+                statusEl.textContent = caseItem.status ? caseItem.status.toUpperCase() : 'UNKNOWN';
+                statusEl.className = `badge badge-${caseItem.status || 'pending'}`;
+            }
+
+            // Specialized Content
+            const container = document.getElementById('detail-specialized-container');
+            if (container) {
+                container.innerHTML = '';
+
+                // -- Section: Additional Standard & Custom Fields --
+                let standardInfo = `
+            <div style="margin-bottom: 2rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Información Adicional</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                   <div>
+                        <span style="color: #64748b; display: block; font-size: 0.8rem;">Estado de Pago:</span>
+                        <span class="badge" style="background: ${caseItem.paymentStatus === 'paid' ? '#dcfce7' : '#fee2e2'}; color: ${caseItem.paymentStatus === 'paid' ? '#166534' : '#991b1b'}; margin-top: 2px;">
+                            ${caseItem.paymentStatus ? caseItem.paymentStatus.toUpperCase() : 'PENDIENTE'}
+                        </span>
+                   </div>
+                   <div>
+                        <span style="color: #64748b; display: block; font-size: 0.8rem;">Fecha Creación:</span>
+                        <span>${this.formatDate(caseItem.createdAt)}</span>
+                   </div>
+                </div>
+            </div>
+        `;
+
+                let tasksHtml = '';
+                if (window.TaskManager && typeof TaskManager.renderTaskList === 'function') {
+                    tasksHtml = `
+                    <div style="margin-bottom: 2rem;">
+                        ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
+                    </div>`;
+                }
+
+                let notesHtml = '';
+                if (window.NoteManager && typeof NoteManager.renderNotes === 'function') {
+                    notesHtml = `
+                    <div style="margin-bottom: 2rem;">
+                        ${NoteManager.renderNotes(caseItem.id, caseItem.internalNotes)}
+                    </div>`;
+                }
+
+                let customFieldsHtml = '';
+                if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                    let fieldsList = Object.entries(caseItem.customFields).map(([key, value]) => `
+                <div style="background: white; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <span style="color: #64748b; display: block; font-size: 0.75rem; text-transform: uppercase;">${key}</span>
+                    <span style="font-weight: 600; color: #334155;">${value || '-'}</span>
+                </div>
+            `).join('');
+
+                    customFieldsHtml = `
+            <div style="margin-bottom: 2rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Campos Personalizados</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+                    ${fieldsList}
+                </div>
+            </div>`;
+                }
+
+                // -- Section: Sidebar Layout --
+                const sidebarHtml = `
+                <div class="case-details-sidebar" style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="user" style="width: 16px;"></i> Cliente
+                        </h4>
+                        <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 700; color: #1e293b; font-size: 1rem; margin-bottom: 0.25rem;">${caseItem.clientName}</div>
+                            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">${caseItem.type}</div>
+                            <button class="btn btn-sm btn-outline-purple btn-block" onclick="NotaryCRM.showClientDetails('${caseItem.clientId}')">
+                                Ver Expediente Completo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem;">Acciones</h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <button class="btn btn-primary btn-block" onclick="NotaryCRM.generateInvoice('${caseItem.id}')" style="justify-content: center; gap: 10px;">
+                                <i data-lucide="receipt" style="width: 18px;"></i> Recibo PDF
+                            </button>
+                            <button class="btn btn-outline-purple btn-block" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" style="justify-content: center; gap: 10px;">
+                                <i data-lucide="pen-tool" style="width: 18px;"></i> Solicitar Firma
+                            </button>
+                            <button class="btn btn-block" style="background: #25d366; color: white; justify-content: center; gap: 10px;" onclick="NotaryCRM.sendReminder('${caseItem.id}', 'whatsapp')">
+                                <i data-lucide="message-circle" style="width: 18px;"></i> WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+
+                // Wrapper if we want standard grid
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = '1fr 300px';
+                container.style.gap = '2rem';
+                container.style.alignItems = 'start';
+
+                const mainContentHtml = `
+                    <div class="case-details-main-content">
+                        ${standardInfo}
+                        ${tasksHtml}
+                        ${notesHtml}
+                        ${customFieldsHtml}
+                    </div>
+                `;
+
+                container.innerHTML = mainContentHtml + sidebarHtml;
+
+                // -- Section: Specialized Type-Specific --
+                if (caseItem.type === 'Apostille') {
+                    container.innerHTML += `
+                <div style="background: #eff6ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #dbeafe; margin-top: 1.5rem;">
+                    <h5 style="margin: 0 0 1rem 0; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="globe" style="width: 18px; height: 18px;"></i> Detalles de Apostilla
+                    </h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <span style="font-size: 0.8rem; color: #1e3a8a; display: block;">País de Destino</span>
+                            <span style="font-weight: 600; font-size: 1.1rem; color: #1e3a8a;">${caseItem.apostilleDestination || 'N/A'}</span>
+                        </div>
+                        <div>
+                             <span style="font-size: 0.8rem; color: #1e3a8a; display: block;">Tracking #</span>
+                             <span style="font-family: monospace; background: white; padding: 2px 6px; border-radius: 4px;">${caseItem.apostilleTracking || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+                } else if (caseItem.type === 'Loan Signing') {
+                    container.innerHTML += `
+                <div style="background: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #dcfce7; margin-top: 1.5rem;">
+                     <h5 style="margin: 0 0 1rem 0; color: #166534; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-check" style="width: 18px; height: 18px;"></i> Checklist de Cierre (LSA)
+                    </h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${caseItem.lsa_closing_disclosure ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} Closing Disclosure
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${caseItem.lsa_the_note ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} The Note
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${caseItem.lsa_deed_of_trust ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} Deed of Trust
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${caseItem.lsa_pcor ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} PCOR
+                        </div>
+                    </div>
+                </div>
+            `;
+                } else if (caseItem.type === 'Wedding') {
+                    container.innerHTML += `
+                <div style="background: #fff1f2; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe4e6; margin-top: 1.5rem;">
+                    <h5 style="margin: 0 0 1rem 0; color: #9f1239; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="heart" style="width: 18px; height: 18px;"></i> Detalles de la Boda
+                    </h5>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                        <p style="margin: 0; font-size: 1.1rem; text-align: center; font-family: serif; font-style: italic; color: #881337;">
+                            ${caseItem.weddingSpouse1 || '???'} & ${caseItem.weddingSpouse2 || '???'}
+                        </p>
+                        <hr style="border-top: 1px dashed #fecdd3; margin: 0.5rem 0;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                             <div>
+                                <strong>Licencia:</strong> ${caseItem.weddingLicense || 'N/A'}
+                             </div>
+                             <div>
+                                <strong>Condado:</strong> ${caseItem.weddingCounty || 'N/A'}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+                }
+
+                // Witnesses
+                const witnessSection = document.getElementById('detail-witness-section');
+                const witnessList = document.getElementById('detail-witness-list');
+
+                if (witnessList && witnessSection) {
+                    // Reset list first
+                    witnessList.innerHTML = '';
+
+                    if (caseItem.witness1) {
+                        witnessSection.style.display = 'block';
+                        witnessList.innerHTML = `
+                    <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; width: 100%;">
+                        <div style="background: #e2e8f0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="user" style="color: #64748b;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b;">${caseItem.witness1}</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">ID: ${caseItem.witness1_id || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+                    } else {
+                        witnessSection.style.display = 'none';
+                    }
+                }
+
+                // Edit button setup
+                const editBtn = document.getElementById('detail-edit-btn');
+                if (editBtn) {
+                    editBtn.onclick = () => {
+                        this.closeModal('case-details-modal');
+                        this.editCasePrompt(id);
+                    };
+                }
+
+                this.openModal('case-details-modal');
+                if (window.lucide) window.lucide.createIcons();
+            } // Close if(container)
+        } catch (e) {
+            console.error('Error in showCaseDetails:', e);
+        }
+    },
 
     async updateCaseStatus(id, newStatus) {
         try {
@@ -3476,11 +4017,19 @@ window.NotaryCRM = {
         const completedCasesEl = document.getElementById('completed-cases');
         if (completedCasesEl) completedCasesEl.textContent = completedCases;
 
+        // Calculate Statistics
         const totalRevenue = this.state.cases
             .filter(c => c.paymentStatus === 'paid')
             .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        const totalRevenueEl = document.getElementById('total-revenue');
-        if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
+
+        const totalMileage = this.state.cases
+            .reduce((sum, c) => sum + (parseFloat(c.mileage) || 0), 0);
+
+        const revEl = document.getElementById('total-revenue');
+        if (revEl) revEl.textContent = this.formatCurrency(totalRevenue);
+
+        // Add mileage to report if possible
+        console.log(`Log de Kilometraje acumulado: ${totalMileage} millas`);
 
         const pendingPayments = this.state.cases
             .filter(c => c.paymentStatus !== 'paid')
@@ -3925,13 +4474,16 @@ window.NotaryCRM = {
         try {
             if (value && typeof value.toDate === 'function') {
                 dateObj = value.toDate();
+            } else if (value && typeof value.seconds === 'number') {
+                // Handle raw Firestore timestamp object {seconds, nanoseconds}
+                dateObj = new Date(value.seconds * 1000);
             } else {
                 dateObj = new Date(value);
             }
         } catch (e) {
             return 'N/A';
         }
-        if (isNaN(dateObj.getTime())) return 'N/A';
+        if (!dateObj || isNaN(dateObj.getTime())) return 'N/A';
 
         const options = {
             year: 'numeric',
@@ -4804,20 +5356,23 @@ window.NotaryCRM = {
                 <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Historial de Auditoría</h4>
                 <div class="audit-list">
                     ${(() => {
-                const logs = AuditManager.getLogs().filter(l => l.details && l.details.includes(id));
-                const clientObj = this.state.clients.find(c => c.id === id);
-                const nameLogs = AuditManager.getLogs().filter(l => l.target === clientObj.name);
-                const allLogs = [...new Set([...logs, ...nameLogs])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const logs = AuditManager.getLogs().filter(l => l.details && (l.details.includes(id) || l.details.includes(client.id)));
+                const resourceLogs = AuditManager.getLogs().filter(l => l.resource === client.name);
+                const allLogs = [...new Set([...logs, ...resourceLogs])].sort((a, b) => {
+                    const dateA = a.timestamp && a.timestamp.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
+                    const dateB = b.timestamp && b.timestamp.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
+                    return dateB - dateA;
+                });
 
-                return allLogs.length === 0 ? '<p>No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
-                            <div style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                return allLogs.length === 0 ? '<p class="empty-state">No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
+                            <div style="padding: 1.25rem; border: 1px solid #f1f5f9; border-radius: 10px; margin-bottom: 0.75rem; background: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
                                 <div>
-                                    <div style="font-weight: 600;">${l.action}</div>
-                                    <div style="font-size: 0.8rem; color: var(--text-light);">${l.details}</div>
+                                    <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">${l.action}</div>
+                                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 2px;">${l.details || '-'}</div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 0.75rem; color: var(--text-light);">${new Date(l.timestamp).toLocaleString()}</div>
-                                    <div style="font-size: 0.7rem; font-weight: 700;">${l.user || 'Sistema'}</div>
+                                    <div style="font-size: 0.8rem; color: #1e293b; font-weight: 600;">${this.formatDate(l.timestamp, true)}</div>
+                                    <div style="font-size: 0.7rem; color: var(--color-primary); margin-top: 2px; text-transform: uppercase; font-weight: 700;">${l.userEmail || l.user || 'Sistema'}</div>
                                 </div>
                             </div>
                         `).join('');
@@ -4926,120 +5481,6 @@ window.NotaryCRM = {
         }
     },
 
-    showCaseDetails(id) {
-        const caseItem = this.state.cases.find(c => c.id === id);
-        if (!caseItem) return;
-
-        const client = this.state.clients.find(cl => cl.id === caseItem.clientId) || {};
-
-        const content = document.getElementById('case-details-content');
-        content.innerHTML = `
-            <div class="case-details-featured">
-                <div class="case-details-main">
-                    <div class="section-header">
-                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        <h4>Información del Expediente</h4>
-                    </div>
-                    
-                    <div class="case-info-grid">
-                        <div class="info-item">
-                            <span class="info-label">Número de Caso</span>
-                            <span class="info-value highlight">${caseItem.caseNumber}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Estado Actual</span>
-                            <div class="info-value">${this.renderStatusBadge(caseItem.status, null, caseItem.id)}</div>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Estado de Pago</span>
-                            <div class="info-value">
-                                ${this.renderPaymentStatusBadge(caseItem.paymentStatus, caseItem.id)}
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Costo Total</span>
-                            <span class="info-value amount">${this.formatCurrency(caseItem.amount)}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Fecha de Trámite</span>
-                            <span class="info-value">${this.formatDate(caseItem.createdAt || new Date())}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Fecha de Vencimiento</span>
-                            <span class="info-value">${this.formatDate(caseItem.dueDate)}</span>
-                        </div>
-                        ${caseItem.customFields ? Object.keys(caseItem.customFields).map(key => `
-                            <div class="info-item">
-                                <span class="info-label">${key}</span>
-                                <span class="info-value">${caseItem.customFields[key] || '-'}</span>
-                            </div>
-                        `).join('') : ''}
-                    </div>
-
-                    <div class="case-description-box">
-                        <span class="info-label">Descripción del Trámite</span>
-                        <p>${caseItem.description || 'Sin descripción detallada.'}</p>
-                    </div>
-
-                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; background: #fffbeb; padding: 1rem; border-radius: 12px; border: 1px solid #fef3c7;">
-                        <svg style="color: #d97706; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        <div>
-                            <span style="display:block; font-size: 0.75rem; font-weight: 700; color: #92400e; text-transform: uppercase;">Ubicación del Archivo</span>
-                            <span style="font-weight: 600; color: #d97706;">${caseItem.location || 'Oficina Central'}</span>
-                        </div>
-                    </div>
-
-                    ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
-                    ${NoteManager.renderNotes(caseItem.id, caseItem.internalNotes)}
-                </div>
-                
-                <div class="case-details-sidebar">
-                    <div class="client-mini-card">
-                        <div class="section-header">
-                            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <h4>Cliente</h4>
-                        </div>
-                        
-                        <div class="client-data-list">
-                            <div class="client-data-item">
-                                <span class="data-label">Nombre Completo</span>
-                                <span class="data-value">${client.name || caseItem.clientName}</span>
-                            </div>
-                            <div class="client-data-item">
-                                <span class="data-label">Identificación</span>
-                                <span class="data-value">${client.idNumber || 'N/A'}</span>
-                            </div>
-                            <div class="client-data-item">
-                                <span class="data-label">Teléfono</span>
-                                <span class="data-value">${client.phone || 'N/A'}</span>
-                            </div>
-                            <div class="client-data-item">
-                                <span class="data-label">Email</span>
-                                <span class="data-value">${client.email || 'N/A'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="case-actions-panel">
-                        <button class="btn btn-primary btn-block" onclick="NotaryCRM.generateInvoice('${caseItem.id}')">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Descargar Recibo
-                        </button>
-                        <button class="btn btn-block btn-outline-purple" onclick="NotaryCRM.sendForSignature('${caseItem.id}')">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            Solicitar Firma
-                        </button>
-                        <button class="btn btn-block" style="background: #25d366; color: white;" onclick="NotaryCRM.sendReminder('${caseItem.id}', 'whatsapp')">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            Enviar Recordatorio (WA)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this.openModal('case-details-modal');
-    },
 
     async addAppointment(form) {
         if (!this.currentUser) return alert('Debes iniciar sesión.');
@@ -5178,8 +5619,8 @@ window.NotaryCRM = {
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nº Control: ${caseItem.caseNumber}`, 140, 32);
-        doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 140, 38);
+        doc.text(`Nº Control: ${caseItem.caseNumber} `, 140, 32);
+        doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')} `, 140, 38);
 
         // 👨‍💼 Notary Details (Static Placeholder)
         doc.setFont('helvetica', 'bold');
@@ -5196,8 +5637,8 @@ window.NotaryCRM = {
         // Prefer data from current state, fallback to saved case name
         const clientName = client.name || caseItem.clientName || 'N/A';
         doc.text(clientName, 110, 60);
-        doc.text(`ID/DNI: ${client.idNumber || 'N/A'}`, 110, 65);
-        doc.text(`Tel: ${client.phone || 'N/A'}`, 110, 70);
+        doc.text(`ID / DNI: ${client.idNumber || 'N/A'} `, 110, 65);
+        doc.text(`Tel: ${client.phone || 'N/A'} `, 110, 70);
 
         const address = client.address || 'Sin dirección registrada';
         const splitAddress = doc.splitTextToSize(address, 70);
@@ -5215,7 +5656,7 @@ window.NotaryCRM = {
         doc.text(caseItem.type, 25, 105);
         doc.text(`(Ubicación: ${caseItem.location || 'Oficina'})`, 25, 110);
 
-        const amountStr = `$${(caseItem.amount || 0).toFixed(2)}`;
+        const amountStr = `$${(caseItem.amount || 0).toFixed(2)} `;
         doc.text(amountStr, 160, 105);
 
         // 💰 Summary
@@ -5275,7 +5716,7 @@ window.NotaryCRM = {
         const initials = initialsMap[serviceType] || 'NT';
         const date = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
         const random = Math.floor(1000 + Math.random() * 9000); // 4 digits
-        return `${initials}${date}${random}`;
+        return `${initials}${date}${random} `;
     },
 
     // Digital Signature Integration

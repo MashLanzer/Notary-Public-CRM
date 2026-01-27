@@ -86,9 +86,7 @@
                     <span class="badge-text">Notary License</span>
                 </div>
                 <div class="header-actions">
-
-
-                    <button class="btn-icon header-btn" id="theme-toggle" title="Cambiar Tema"
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme"
                         style="margin-right: 1rem;">
                         <svg class="icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -160,14 +158,7 @@
                     <i data-lucide="bar-chart-3"></i>
                     Reports
                 </button>
-                <button class="tab-btn" data-tab="users" id="users-tab-btn" style="display:none;" data-i18n="nav_users">
-                    <i data-lucide="user-cog"></i>
-                    Users
-                </button>
-                <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;" data-i18n="nav_audit">
-                    <i data-lucide="shield-check"></i>
-                    Auditoría / Historial
-                </button>
+                <!-- Users and Audit tabs hidden per user request to simplify workflow -->
             </div>
 
             <!-- Breadcrumbs -->
@@ -714,6 +705,60 @@
                 </div>
             </div>
 
+            <!-- Notary Journal Modal (Real Functionality) -->
+            <div class="modal" id="journal-modal">
+                <div class="modal-backdrop"></div>
+                <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header" style="background: #854d0e; color: white;">
+                        <h3 class="modal-title" style="color: white;">📔 Diario Notarial Oficial</h3>
+                        <button class="modal-close" data-modal="journal-modal"
+                            style="color: white; border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 2rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div>
+                                <p style="margin: 0; color: #854d0e; font-weight: 700;">REGISTRO DE ACTOS NOTARIALES</p>
+                                <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Cumple con los requisitos de
+                                    registro legal.</p>
+                            </div>
+                            <button class="btn btn-outline" onclick="NotaryCRM.exportJournal()">
+                                <i data-lucide="download"></i> Exportar Diario (PDF)
+                            </button>
+                        </div>
+
+                        <div
+                            style="background: #fdfaea; border: 1px solid #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; color: #92400e; font-size: 0.9rem; display: flex; align-items: flex-start; gap: 10px;">
+                            <i data-lucide="info" style="width: 20px; height: 20px;"></i>
+                            <p>Este diario se genera dinámicamente a partir de sus expedientes marcados como
+                                **Completados**. Asegúrese de registrar los testigos e identificaciones en cada caso.
+                            </p>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Tipo de Acto</th>
+                                        <th>Firmante</th>
+                                        <th>Identificación</th>
+                                        <th>Testigos</th>
+                                        <th>Honorarios</th>
+                                        <th style="text-align:right;">Ref.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="journal-table-body">
+                                    <tr>
+                                        <td colspan="7" class="empty-state">No hay actos completados para mostrar en el
+                                            diario.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Cases Tab -->
             <div class="tab-content" id="cases-tab">
                 <div class="actions-bar">
@@ -745,6 +790,12 @@
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                         <span data-i18n="add_case">Add Case</span>
+                    </button>
+                    <!-- Professional Journal Shortcut -->
+                    <button class="btn btn-outline" onclick="NotaryCRM.openModal('journal-modal')"
+                        style="border-color: #854d0e; color: #854d0e;">
+                        <i data-lucide="book" style="width: 16px; height: 16px; margin-right: 5px;"></i> Ver Libro
+                        Diario
                     </button>
                     <!-- Small export drop for cleaner UI if needed, kept buttons for now -->
                     <button class="btn" id="export-cases-csv">Export CSV</button>
@@ -792,7 +843,13 @@
                                 <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Crea documentos
                                     profesionales con firmas digitales integradas.</p>
                             </div>
-                            <div style="display: flex; gap: 0.75rem;">
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <button class="btn btn-sm btn-outline"
+                                    onclick="NotaryCRM.openModal('legal-library-modal')"
+                                    style="display: flex; align-items: center; gap: 5px;">
+                                    <i data-lucide="library" style="width: 14px; height: 14px;"></i>
+                                    📖 Librería de Juramentos
+                                </button>
                                 <button class="btn btn-sm btn-outline" id="btn-fill-demo"
                                     title="Rellenar con datos de prueba">
                                     Ejemplo
@@ -1372,6 +1429,16 @@
 
                 <!-- Step 1: Basic Info -->
                 <div class="form-step active" data-step="1">
+                    <div
+                        style="margin-bottom: 1.5rem; background: #f0f7ff; padding: 1rem; border-radius: 8px; border: 1px solid #dbeafe; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.85rem; color: #1e40af;">
+                            <i data-lucide="scan"
+                                style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 5px;"></i>
+                            <strong>ID Scanner (Mock)</strong>: Automate data entry by scanning a driver's license.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="NotaryCRM.mockScanID()">Escanear
+                            ID</button>
+                    </div>
                     <div class="form-row">
                         <div class="form-group flex-1">
                             <label class="form-label">Nombre Completo</label>
@@ -1389,10 +1456,17 @@
                             <input type="tel" class="form-input mask-phone" name="phone" placeholder="(555) 123-4567"
                                 required>
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group flex-1">
                             <label class="form-label">Dirección</label>
                             <input type="text" class="form-input" name="address" placeholder="Dirección completa"
                                 required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Referido por</label>
+                            <input type="text" class="form-input" name="referralSource"
+                                placeholder="Ej: Google, Abogado, Amigo">
                         </div>
                     </div>
                 </div>
@@ -1519,6 +1593,7 @@
                             <option value="Oath / Affirmation">Juramentos</option>
                             <option value="Loan Signing">Firma de Préstamos</option>
                             <option value="Acknowledgment">Reconocimiento de Firma</option>
+                            <option value="Wedding">Boda Notarial</option>
                             <option value="Other">Otro Servicio</option>
                         </select>
                     </div>
@@ -1559,6 +1634,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Kilometraje (Millas)</label>
+                        <input type="number" class="form-input" name="mileage" placeholder="0" step="0.1">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Description / Internal Notes</label>
                     <textarea class="form-input" name="description" rows="2" placeholder="Case details..."
@@ -1566,11 +1648,184 @@
                 </div>
                 <div id="case-custom-fields-container"
                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;"></div>
+
+                <!-- Specialized Section: Apostille -->
+                <div id="specialized-apostille"
+                    style="display: none; border: 1px dashed var(--color-primary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #f0f7ff;">
+                    <h4
+                        style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="globe" style="width: 16px; height: 16px;"></i>
+                        Detalles de Apostilla
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">País de Destino</label>
+                            <input type="text" class="form-input" name="apostilleCountry" placeholder="Ej: España">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tracking Envío</label>
+                            <input type="text" class="form-input" name="apostilleTracking" placeholder="Número de guía">
+                        </div>
+                    </div>
+                    <div
+                        style="margin-top: 0.5rem; font-size: 0.8rem; color: #64748b; background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #e0e7ff;">
+                        <i data-lucide="help-circle"
+                            style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i>
+                        <strong>Tip:</strong> Verifique si el país es miembro de la Convención de la Haya para emitir
+                        Apostilla o Autenticación.
+                        <a href="https://www.hcch.net/en/instruments/conventions/status-table/?cid=41" target="_blank"
+                            style="color: var(--color-primary);">Ver tabla de estados</a>
+                    </div>
+                </div>
+
+                <!-- Specialized Section: Loan Signing (LSA) -->
+                <div id="specialized-lsa"
+                    style="display: none; border: 1px dashed var(--color-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fffcf0;">
+                    <h4
+                        style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #854d0e; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="file-check" style="width: 16px; height: 16px;"></i>
+                        Checklist de Cierre (LSA)
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <input type="checkbox" name="lsa_cd"> Closing Disclosure
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <input type="checkbox" name="lsa_note"> The Note
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <input type="checkbox" name="lsa_deed"> Deed of Trust
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <input type="checkbox" name="lsa_pcor"> PCOR
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Specialized Section: Witnesses -->
+                <div class="form-group" style="border-top: 1px solid #f1f5f9; padding-top: 1rem; margin-top: 1rem;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="users" style="width: 16px; height: 16px;"></i>
+                        Testigos Requeridos
+                    </label>
+                    <div id="witness-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" class="form-input" name="witness1" placeholder="Nombre Testigo 1"
+                                style="flex: 2;">
+                            <input type="text" class="form-input" name="witness1_id" placeholder="ID/Licencia"
+                                style="flex: 1;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specialized Section: Wedding -->
+                <div id="specialized-wedding"
+                    style="display: none; border: 1px dashed #ec4899; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fff1f2;">
+                    <h4
+                        style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #be123c; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="heart" style="width: 16px; height: 16px;"></i>
+                        Detalles de Boda Notarial
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Nombre Cónyuge 1</label>
+                            <input type="text" class="form-input" name="weddingSpouse1" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Nombre Cónyuge 2</label>
+                            <input type="text" class="form-input" name="weddingSpouse2" placeholder="Nombre completo">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° Licencia de Matrimonio</label>
+                            <input type="text" class="form-input" name="weddingLicense" placeholder="Licencia #">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Condado de Emisión</label>
+                            <input type="text" class="form-input" name="weddingCounty" placeholder="Ej: Miami-Dade">
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary btn-block">Guardar Expediente</button>
             </form>
         </div>
     </div>
 
+    <!-- Case Details Modal (Premium View) -->
+    <div class="modal" id="case-details-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+                <div style="display: flex; flex-direction: column;">
+                    <h3 class="modal-title" style="color: white;" id="detail-case-number">Expediente #---</h3>
+                    <span id="detail-case-status" class="badge" style="margin-top: 5px;">Status</span>
+                </div>
+                <button class="modal-close" data-modal="case-details-modal" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h4
+                            style="color: var(--color-primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                            Información del Cliente</h4>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 5px;" id="detail-client-name">---
+                        </p>
+                        <p style="color: #64748b; font-size: 0.9rem;" id="detail-case-type">---</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h4
+                            style="color: var(--color-primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                            Vencimiento e Importe</h4>
+                        <p style="font-size: 1.1rem; font-weight: 700; color: #0f172a;" id="detail-due-date">---</p>
+                        <p style="font-size: 1.5rem; font-weight: 800; color: #16a34a; margin-top: 5px;"
+                            id="detail-amount">$0.00</p>
+                    </div>
+                </div>
+
+                <div class="grid"
+                    style="grid-template-columns: 1fr 1fr; gap: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                    <div>
+                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Ubicación</p>
+                        <p style="font-weight: 600;" id="detail-location">---</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Kilometraje (Millas)</p>
+                        <p style="font-weight: 600;" id="detail-mileage">0</p>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">Descripción / Notas</p>
+                        <p style="font-style: italic;" id="detail-description">Sin descripción adicional.</p>
+                    </div>
+                </div>
+
+                <!-- Specific Sections Container -->
+                <div id="detail-specialized-container">
+                    <!-- Dynamic Content -->
+                </div>
+
+                <!-- Testigos Section -->
+                <div id="detail-witness-section"
+                    style="display:none; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 1.5rem;">
+                    <h4
+                        style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="users" style="width: 18px; height: 18px;"></i> Testigos Registrados
+                    </h4>
+                    <div id="detail-witness-list" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <!-- Witnesses will go here -->
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" style="flex: 1;" id="detail-edit-btn">Editar Expediente</button>
+                    <button class="btn btn-outline" style="flex: 1;"
+                        onclick="NotaryCRM.closeModal('case-details-modal')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Reminders Modal -->
     <div class="modal" id="reminders-modal">
         <div class="modal-backdrop"></div>
@@ -1813,24 +2068,6 @@
         </div>
     </div>
 
-    <!-- Case Details Modal -->
-    <div class="modal" id="case-details-modal">
-        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('case-details-modal')"></div>
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Detalles del Caso</h3>
-                <button class="modal-close" data-modal="case-details-modal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body" id="case-details-content">
-                <!-- Content injected via JS -->
-            </div>
-        </div>
-    </div>
 
     <!-- Tab Content for Reminders -->
     <div id="reminders-tab-container" style="display:none;">
@@ -2470,6 +2707,16 @@
                         </div>
                         <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
                     </button>
+
+                    <button class="btn" onclick="NotaryCRM.openModal('notary-commission-modal')"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: #fdfaea; border: 1px solid #fef3c7; text-align: left;">
+                        <i data-lucide="award" style="color: #b45309;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #92400e;">Perfil y Comisión Notarial</div>
+                            <div style="font-size: 0.8rem; color: #b45309;">N° de licencia y fecha de vencimiento</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2704,6 +2951,260 @@
         </div>
     </div>
 
+    <!-- Legal Library (Juramentos) Modal -->
+    <div class="modal" id="legal-library-modal" style="z-index: 5000;">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('legal-library-modal')"></div>
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white;">
+                <h3 class="modal-title">Librería de Juramentos y Certificados</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('legal-library-modal')"
+                    style="color: white; border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Juramento Simple</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('jurat-simple')">Copiar</button>
+                        </div>
+                        <code id="jurat-simple"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "Do you solemnly swear [or affirm] that the statements contained in this document are true and correct to the best of your knowledge and belief [so help you God]?"
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Acknowledgment (FL)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('ack-fl')">Copiar</button>
+                        </div>
+                        <code id="ack-fl"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "The foregoing instrument was acknowledged before me this ____ day of ________, 20____, by [Name], who is personally known to me or who has produced [ID] as identification."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Copia Fiel</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('copy-cert')">Copiar</button>
+                        </div>
+                        <code id="copy-cert"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "On this ____ day of ________, 20____, I attest that the preceding document is a true, exact, complete, and unaltered photocopy from the original presented to me."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Jurat (Florida)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('jurat-fl')">Copiar</button>
+                        </div>
+                        <code id="jurat-fl"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "Sworn to [or affirmed] and subscribed before me this ____ day of ________, 20____, by [Name], who is personally known to me or who has produced [ID] as identification."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Juramento (Testigo Creíble)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('oath-witness')">Copiar</button>
+                        </div>
+                        <code id="oath-witness"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "Do you solemnly swear [or affirm] that the person appearing before me is the person named in this document, and that you personally know them to be such person?"
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Certificado de Traducción</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('cert-trans')">Copiar</button>
+                        </div>
+                        <code id="cert-trans"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "I, [Translator Name], certify that I am fluent in English and [Language], and that the foregoing is a true and accurate translation of the attached document."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Afirmación Solemne</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('affirm-sol')">Copiar</button>
+                        </div>
+                        <code id="affirm-sol"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "Do you affirm, under the penalties of perjury, that the statements in this document are true according to the best of your knowledge?"
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Boda (Ceremonia Simple)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('wedding-script')">Copiar</button>
+                        </div>
+                        <code id="wedding-script"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "By virtue of the authority vested in me by the State, I now pronounce you as legally married. You may seal your vows with a kiss."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Firma por Marca (Testigo)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('sig-mark')">Copiar</button>
+                        </div>
+                        <code id="sig-mark"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "I, [Witness Name], testify that [Signer Name] made their mark in my presence as their official signature, being unable to write due to physical disability."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Verificación bajo Juramento</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('verif-oath')">Copiar</button>
+                        </div>
+                        <code id="verif-oath"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "State of ____, County of ____. Signed and sworn to [or affirmed] before me on [Date] by [Signer Name]."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Copia Certificada (FL)</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('copy-cert-fl')">Copiar</button>
+                        </div>
+                        <code id="copy-cert-fl"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "On this [Date], I attest that the preceding document is a true, exact, complete, and unaltered photocopy from the original presented to me."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Juramento de Cargo</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('oath-office')">Copiar</button>
+                        </div>
+                        <code id="oath-office"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "I do solemnly swear [or affirm] that I will support, protect, and defend the Constitution and Government of the United States and of the State of Florida."
+                        </code>
+                    </div>
+                    <div class="card"
+                        style="padding: 1.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; font-size: 1rem;">Reconocimiento de Firma</h4>
+                            <button class="btn btn-sm btn-outline"
+                                onclick="NotaryCRM.copyText('ack-simple')">Copiar</button>
+                        </div>
+                        <code id="ack-simple"
+                            style="display: block; background: #f8fafc; padding: 1rem; border-radius: 4px; font-size: 0.85rem; line-height: 1.5; color: #334155;">
+                            "The foregoing instrument was acknowledged before me this ____ day of ________, 20____, by [Name]."
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Notary Commission Modal -->
+    <div class="modal" id="notary-commission-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('notary-commission-modal')"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Mi Comisión Notarial</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('notary-commission-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form class="modal-body" id="notary-commission-form"
+                onsubmit="event.preventDefault(); window.NotaryCRM.saveCommission(this);">
+                <div class="form-row">
+                    <div class="form-group flex-1" style="margin-bottom: 1rem;">
+                        <label class="form-label">Número de Comisión</label>
+                        <input type="text" class="form-input" name="commissionNumber" placeholder="Ej: 12345678"
+                            required>
+                    </div>
+                    <div class="form-group flex-1" style="margin-bottom: 1rem;">
+                        <label class="form-label">Estado / Condado</label>
+                        <input type="text" class="form-input" name="commissionState"
+                            placeholder="Ej: Florida, Miami-Dade">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Fecha de Vencimiento de Comisión</label>
+                    <input type="date" class="form-input" name="commissionExpiry" required>
+                </div>
+                <div
+                    style="background: #fff8e1; border: 1px solid #ffe082; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p
+                        style="font-size: 0.85rem; color: #795548; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="bell" style="width: 16px; height: 16px;"></i>
+                        El sistema le enviará alertas automáticas 90, 60 y 30 días antes de que su comisión expire.
+                    </p>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Actualizar Credenciales</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Security Paper Inventory Modal -->
+    <div class="modal" id="security-paper-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('security-paper-modal')"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inventario de Papel de Seguridad</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('security-paper-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">Hojas Disponibles</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);"
+                        id="paper-stock-count">0</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rango de Folios (Inicio - Fin)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" class="form-input" id="paper-start" placeholder="0001">
+                        <input type="number" class="form-input" id="paper-end" placeholder="0100">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="NotaryCRM.addPaperStock()">Cargar Inventario</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
@@ -2713,6 +3214,7 @@
     <!-- PDF & Signature Libs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
     <script type="module" src="firebase-init.js"></script>
