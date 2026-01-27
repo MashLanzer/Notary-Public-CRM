@@ -13,54 +13,58 @@ service cloud.firestore {
     }
 
     // Users: only the user may read/write their profile doc
-    // Users: only the user may read/write their profile doc
     match /users/{userId} {
-      // Users may read/write their own profile. Admins may update other users (for role management).
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       
-      // Allow user to manage their own subcollections (e.g. settings)
       match /{subcollection=**} {
         allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
     }
 
-    // Clients: only owner (creator) or admin can create/read/update/delete
+    // Clients
     match /clients/{clientId} {
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       allow read: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Cases: accessible by owner/admin, OR publicly for the status portal
+    // Cases
     match /cases/{caseId} {
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow read: if true; // Enabled for public status portal
+      allow read: if true; 
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Appointments: public can CREATE (booking) and READ (calendar availability)
+    // Requests (Profile Updates) 
+    // Allow any signed in user to create and read (needed for client portal)
+    match /requests/{requestId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Appointments
     match /appointments/{appId} {
-      allow create: if true; // Public booking allowed
-      allow read: if true;   // Public availability check allowed
+      allow create: if true; 
+      allow read: if true;   
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Reminders: only owner or admin can access
+    // Reminders
     match /reminders/{reminderId} {
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       allow read, update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Audit Logs: Authenticated users can write logs, only Admins can read
+    // Audit Logs
     match /audit_logs/{logId} {
       allow create: if isSignedIn();
       allow read: if isAdmin();
     }
 
-    // Blocked Dates: Authenticated users can read/write (for managing their calendar)
-    // Public can READ to see availability
+    // Blocked Dates
     match /blocked_dates/{docId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;

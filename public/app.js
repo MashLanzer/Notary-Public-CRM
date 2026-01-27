@@ -1045,6 +1045,10 @@ const AuditManager = {
         }).join('');
     },
 
+    getLogs() {
+        return this.logs || [];
+    },
+
     attachListeners() {
         const refreshBtn = document.getElementById('refresh-logs-btn');
         if (refreshBtn) {
@@ -1054,6 +1058,10 @@ const AuditManager = {
         }
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.AuditManager = AuditManager;
+}
 
 // ============================================
 // CASE TEMPLATES MANAGER
@@ -1656,7 +1664,11 @@ window.NotaryCRM = {
             const settingsRef = doc(db, 'settings', 'fields');
             const snap = await getDoc(settingsRef);
             if (snap.exists()) {
-                this.state.customFields = snap.data();
+                const data = snap.data();
+                this.state.customFields = {
+                    clients: data.clients || [],
+                    cases: data.cases || []
+                };
             } else {
                 // Initialize default empty
                 await setDoc(settingsRef, this.state.customFields);
@@ -1733,7 +1745,13 @@ window.NotaryCRM = {
         const container = document.getElementById(`${type === 'client' ? 'client' : 'case'}-custom-fields-container`);
         if (!container) return;
 
-        const fields = (type === 'client' ? this.state.customFields.clients : this.state.customFields.cases) || [];
+        // Safeguard for custom fields state
+        if (!this.state.customFields) {
+            this.state.customFields = { clients: [], cases: [] };
+        }
+
+        const key = type === 'client' ? 'clients' : 'cases';
+        const fields = Array.isArray(this.state.customFields[key]) ? this.state.customFields[key] : [];
 
         container.innerHTML = fields.map(f => `
             <div class="form-group">
@@ -2486,10 +2504,7 @@ window.NotaryCRM = {
                     const usersBtn = document.getElementById('users-tab-btn');
                     const auditBtn = document.getElementById('audit-tab-btn'); // Assuming ID, check HTML if needed
                     if (usersBtn) usersBtn.style.display = 'none';
-                    // if (auditBtn) auditBtn.style.display = 'none'; // Audit might be useful for personal actions? Keep it if relevant. 
-                    // Actually, AuditManager logs "System" events. If it logs their own events, fine. 
-                    // But usually "Audit" implies seeing what OTHERS did. 
-                    // Let's hide it to be safe as requested "oculta la seccion usuarios y auditoria".
+                    if (auditBtn) auditBtn.style.display = 'none';
                     const auditLink = document.querySelector('button[onclick*="audit"]'); // finding by handler or ID
                     // The sidebar buttons usually have IDs like 'dashboard-tab-btn'.
                     // I will search for them in next step if I can't find ID.
@@ -2686,11 +2701,10 @@ window.NotaryCRM = {
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
         if (tabName === 'emails') EmailManager.renderTemplates();
-        if (tabName === 'documents' && window.DocumentsManager) {
-            const layout = document.querySelector('.documents-layout');
-            if (layout) layout.style.display = 'grid'; // Ensure grid is restored
-            DocumentsManager.updatePreview();
-            setTimeout(() => DocumentsManager.resizeCanvas(), 100);
+
+        // Refresh icons on tab switch
+        if (window.lucide) {
+            window.lucide.createIcons();
         }
     },
 
@@ -2728,6 +2742,17 @@ window.NotaryCRM = {
         }
         if (modalId === 'case-modal') {
             this.renderCustomFieldsInForm('case');
+        }
+        if (modalId === 'client-custom-fields-modal') {
+            this.renderCustomFieldsConfig('client');
+        }
+        if (modalId === 'case-custom-fields-modal') {
+            this.renderCustomFieldsConfig('case');
+        }
+
+        // Initialize Lucide icons if any were injected
+        if (window.lucide) {
+            window.lucide.createIcons();
         }
 
         // Announce modal opening for screen readers
@@ -2908,7 +2933,7 @@ window.NotaryCRM = {
         const nextBtn = document.getElementById('next-client-step');
         const submitBtn = document.getElementById('submit-client-form');
 
-        if (prevBtn) prevBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+
 
         if (step === 3) {
             if (nextBtn) nextBtn.style.display = 'none';
@@ -2916,6 +2941,12 @@ window.NotaryCRM = {
         } else {
             if (nextBtn) nextBtn.style.display = 'block';
             if (submitBtn) submitBtn.style.display = 'none';
+        }
+
+        if (step === 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+        } else {
+            if (prevBtn) prevBtn.style.display = 'block';
         }
     },
 
@@ -4659,7 +4690,7 @@ window.NotaryCRM = {
         window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
     },
 
-    async showClientDetails(id) {
+    async showClientDetails(id, tab = 'cases') {
         const client = this.state.clients.find(c => c.id === id);
         if (!client) return;
 
@@ -4710,12 +4741,23 @@ window.NotaryCRM = {
                 `).join('') : ''}
             </div>
             
-            <div style="display:flex; gap:1rem; border-bottom: 1px solid #eee; margin-bottom: 1.5rem;">
-                <button class="btn btn-link active" onclick="NotaryCRM.switchClientDetailTab('cases', '${id}')">${I18nManager.currentLang === 'es' ? 'Casos' : 'Cases'}</button>
-                <button class="btn btn-link" onclick="NotaryCRM.switchClientDetailTab('audit', '${id}')">${I18nManager.currentLang === 'es' ? 'Auditoría / Historial' : 'Audit History'}</button>
+            <div style="display:flex; gap:0.5rem; background: #f1f5f9; padding: 0.4rem; border-radius: 12px; margin-bottom: 2rem; width: fit-content;">
+                <button class="btn btn-sm ${tab === 'cases' || !tab ? 'btn-primary' : 'btn-ghost'}" 
+                        style="display: flex; align-items: center; gap: 0.5rem; border: none !important; border-radius: 8px !important;"
+                        onclick="NotaryCRM.switchClientDetailTab('cases', '${id}')">
+                    <i data-lucide="folder" style="width: 16px; height: 16px;"></i>
+                    ${I18nManager.currentLang === 'es' ? 'Casos' : 'Cases'}
+                </button>
+                <button class="btn btn-sm ${tab === 'audit' ? 'btn-primary' : 'btn-ghost'}" 
+                        style="display: flex; align-items: center; gap: 0.5rem; border: none !important; border-radius: 8px !important;"
+                        onclick="NotaryCRM.switchClientDetailTab('audit', '${id}')">
+                    <i data-lucide="history" style="width: 16px; height: 16px;"></i>
+                    ${I18nManager.currentLang === 'es' ? 'Auditoría' : 'Audit'}
+                </button>
             </div>
 
             <div id="client-detail-tab-content">
+                ${tab === 'cases' ? `
                 <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Historial de Casos' : 'Case History'} (${clientCases.length})</h4>
                 <div class="table-container" style="margin-bottom: 2rem;">
                     <table class="data-table">
@@ -4758,43 +4800,45 @@ window.NotaryCRM = {
                         </div>
                     </div>
                 </div>
+                ` : `
+                <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Historial de Auditoría</h4>
+                <div class="audit-list">
+                    ${(() => {
+                const logs = AuditManager.getLogs().filter(l => l.details && l.details.includes(id));
+                const clientObj = this.state.clients.find(c => c.id === id);
+                const nameLogs = AuditManager.getLogs().filter(l => l.target === clientObj.name);
+                const allLogs = [...new Set([...logs, ...nameLogs])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                return allLogs.length === 0 ? '<p>No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
+                            <div style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600;">${l.action}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-light);">${l.details}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.75rem; color: var(--text-light);">${new Date(l.timestamp).toLocaleString()}</div>
+                                    <div style="font-size: 0.7rem; font-weight: 700;">${l.user || 'Sistema'}</div>
+                                </div>
+                            </div>
+                        `).join('');
+            })()}
+                </div>
+                `}
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                 <button class="btn btn-sm btn-ghost" onclick="NotaryCRM.closeModal('client-details-modal')">Cerrar</button>
             </div>
         `;
 
+        if (window.lucide) window.lucide.createIcons();
         this.openModal('client-details-modal');
     },
 
     switchClientDetailTab(tab, clientId) {
-        const container = document.getElementById('client-detail-tab-content');
         if (tab === 'audit') {
-            // Get audit logs for this client
-            const logs = AuditManager.getLogs().filter(l => l.details && l.details.includes(clientId));
-            // Or many times logs just mention the name
-            const client = this.state.clients.find(c => c.id === clientId);
-            const nameLogs = AuditManager.getLogs().filter(l => l.target === client.name);
-
-            const allLogs = [...new Set([...logs, ...nameLogs])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            container.innerHTML = `
-                <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Historial de Auditoría</h4>
-                <div class="audit-list">
-                    ${allLogs.length === 0 ? '<p>No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
-                        <div style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600;">${l.action}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-light);">${l.details}</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 0.75rem; color: var(--text-light);">${new Date(l.timestamp).toLocaleString()}</div>
-                                <div style="font-size: 0.7rem; font-weight: 700;">${l.user || 'Sistema'}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            this.showClientDetails(clientId, 'audit');
         } else {
-            // Reload cases tab
-            this.showClientDetails(clientId);
+            this.showClientDetails(clientId, 'cases');
         }
     },
 

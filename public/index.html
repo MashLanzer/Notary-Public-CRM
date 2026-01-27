@@ -25,6 +25,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3a8a">
     <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
@@ -83,6 +86,8 @@
                     <span class="badge-text">Notary License</span>
                 </div>
                 <div class="header-actions">
+
+
                     <button class="btn-icon header-btn" id="theme-toggle" title="Cambiar Tema"
                         style="margin-right: 1rem;">
                         <svg class="icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -118,6 +123,9 @@
                 </div>
             </div>
         </div>
+        </div>
+        </div>
+        </div>
     </header>
 
     <!-- Main Content -->
@@ -135,7 +143,7 @@
                 </button>
                 <button class="tab-btn" data-tab="cases" data-i18n="nav_cases">
                     <i data-lucide="briefcase"></i>
-                    Cases
+                    Casos
                 </button>
                 <button class="tab-btn" data-tab="calendar" data-i18n="nav_calendar">
                     <i data-lucide="calendar"></i>
@@ -148,10 +156,6 @@
                 <button class="tab-btn" data-tab="emails" id="emails-tab-btn">
                     Docs & Email
                 </button>
-                <button class="tab-btn" data-tab="settings" data-i18n="nav_settings">
-                    <i data-lucide="settings"></i>
-                    Configuración
-                </button>
                 <button class="tab-btn" data-tab="reports" data-i18n="nav_reports">
                     <i data-lucide="bar-chart-3"></i>
                     Reports
@@ -162,7 +166,7 @@
                 </button>
                 <button class="tab-btn" data-tab="audit" id="audit-tab-btn" style="display:none;" data-i18n="nav_audit">
                     <i data-lucide="shield-check"></i>
-                    Auditoría
+                    Auditoría / Historial
                 </button>
             </div>
 
@@ -202,15 +206,6 @@
                 <div class="dashboard-body">
                     <div class="actions-bar" style="margin-bottom: 1.5rem;">
                         <h2 class="section-title">Dashboard</h2>
-                        <button class="btn" id="customize-dashboard-btn">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
-                                <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
-                                </path>
-                            </svg>
-                            Personalizar
-                        </button>
                     </div>
 
                     <div class="stats-grid" id="dashboard-stats-grid"
@@ -375,7 +370,7 @@
                     <div class="card" style="margin:0; height: 100%;">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 class="card-title" style="margin:0;">📅 Agenda de Hoy</h3>
+                            <h3 class="card-title" style="margin:0;">Agenda de Hoy</h3>
                             <span id="today-appointments-badge" class="badge"
                                 style="background:#eff6ff; color:#1d4ed8;">0</span>
                         </div>
@@ -388,7 +383,7 @@
                     <div class="card" style="margin:0; height: 100%;">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 class="card-title" style="margin:0;">📊 Actividad del Mes</h3>
+                            <h3 class="card-title" style="margin:0;">Actividad del Mes</h3>
                             <span class="badge" style="background:#f0fdf4; color:#15803d;">Activo</span>
                         </div>
                         <div style="padding: 0.5rem 0;">
@@ -397,11 +392,7 @@
                                 <span style="color: #64748b;">Casos Activos</span>
                                 <span id="dash-active-count" style="font-weight: 700; color: #0f172a;">0</span>
                             </div>
-                            <div
-                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
-                                <span style="color: #64748b;">Firmas Recibidas</span>
-                                <span id="dash-signed-count" style="font-weight: 700; color: #0f172a;">0</span>
-                            </div>
+
                             <div
                                 style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
                                 <span style="color: #64748b;">Ingresos del Mes</span>
@@ -412,11 +403,16 @@
                                 <span style="color: #64748b;">Nuevos Clientes</span>
                                 <span id="dash-new-clients" style="font-weight: 700; color: #0f172a;">0</span>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
-                                <button class="btn btn-sm btn-outline" onclick="NotaryCRM.switchTab('clients')">👥
-                                    Clientes</button>
-                                <button class="btn btn-sm btn-primary" onclick="NotaryCRM.switchTab('cases')">💼
-                                    Casos</button>
+                            <div
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.5rem;">
+                                <button class="btn btn-outline" onclick="NotaryCRM.switchTab('clients')"
+                                    style="padding: 0.875rem; font-weight: 600;">
+                                    Clientes
+                                </button>
+                                <button class="btn btn-primary" onclick="NotaryCRM.switchTab('cases')"
+                                    style="padding: 0.875rem; font-weight: 600;">
+                                    Casos
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -592,16 +588,18 @@
                     <div
                         style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 1rem;">
                         <h2 class="section-title" style="margin: 0;">💰 Análisis de Ingresos y Servicios</h2>
-                        <button class="btn btn-primary" onclick="PaymentManager.promptPayPalConfig()"
-                            title="Configurar Cuenta de PayPal para Recibir Pagos"
-                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+                        <button class="btn btn-outline" onclick="NotaryCRM.openModal('settings-modal')"
+                            title="Configuración General"
+                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; margin-left: 10px;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 1.25rem; height: 1.25rem;">
                                 <circle cx="12" cy="12" r="3"></circle>
-                                <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
-                                <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                                 </path>
                             </svg>
-                            ⚙️ Configurar PayPal
+                            Configuración
                         </button>
                     </div>
                     <div class="header-actions" style="width: 100%;">
@@ -797,11 +795,11 @@
                             <div style="display: flex; gap: 0.75rem;">
                                 <button class="btn btn-sm btn-outline" id="btn-fill-demo"
                                     title="Rellenar con datos de prueba">
-                                    <span style="margin-right: 5px;">🪄</span> Ejemplo
+                                    Ejemplo
                                 </button>
                                 <button class="btn btn-sm btn-outline" id="btn-clear-fields"
                                     title="Borrar todos los campos" style="color: #ef4444; border-color: #fee2e2;">
-                                    <span style="margin-right: 5px;">🗑️</span> Limpiar
+                                    Limpiar
                                 </button>
                             </div>
                         </div>
@@ -1197,85 +1195,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- Settings Tab -->
-                <section id="settings-tab" class="tab-content">
-                    <div class="section-header">
-                        <h2 class="section-title">Configuración del CRM</h2>
-                        <p class="section-subtitle">Personalice los campos y el comportamiento del sistema.</p>
-                    </div>
 
-                    <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
-                        <div
-                            style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-                            <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Campos Personalizados</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
-                                Añada campos extra que aparecerán en el formulario de clientes.
-                                Ejemplo: "Referencia", "Facebook", "Nivel de Prioridad".
-                            </p>
-
-                            <div id="custom-fields-list"
-                                style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                                <!-- Fields will be listed here -->
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Nuevo Campo</label>
-                                <div style="display:flex; gap:0.5rem;">
-                                    <input type="text" id="new-custom-field-name" class="form-input"
-                                        placeholder="Nombre del campo">
-                                    <button class="btn btn-primary" onclick="NotaryCRM.addCustomField()">Añadir</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-                            <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Vista Previa del Formulario
-                            </h3>
-                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
-                                Así se verán los campos en la ficha del cliente.
-                            </p>
-                            <div id="custom-fields-preview"
-                                style="background: var(--color-gray-50); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-200);">
-                                <!-- Preview injected here -->
-                                <p class="empty-state">No hay campos personalizados configurados.</p>
-                            </div>
-                        </div>
-                    </div>
             </div>
-
-            <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem; margin-top: 2rem;">
-                <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Campos en Expedientes</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
-                        Campos adicionales para los casos. Ejemplo: "Facilitador", "Corte", "Número de Seguimiento".
-                    </p>
-
-                    <div id="case-custom-fields-list"
-                        style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                        <!-- Case fields will be listed here -->
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Nuevo Campo para Casos</label>
-                        <div style="display:flex; gap:0.5rem;">
-                            <input type="text" id="new-case-custom-field-name" class="form-input"
-                                placeholder="Nombre del campo">
-                            <button class="btn btn-primary" onclick="NotaryCRM.addCustomField('case')">Añadir</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Vista Previa (Casos)</h3>
-                    <div id="case-custom-fields-preview"
-                        style="background: var(--color-gray-50); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-200);">
-                        <p class="empty-state">No hay campos personalizados configurados para expedientes.</p>
-                    </div>
-                </div>
-            </div>
-            </section>
-        </div>
     </main>
 
     <!-- Footer -->
@@ -1430,7 +1351,7 @@
                     </svg>
                 </button>
             </div>
-            <form class="modal-body" id="client-form">
+            <form class="modal-body" id="client-form" style="max-height: 70vh; overflow-y: auto; overflow-x: hidden;">
                 <input type="hidden" name="id" />
 
                 <!-- Step Indicator -->
@@ -1523,35 +1444,38 @@
                     <div id="client-custom-fields-container"
                         style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;"></div>
                 </div>
-        </div>
 
-        <!-- Step 3: Additional -->
-        <div class="form-step" data-step="3">
-            <div class="form-group">
-                <label class="form-label">Notas / Observaciones</label>
-                <textarea class="form-input" name="notes" rows="3" placeholder="Detalles adicionales..."></textarea>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
-                <select class="form-input" name="relatedId" id="client-related-select">
-                    <option value="">Ninguna / Sin vínculo</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
-                <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
-            </div>
-        </div>
+                <!-- Step 3: Additional -->
+                <div class="form-step" data-step="3">
+                    <div class="form-group">
+                        <label class="form-label">Notas / Observaciones</label>
+                        <textarea class="form-input" name="notes" rows="3"
+                            placeholder="Detalles adicionales..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
+                        <select class="form-input" name="relatedId" id="client-related-select">
+                            <option value="">Ninguna / Sin vínculo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
+                        <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
+                    </div>
+                </div>
 
-        <!-- Footer Navigation -->
-        <div class="form-navigation">
-            <button type="button" class="btn" id="prev-client-step" style="visibility: hidden;">Atrás</button>
-            <button type="button" class="btn btn-primary" id="next-client-step">Siguiente</button>
-            <button type="submit" class="btn btn-primary" id="submit-client-form" style="display: none;">Guardar
-                Cliente</button>
+                <!-- Footer Navigation -->
+                <div class="form-navigation"
+                    style="display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn" id="prev-client-step" style="display: none;">Atrás</button>
+                    <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn btn-primary" id="next-client-step">Siguiente</button>
+                        <button type="submit" class="btn btn-primary" id="submit-client-form"
+                            style="display: none;">Guardar Cliente</button>
+                    </div>
+                </div>
+            </form>
         </div>
-        </form>
-    </div>
     </div>
 
     <!-- Add Case Modal -->
@@ -1953,150 +1877,7 @@
         </div>
     </div>
 
-    <!-- Dashboard Customization Modal -->
-    <div class="modal" id="customize-dashboard-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 2rem;">
-                <div>
-                    <h3 class="modal-title"
-                        style="color: white; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="width: 28px; height: 28px;">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
-                            <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
-                            </path>
-                        </svg>
-                        ⚙️ Personalizar Dashboard
-                    </h3>
-                    <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
-                        Configura tu espacio de trabajo a tu medida
-                    </p>
-                </div>
-                <button class="modal-close" data-modal="customize-dashboard-modal" style="color: white; opacity: 0.9;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body" style="padding: 2rem;">
-                <!-- Widgets Section -->
-                <div
-                    style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-                    <h4
-                        style="margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--color-primary);">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="width: 20px; height: 20px;">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                        📊 Widgets Disponibles
-                    </h4>
-                    <p style="color: var(--color-gray-600); margin: 0 0 1rem 0; font-size: 0.85rem;">
-                        Selecciona los widgets que quieres ver en tu dashboard
-                    </p>
 
-                    <div id="widgets-config" class="widgets-config">
-                        <!-- Widget toggles will be dynamically inserted here -->
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
-                    <button class="btn btn-primary" id="save-dashboard-config"
-                        style="flex: 1; padding: 0.875rem; font-weight: 600;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="width: 18px; height: 18px;">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                            <polyline points="7 3 7 8 15 8"></polyline>
-                        </svg>
-                        Guardar Cambios
-                    </button>
-                    <button class="btn" id="reset-dashboard-config" style="padding: 0.875rem;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="width: 18px; height: 18px;">
-                            <polyline points="1 4 1 10 7 10"></polyline>
-                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                        </svg>
-                        Restaurar
-                    </button>
-                </div>
-
-                <!-- Privacy & Data Section -->
-                <div style="border-top: 2px solid var(--color-gray-200); padding-top: 2rem;">
-                    <!-- Sync Indicators -->
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                        <div class="header-badge" id="sync-indicator"
-                            style="background: var(--color-success-light); padding: 0.5rem 1rem; border-radius: 8px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="width: 18px; height: 18px; color: var(--color-success);">
-                                <path d="M18 6 7 17l-5-5"></path>
-                            </svg>
-                            <span class="badge-text" id="sync-text"
-                                style="color: var(--color-success); font-weight: 600;">☁️ Cloud Synced</span>
-                        </div>
-                        <div class="header-badge"
-                            style="background: var(--color-primary-light); padding: 0.5rem 1rem; border-radius: 8px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="width: 18px; height: 18px; color: var(--color-primary);">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <span class="badge-text" style="color: var(--color-primary); font-weight: 600;">🔒
-                                Encrypted</span>
-                        </div>
-                    </div>
-
-                    <!-- GDPR Section -->
-                    <h4
-                        style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            style="width: 20px; height: 20px;">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                        🛡️ Privacidad y Datos (GDPR)
-                    </h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <button class="btn btn-outline btn-block" onclick="NotaryCRM.gdprExport()"
-                            style="text-align: left; padding: 1.25rem; border: 2px solid var(--color-gray-300); border-radius: 10px; transition: all 0.3s;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    style="width: 20px; height: 20px; color: var(--color-primary);">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                <div style="font-weight: 600; font-size: 0.9rem;">📥 Exportar mis Datos</div>
-                            </div>
-                            <div style="font-size: 0.75rem; color: var(--text-light);">Descarga toda tu información en
-                                formato JSON</div>
-                        </button>
-                        <button class="btn btn-outline btn-danger btn-block" onclick="NotaryCRM.gdprDelete()"
-                            style="text-align: left; padding: 1.25rem; border: 2px solid var(--color-danger); border-radius: 10px; transition: all 0.3s;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    style="width: 20px; height: 20px; color: var(--color-danger);">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
-                                <div style="font-weight: 600; font-size: 0.9rem;">🗑️ Borrar mi Cuenta</div>
-                            </div>
-                            <div style="font-size: 0.75rem; color: var(--text-light);">Eliminación permanente de todos
-                                los datos</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
@@ -2604,7 +2385,7 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
+    <!-- CONFIRMATION MODAL -->
     <div class="modal" id="confirm-modal">
         <div class="modal-backdrop" onclick="NotaryCRM.closeModal('confirm-modal')"></div>
         <div class="modal-content modal-confirm">
@@ -2621,6 +2402,304 @@
             <div class="confirm-actions">
                 <button class="btn" id="confirm-cancel">Cancelar</button>
                 <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('settings-modal')"></div>
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title">Configuración del CRM</h3>
+                <button class="modal-close" data-modal="settings-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-menu"
+                    style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn" onclick="PaymentManager.promptPayPalConfig()"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="credit-card" style="color: #2563eb;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Pagos y PayPal</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Configurar cuenta para cobros</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+
+                    <button class="btn" onclick="NotaryCRM.openModal('client-custom-fields-modal')"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="users" style="color: #16a34a;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Personalización de Clientes</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Gestionar campos adicionales</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+
+                    <button class="btn" onclick="NotaryCRM.openModal('case-custom-fields-modal')"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="folder" style="color: #db2777;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Personalización de Expedientes</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Campos específicos de casos</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+                    <button class="btn" onclick="DashboardManager.openCustomization()"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="layout" style="color: #8b5cf6;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Personalización del Dashboard</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Configurar widgets y vista principal
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+                    <button class="btn" onclick="NotaryCRM.openModal('privacy-data-modal')"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="shield" style="color: #0ea5e9;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Privacidad y Datos (GDPR)</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Gestionar tus datos y privacidad</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Customization Modal -->
+    <div class="modal" id="customize-dashboard-modal" style="z-index: 5000;">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('customize-dashboard-modal')"></div>
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 2rem; position: sticky; top: 0; z-index: 10;">
+                <h3 class="modal-title"
+                    style="color: white; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width: 28px; height: 28px;">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                        <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                        </path>
+                    </svg>
+                    Personalizar Dashboard
+                </h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('customize-dashboard-modal')"
+                    style="color: white; opacity: 0.9; position: absolute; top: 1.5rem; right: 1.5rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <!-- Widgets Section -->
+                <div
+                    style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                    <h4
+                        style="margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; color: var(--color-primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 20px; height: 20px;">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Widgets Disponibles
+                    </h4>
+                    <p style="color: var(--color-gray-600); margin: 0 0 1rem 0; font-size: 0.85rem;">
+                        Selecciona los widgets que quieres ver en tu dashboard
+                    </p>
+
+                    <div id="widgets-config" class="widgets-config">
+                        <!-- Widget toggles will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
+                    <button class="btn btn-primary" id="save-dashboard-config"
+                        style="flex: 1; padding: 0.875rem; font-weight: 600;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 18px; height: 18px;">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Guardar Cambios
+                    </button>
+                    <button class="btn" id="reset-dashboard-config" style="padding: 0.875rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 18px; height: 18px;">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        Restaurar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy & Data Modal -->
+    <div class="modal" id="privacy-data-modal" style="z-index: 5000;">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('privacy-data-modal')"></div>
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; padding: 2rem;">
+                <h3 class="modal-title"
+                    style="color: white; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="shield" style="width: 28px; height: 28px;"></i>
+                    Privacidad y Datos (GDPR)
+                </h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('privacy-data-modal')"
+                    style="color: white; opacity: 0.9;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <!-- Sync Indicators -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <div class="header-badge" id="sync-indicator"
+                        style="background: var(--color-success-light); padding: 0.75rem 1.25rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem;">
+                        <i data-lucide="check-circle"
+                            style="width: 20px; height: 20px; color: var(--color-success);"></i>
+                        <span class="badge-text" id="sync-text"
+                            style="color: var(--color-success); font-weight: 600;">Cloud Synced</span>
+                    </div>
+                    <div class="header-badge"
+                        style="background: var(--color-primary-light); padding: 0.75rem 1.25rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem;">
+                        <i data-lucide="lock" style="width: 20px; height: 20px; color: var(--color-primary);"></i>
+                        <span class="badge-text" style="color: var(--color-primary); font-weight: 600;">Encrypted</span>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                    <h4 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 1.1rem;">Tu Seguridad es Prioridad</h4>
+                    <p style="color: #64748b; font-size: 0.9rem; line-height: 1.6; margin: 0;">
+                        Toda tu información está protegida mediante encriptación de nivel bancario y se sincroniza en
+                        tiempo real con la nube. Cumplimos con los más altos estándares de protección de datos (GDPR).
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <button class="btn btn-outline" onclick="NotaryCRM.gdprExport()"
+                        style="text-align: left; padding: 1.5rem; border: 2px solid #e2e8f0; border-radius: 16px; transition: all 0.3s; height: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div
+                            style="background: #eff6ff; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="download" style="color: #3b82f6;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b;">Exportar mis Datos</div>
+                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Descarga toda tu
+                                información en formato JSON</div>
+                        </div>
+                    </button>
+
+                    <button class="btn btn-outline btn-danger" onclick="NotaryCRM.gdprDelete()"
+                        style="text-align: left; padding: 1.5rem; border: 2px solid #fee2e2; border-radius: 16px; transition: all 0.3s; height: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div
+                            style="background: #fef2f2; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="trash-2" style="color: #ef4444;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #991b1b;">Borrar mi Cuenta</div>
+                            <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 0.25rem;">Eliminación permanente
+                                de todos los datos</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Custom Fields Modal -->
+    <div class="modal" id="client-custom-fields-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('client-custom-fields-modal')"></div>
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Personalización de Clientes</h3>
+                <button class="modal-close" data-modal="client-custom-fields-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="grid" style="grid-template-columns: 1fr 1.5fr; gap: 2rem;">
+                    <div
+                        style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--color-gray-200);">
+                        <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--color-primary);">Campos
+                            Personalizados</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">Añada datos
+                            específicos que necesite recolectar de sus clientes.</p>
+                        <div id="custom-fields-list"
+                            style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="text" id="new-custom-field-name" class="form-input"
+                                    placeholder="Nombre del campo">
+                                <button class="btn btn-sm btn-secondary"
+                                    onclick="NotaryCRM.addCustomField()">Añadir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        style="background: #f9fafb; padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-300);">
+                        <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-light);">Vista Previa</h4>
+                        <div id="custom-fields-preview">
+                            <p class="empty-state">No hay campos personalizados configurados.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Case Custom Fields Modal -->
+    <div class="modal" id="case-custom-fields-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('case-custom-fields-modal')"></div>
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Personalización de Expedientes</h3>
+                <button class="modal-close" data-modal="case-custom-fields-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="grid" style="grid-template-columns: 1fr 1.5fr; gap: 2rem;">
+                    <div
+                        style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--color-gray-200);">
+                        <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--color-primary);">Campos de Caso
+                        </h4>
+                        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">Defina datos
+                            extra para el seguimiento de sus expedientes.</p>
+                        <div id="case-custom-fields-list"
+                            style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="text" id="new-case-custom-field-name" class="form-input"
+                                    placeholder="Nombre del campo">
+                                <button class="btn btn-sm btn-secondary"
+                                    onclick="NotaryCRM.addCustomField('case')">Añadir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        style="background: #f9fafb; padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-300);">
+                        <h4 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-light);">Vista Previa</h4>
+                        <div id="case-custom-fields-preview">
+                            <p class="empty-state">No hay campos configurados.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
