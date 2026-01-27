@@ -446,15 +446,59 @@
 
             <!-- Reminders Tab -->
             <div class="tab-content" id="reminders-tab">
-                <div class="actions-bar">
-                    <h2 class="section-title">Recordatorios Programados</h2>
-                    <button class="btn btn-primary" onclick="NotaryCRM.openModal('reminders-modal')">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Nuevo Recordatorio
-                    </button>
+                <div class="actions-bar" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 class="section-title" style="margin: 0;">Recordatorios Programados</h2>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button class="btn btn-outline" onclick="Reminders.clearCompleted()"
+                                title="Eliminar todos los completados">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                                Limpiar Completados
+                            </button>
+                            <button class="btn btn-primary" onclick="NotaryCRM.openModal('reminders-modal')">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Nuevo Recordatorio
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display: flex; gap: 1rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div class="search-box" style="flex: 2; margin-bottom: 0;">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" id="reminders-search" class="search-input"
+                                placeholder="Buscar en recordatorios..." oninput="Reminders.render()">
+                        </div>
+                        <select id="reminders-filter-category" class="form-input" style="flex: 1;"
+                            onchange="Reminders.render()">
+                            <option value="all">Todas las categorías</option>
+                            <option value="appointment">Citas</option>
+                            <option value="call">Llamadas</option>
+                            <option value="payment">Pagos</option>
+                            <option value="document">Documentos</option>
+                            <option value="other">Otros</option>
+                        </select>
+                        <select id="reminders-filter-status" class="form-input" style="flex: 1;"
+                            onchange="Reminders.render()">
+                            <option value="all">Ver Todos</option>
+                            <option value="pending">Pendientes</option>
+                            <option value="completed">Completados</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="reminders-timeline" id="reminders-tab-timeline">
@@ -1467,6 +1511,26 @@
                 <div class="form-group">
                     <label class="form-label">Mensaje</label>
                     <input type="text" class="form-input" name="message" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Prioridad</label>
+                        <select class="form-input" name="priority">
+                            <option value="low">Baja</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-input" name="category">
+                            <option value="appointment">Cita</option>
+                            <option value="call">Llamada</option>
+                            <option value="payment">Pago</option>
+                            <option value="document">Documento</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Fecha y hora</label>

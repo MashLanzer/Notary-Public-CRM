@@ -4829,7 +4829,85 @@ const Reminders = {
         this.load();
         this.attachListeners();
         this.render();
+        this.startDueChecker();
+        this.requestNotificationPermission();
         console.info('Reminders initialized');
+    },
+
+    requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    },
+
+    startDueChecker() {
+        // Check every minute
+        setInterval(() => this.checkDueReminders(), 60000);
+        // Initial check
+        setTimeout(() => this.checkDueReminders(), 2000);
+    },
+
+    checkDueReminders() {
+        if (!this.state.items.length) return;
+        const now = new Date();
+
+        this.state.items.forEach(it => {
+            if (it.completed) return;
+
+            const dueTime = new Date(it.when);
+            const diffInMinutes = (now - dueTime) / 60000;
+
+            // If due exactly now or within the last minute (and we haven't notified yet)
+            if (diffInMinutes >= 0 && diffInMinutes < 1.05 && !it.notified) {
+                this.showDueNotification(it);
+                it.notified = true;
+            }
+        });
+    },
+
+    showDueNotification(it) {
+        // 1. Toast
+        Toast.warning('🔔 Pendiente: ' + it.title, it.message);
+
+        // 2. Browser Notification
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Notary CRM: Recordatorio", {
+                body: `${it.title}: ${it.message}`,
+                icon: '/icon-192.png'
+            });
+        }
+    },
+
+    async clearCompleted() {
+        const completed = this.state.items.filter(it => it.completed);
+        if (completed.length === 0) return;
+
+        NotaryCRM.confirmAction(
+            'Limpiar Completados',
+            `¿Estás seguro de que deseas eliminar los ${completed.length} recordatorios completados?`,
+            async () => {
+                if (NotaryCRM.useFirestore) {
+                    try {
+                        const { doc, deleteDoc } = window.dbFuncs;
+                        const db = window.firebaseDB;
+                        for (const it of completed) {
+                            await deleteDoc(doc(db, 'reminders', it.id));
+                        }
+                        this.state.items = this.state.items.filter(it => !it.completed);
+                    } catch (err) {
+                        console.error('Error clearing completed in Firestore:', err);
+                        Toast.error('Error', 'No se pudieron eliminar todos.');
+                    }
+                } else {
+                    this.state.items = this.state.items.filter(it => !it.completed);
+                    this.save();
+                }
+
+                this.render();
+                Toast.success('Limpieza exitosa', 'Se han eliminado los recordatorios completados.');
+            },
+            { type: 'danger', confirmText: 'Eliminar Todos' }
+        );
     },
     async load() {
         // Si usamos Firestore, cargar desde ahí
@@ -4903,6 +4981,9 @@ const Reminders = {
             title: formData.get('title'),
             message: formData.get('message'),
             when: formData.get('when'),
+            priority: formData.get('priority') || 'medium',
+            category: formData.get('category') || 'other',
+            completed: false,
             ownerId: NotaryCRM.currentUser.uid,
             createdAt: new Date().toISOString()
         };
@@ -4930,36 +5011,88 @@ const Reminders = {
         this.render();
         NotaryCRM.closeModal('reminders-modal');
     },
-    async delete(id) {
-        if (!confirm('¿Estás seguro de eliminar este recordatorio?')) return;
+    async toggleComplete(id) {
+        const item = this.state.items.find(it => it.id === id);
+        if (!item) return;
 
-        // Eliminar de Firestore si está disponible
+        const newStatus = !item.completed;
+
         if (NotaryCRM.useFirestore) {
             try {
-                const { doc, deleteDoc } = window.dbFuncs;
+                const { doc, updateDoc } = window.dbFuncs;
                 const db = window.firebaseDB;
-                await deleteDoc(doc(db, 'reminders', id));
-                this.state.items = this.state.items.filter(it => it.id !== id);
-                Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
+                await updateDoc(doc(db, 'reminders', id), { completed: newStatus });
+                item.completed = newStatus;
             } catch (err) {
-                console.error('Error deleting reminder from Firestore:', err);
-                Toast.error('Error', 'No se pudo eliminar el recordatorio.');
+                console.error('Error updating reminder in Firestore:', err);
+                Toast.error('Error', 'No se pudo actualizar el estado.');
                 return;
             }
         } else {
-            this.state.items = this.state.items.filter(it => it.id !== id);
+            item.completed = newStatus;
             this.save();
-            Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
         }
 
         this.render();
+    },
+    async delete(id) {
+        NotaryCRM.confirmAction(
+            'Eliminar Recordatorio',
+            '¿Estás seguro de que deseas eliminar este recordatorio? Esta acción no se puede deshacer.',
+            async () => {
+                // Eliminar de Firestore si está disponible
+                if (NotaryCRM.useFirestore) {
+                    try {
+                        const { doc, deleteDoc } = window.dbFuncs;
+                        const db = window.firebaseDB;
+                        await deleteDoc(doc(db, 'reminders', id));
+                        this.state.items = this.state.items.filter(it => it.id !== id);
+                        Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
+                    } catch (err) {
+                        console.error('Error deleting reminder from Firestore:', err);
+                        Toast.error('Error', 'No se pudo eliminar el recordatorio.');
+                        return;
+                    }
+                } else {
+                    this.state.items = this.state.items.filter(it => it.id !== id);
+                    this.save();
+                    Toast.success('Eliminado', 'Recordatorio eliminado correctamente.');
+                }
+                this.render();
+            },
+            { type: 'danger', confirmText: 'Eliminar' }
+        );
     },
     render() {
         const list = document.getElementById('reminders-list');
         const timeline = document.getElementById('reminders-tab-timeline');
         if (!list && !timeline) return;
 
-        const sorted = [...this.state.items].sort((a, b) => new Date(a.when) - new Date(b.when));
+        // Get filter values
+        const searchQuery = document.getElementById('reminders-search')?.value.toLowerCase() || '';
+        const categoryFilter = document.getElementById('reminders-filter-category')?.value || 'all';
+        const statusFilter = document.getElementById('reminders-filter-status')?.value || 'all';
+
+        let filteredItems = [...this.state.items];
+
+        // Apply filters
+        if (searchQuery) {
+            filteredItems = filteredItems.filter(it =>
+                it.title.toLowerCase().includes(searchQuery) ||
+                it.message.toLowerCase().includes(searchQuery)
+            );
+        }
+
+        if (categoryFilter !== 'all') {
+            filteredItems = filteredItems.filter(it => it.category === categoryFilter);
+        }
+
+        if (statusFilter !== 'all') {
+            if (statusFilter === 'completed') filteredItems = filteredItems.filter(it => it.completed);
+            if (statusFilter === 'pending') filteredItems = filteredItems.filter(it => !it.completed);
+        }
+
+        const sorted = filteredItems.sort((a, b) => new Date(a.when) - new Date(b.when));
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
@@ -4983,19 +5116,45 @@ const Reminders = {
             }
         });
 
-        // 1. Render Modal List (simplified)
+        // Helper to get color/icon based on priority/category
+        const getPriorityColor = (p) => {
+            switch (p) {
+                case 'high': return '#ef4444';
+                case 'medium': return '#f59e0b';
+                case 'low': return '#10b981';
+                default: return '#64748b';
+            }
+        };
+
+        const getCategoryIcon = (c) => {
+            switch (c) {
+                case 'appointment': return '📅';
+                case 'call': return '📞';
+                case 'payment': return '💰';
+                case 'document': return '📄';
+                default: return '🔔';
+            }
+        };
+
+        // 1. Render Modal List
         if (list) {
             if (sorted.length === 0) {
                 list.innerHTML = '<p class="empty-state">No hay recordatorios.</p>';
             } else {
                 list.innerHTML = sorted.map(it => `
-                    <div class="reminder-item" style="border-bottom: 1px solid var(--color-gray-100); padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong style="font-size:0.9rem;">${it.title}</strong>
-                            <div style="font-size:0.75rem; color:var(--color-primary);">${new Date(it.when).toLocaleString()}</div>
+                    <div class="reminder-item ${it.completed ? 'completed' : ''}" 
+                         style="border-bottom: 1px solid var(--color-gray-100); padding: 12px 0; display:flex; justify-content:space-between; align-items:center; opacity: ${it.completed ? '0.6' : '1'}">
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            <input type="checkbox" ${it.completed ? 'checked' : ''} onchange="Reminders.toggleComplete('${it.id}')" style="width:18px;height:18px;cursor:pointer;">
+                            <div>
+                                <strong style="font-size:0.9rem; ${it.completed ? 'text-decoration: line-through;' : ''}">${getCategoryIcon(it.category)} ${it.title}</strong>
+                                <div style="font-size:0.75rem; color: ${getPriorityColor(it.priority)}; font-weight:600;">
+                                    ${new Date(it.when).toLocaleString()}
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn-icon btn-danger" onclick="Reminders.delete('${it.id}')">
-                            <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <button class="btn-delete-item" onclick="Reminders.delete('${it.id}')" title="Eliminar">
+                            <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>
                 `).join('');
@@ -5008,6 +5167,7 @@ const Reminders = {
                 timeline.innerHTML = '<p class="empty-state">No tienes recordatorios creados. Comienza añadiendo uno arriba.</p>';
             } else {
                 let html = '';
+                // Render groups in order: Today -> Upcoming -> Past
                 [groups.today, groups.upcoming, groups.past].forEach(group => {
                     if (group.items.length > 0) {
                         html += `<div class="timeline-group">
@@ -5015,19 +5175,45 @@ const Reminders = {
                             ${group.items.map(it => {
                             const d = new Date(it.when);
                             const isPast = d < now;
+                            const pColor = getPriorityColor(it.priority);
+                            const cIcon = getCategoryIcon(it.category);
+
                             return `
-                                    <div class="timeline-item ${isPast ? 'past' : ''}">
-                                        <div class="timeline-dot"></div>
-                                        <div class="timeline-card">
+                                    <div class="timeline-item ${isPast ? 'past' : ''} ${it.completed ? 'is-completed' : ''}">
+                                        <div class="timeline-dot" style="background: ${it.completed ? '#cbd5e1' : pColor}"></div>
+                                        <div class="timeline-card" style="border-left: 4px solid ${pColor}; ${it.completed ? 'background: #f8fafc;' : ''}">
                                             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                                <div>
-                                                    <span class="timeline-time">${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                                                    <h4 class="timeline-title">${it.title}</h4>
-                                                    <p class="timeline-msg">${it.message}</p>
+                                                <div style="display:flex; gap: 15px;">
+                                                    <div style="padding-top: 4px;">
+                                                        <input type="checkbox" ${it.completed ? 'checked' : ''} 
+                                                               onchange="Reminders.toggleComplete('${it.id}')" 
+                                                               style="width: 20px; height: 20px; cursor: pointer;">
+                                                    </div>
+                                                    <div>
+                                                        <span class="timeline-time" style="color: ${pColor}; font-weight: 700;">
+                                                            ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} 
+                                                            <span style="opacity: 0.6; font-weight: 400; margin-left: 5px;">| ${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                                                        </span>
+                                                        <h4 class="timeline-title" style="${it.completed ? 'text-decoration: line-through; color: #94a3b8;' : ''}">
+                                                            ${cIcon} ${it.title}
+                                                        </h4>
+                                                        <p class="timeline-msg" style="${it.completed ? 'color: #cbd5e1;' : ''}">${it.message}</p>
+                                                        
+                                                        <div style="margin-top: 10px; display: flex; gap: 8px;">
+                                                            <span style="font-size: 0.65rem; background: ${pColor}20; color: ${pColor}; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700;">
+                                                                ${it.priority}
+                                                            </span>
+                                                            <span style="font-size: 0.65rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700;">
+                                                                ${it.category}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <button class="btn-icon btn-danger" onclick="Reminders.delete('${it.id}')" title="Eliminar">
-                                                    <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                </button>
+                                                <div style="display: flex; gap: 5px;">
+                                                    <button class="btn-delete-item" onclick="Reminders.delete('${it.id}')" title="Eliminar">
+                                                        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -5069,8 +5255,15 @@ const NoteGenerator = {
                     ]
                 },
                 {
-                    group: 'Detalles de la Declaración', fields: [
-                        { id: 'statement', label: 'Hechos Declarados', type: 'textarea', rows: 8, placeholder: 'Detalle punto por punto los hechos...' }
+                    group: 'Contenido de la Declaración', fields: [
+                        { id: 'subject', label: 'Asunto o Propósito del Documento', type: 'text', width: 'full', placeholder: 'Ej: Declaración de Ingresos, Hechos de Tránsito, Superviviencia...' },
+                        { id: 'statement', label: 'Cuerpo de la Declaración (Hechos)', type: 'textarea', rows: 12, placeholder: 'Detalle aquí los hechos de forma clara y cronológica...' }
+                    ]
+                },
+                {
+                    group: 'Información del Notario', fields: [
+                        { id: 'notaryCommission', label: 'Mi comisión expira el:', type: 'date', width: 'half' },
+                        { id: 'notaryReg', label: 'Nº Registro Notarial (Opcional)', type: 'text', width: 'half', placeholder: 'Reg #12345' }
                     ]
                 },
                 {
@@ -5085,13 +5278,14 @@ const NoteGenerator = {
                             ],
                             width: 'half'
                         },
-                        { id: 'idDetails', label: 'Especifique ID (P. ej: NY Driver License #...)', type: 'text', width: 'half' }
+                        { id: 'idDetails', label: 'Especifique ID (Licencia, Pasaporte, etc)', type: 'text', width: 'half' }
                     ]
                 }
             ],
             content: (data) => `
                 <div class="legal-doc" contenteditable="true">
                     <h2 class="doc-title">DECLARACIÓN JURADA (AFFIDAVIT)</h2>
+                    
                     <div style="display: flex; justify-content: space-between; margin-bottom: 25pt; border-bottom: 2px solid #000; padding-bottom: 10pt;">
                         <p style="margin: 0; line-height: 1.5;">
                             ESTADO DE: <strong>${data.location ? (data.location.split(',')[1] || data.location).trim().toUpperCase() : '__________'}</strong><br>
@@ -5102,42 +5296,58 @@ const NoteGenerator = {
                         </p>
                     </div>
 
-                    <p class="doc-text" style="text-indent: 30pt; margin-bottom: 20pt;">
-                        ANTE MÍ, el Notario Público abajo firmante, compareció personalmente <strong>${data.affiantName || data.clientName}</strong>, mayor de edad (${data.age || '__'} años), de ocupación ${data.occupation || '__________'}, con domicilio legal en ${data.address || '______________________________'}, quien después de haber sido debidamente juramentado de acuerdo con la ley, declara bajo pena de perjurio:
+                    ${data.subject ? `<div style="margin-bottom: 20pt; text-align: center; background: #f8fafc; padding: 12pt; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <span style="font-size: 9pt; color: #64748b; letter-spacing: 0.05em;">ASUNTO / PROPÓSITO:</span><br>
+                        <strong style="font-size: 11pt;">${data.subject.toUpperCase()}</strong>
+                    </div>` : ''}
+
+                    <p class="doc-text" style="text-indent: 30pt; margin-bottom: 20pt; line-height: 1.8;">
+                        ANTE MÍ, el Notario Público abajo firmante, debidamente comisionado y autorizado para actuar en esta jurisdicción, compareció personalmente <strong>${data.affiantName || data.clientName}</strong>, mayor de edad (${data.age || '__'} años), identificado/a como se describe más adelante, de ocupación ${data.occupation || '__________'}, con domicilio legal en ${data.address || '______________________________'}, quien después de haber prestado juramento solemne de acuerdo con la ley, declara y hace constar lo siguiente:
                     </p>
 
-                    <div class="doc-body-text" style="min-height: 200pt; border: 1px double #eee; padding: 15pt; margin: 15pt 0;">
-                        ${(data.statement || '[Detalle aquí los hechos declarados, enumerándolos si es posible.]').replace(/\n/g, '<br>')}
+                    <div class="doc-body-text" style="min-height: 250pt; border: 1px double #ccc; padding: 25pt; margin: 20pt 0; background: #fff; position: relative; line-height: 1.6;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60pt; color: rgba(0,0,0,0.015); pointer-events: none; white-space: nowrap; user-select: none; font-weight: 800;">OFFICIAL DOCUMENT</div>
+                        
+                        <div style="position: relative; z-index: 1;">
+                            ${(data.statement || '[Detalle aquí los hechos declarados. Use párrafos numerados para mayor formalidad.]').split('\n').map(p => p.trim() ? `<p style="margin-bottom: 12pt; text-align: justify;">${p}</p>` : '<br>').join('')}
+                        </div>
                     </div>
 
-                    <p class="doc-text" style="margin-top: 25pt;">
-                        EL DECLARANTE CERTIFICA que ha leído o se le ha leído la declaración anterior y que cada uno de los hechos allí expuestos es verdadero y correcto según su leal saber y entender.
+                    <p class="doc-text" style="margin-top: 25pt; font-style: italic; border-left: 3px solid #eee; padding-left: 15pt;">
+                        BAJO PENA DE PERJURIO, el facultativo certifica que ha leído íntegramente esta declaración y que el contenido de la misma es fiel reflejo de la verdad según su leal saber y entender.
                     </p>
 
                     <br><br>
                     <div class="sig-section" contenteditable="false">
-                        <div class="sig-block" contenteditable="false">
-                            <div class="sig-label">_________________________________</div>
-                            <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
-                            <div class="sig-label"><strong>${data.affiantName || data.clientName}</strong><br>Declarante</div>
+                        <div class="sig-block" contenteditable="false" style="width: 280px; margin-left: auto;">
+                            <div style="border-top: 1px solid #000; padding-top: 5pt; text-align: center;">
+                                <div class="sig-zone" id="sig-client" onclick="NoteGenerator.openSignPad('client', this)" data-label="Firma Declarante"></div>
+                                <div class="sig-label"><strong>${data.affiantName || data.clientName}</strong><br>EL DECLARANTE</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="notary-block" contenteditable="false" style="margin-top: 40pt; border-top: 1px dashed #ccc; padding-top: 20pt;">
-                        <p class="doc-center-bold">CERTIFICACIÓN NOTARIAL</p>
-                        <p class="doc-text">
-                            Suscrito y jurado (o afirmado) ante mí este día <strong>${data.date}</strong> por <strong>${data.affiantName || data.clientName}</strong>, a quien se le identificó mediante:
-                            <br><br>
-                            ${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} conocimiento personal
-                            <br>
-                            ${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} presentación de identificación: <strong>${data.idDetails || '____________________'}</strong>
+                    <div class="notary-block" contenteditable="false" style="margin-top: 40pt; border: 1px solid #000; padding: 20pt; background: #fdfdfd; position: relative;">
+                        <p class="doc-center-bold" style="text-decoration: underline; margin-bottom: 15pt;">ACTO NOTARIAL DE JURAMENTACIÓN</p>
+                        <p class="doc-text" style="line-height: 1.6;">
+                            SUSCRITO Y JURADO (o afirmado) ante mí, el Notario Público actuante, en este día <strong>${data.date}</strong>, por <strong>${data.affiantName || data.clientName}</strong>, cuya identidad ha sido verificada satisfactoriamente mediante:
                         </p>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20pt;">
-                            <div class="notary-seal-placeholder" style="margin: 0;">SELLO</div>
-                            <div class="sig-block" style="text-align: center;">
-                                <div class="sig-label">_________________________________</div>
-                                <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
-                                <div class="sig-label">NOTARIO PÚBLICO</div>
+                        <div style="margin: 15pt 0; padding-left: 20pt;">
+                            <p>${data.idType === 'Conocimiento personal' ? '<strong>[X]</strong>' : '[ ]'} Conocimiento personal del Notario.</p>
+                            <p>${data.idType === 'Presentación de identificación' ? '<strong>[X]</strong>' : '[ ]'} Presentación de identificación: <strong>${data.idDetails || '____________________'}</strong></p>
+                        </div>
+                        
+                        <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: 30pt;">
+                            <div class="notary-seal-placeholder" style="width: 100pt; height: 100pt; display: flex; align-items: center; justify-content: center; border: 2px solid #ccc; color: #ccc; font-size: 7pt; margin: 0; text-align: center; padding: 5pt;">ESPACIO PARA SELLO OFICIAL</div>
+                            <div class="sig-block" style="width: 250px; text-align: center;">
+                                <div style="border-top: 1px solid #000; padding-top: 5pt;">
+                                    <div class="sig-zone" id="sig-notary" onclick="NoteGenerator.openSignPad('notary', this)" data-label="Firma Notario"></div>
+                                    <div class="sig-label">
+                                        <strong>NOTARIO PÚBLICO</strong><br>
+                                        ${data.notaryReg ? `Nº Registro: ${data.notaryReg}<br>` : ''}
+                                        Mi comisión expira: ${data.notaryCommission ? data.notaryCommission : '____________'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
