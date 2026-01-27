@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Notaría | Portal del Cliente</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --bg-accent: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --radius-lg: 1.25rem;
+            --radius-md: 0.75rem;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            --glass: rgba(255, 255, 255, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Hero Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 350px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            z-index: -1;
+            border-radius: 0 0 3rem 3rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-decoration: none;
+            color: white;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Auth Screen */
+        #auth-screen {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .login-card {
+            background: var(--surface);
+            padding: 3rem;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn-login:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+        }
+
+        /* Portal Main View */
+        #portal-view {
+            display: none;
+            padding: 2rem 0;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .user-welcome h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        /* Dashboard Grid */
+        .portal-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 1rem;
+        }
+
+        /* Cases Table */
+        .case-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .case-item {
+            padding: 1.25rem;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .case-item:hover {
+            border-color: var(--primary-light);
+            background: #f8fafc;
+        }
+
+        .case-info h4 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .case-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .badge-info {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        /* Document List */
+        .doc-list {
+            list-style: none;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .doc-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .btn-download {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* Loading */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <div class="container">
+        <nav class="navbar">
+            <a href="landing.html" class="brand">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                </div>
+                <span>Mi Notaría</span>
+            </a>
+            <div class="nav-actions" id="nav-actions">
+                <a href="landing.html" class="btn-ghost" id="logout-btn" style="display:none;">Cerrar Sesión</a>
+            </div>
+        </nav>
+
+        <!-- Auth Screen -->
+        <section id="auth-screen">
+            <div class="login-card">
+                <h2>Bienvenido</h2>
+                <p>Ingrese sus credenciales para acceder a sus documentos y trámites históricos.</p>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="email" class="input-control" placeholder="usuario@ejemplo.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="password" class="input-control" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-login">
+                        <span>Entrar al Portal</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                    </button>
+                </form>
+
+                <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                    ¿No tiene cuenta? Su cuenta es creada automáticamente al realizar su primer trámite con nosotros.
+                </div>
+            </div>
+        </section>
+
+        <!-- Portal View -->
+        <section id="portal-view">
+            <div class="portal-header">
+                <div class="user-welcome">
+                    <h1 id="welcome-name">Hola, Cliente</h1>
+                    <p style="opacity: 0.9;">Aquí puede gestionar sus expedientes y descargar sus copias digitales.</p>
+                </div>
+            </div>
+
+            <div class="portal-grid">
+                <!-- Main Area -->
+                <div class="portal-main">
+                    <div class="section-card">
+                        <h3 class="section-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <path d="M16 2v4"></path>
+                                <path d="M8 2v4"></path>
+                                <path d="M3 10h18"></path>
+                            </svg>
+                            Mis Expedientes Recientes
+                        </h3>
+                        <div class="case-list" id="portal-case-list">
+                            <!-- Cases will be loaded here -->
+                            <div class="case-item">
+                                <div class="case-info">
+                                    <h4>Cargando expedientes...</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="portal-sidebar">
+                    <div class="section-card">
+                        <h3 class="section-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Documentos Listos
+                        </h3>
+                        <ul class="doc-list" id="portal-doc-list">
+                            <!-- Docs will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <div class="section-card" style="background: var(--primary); color: white;">
+                        <h4 style="margin-bottom: 0.5rem;">Citas Próximas</h4>
+                        <div id="portal-next-appointment">
+                            <p style="font-size: 0.9rem; opacity: 0.9;">No hay citas agendadas.</p>
+                        </div>
+                        <a href="booking.html" class="btn-ghost"
+                            style="display:block; text-align:center; margin-top: 1rem; border-color: rgba(255,255,255,0.4);">Agendar
+                            Nueva Cita</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module">
+        const authScreen = document.getElementById('auth-screen');
+        const portalView = document.getElementById('portal-view');
+        const loginForm = document.getElementById('login-form');
+        const loader = document.getElementById('loading-overlay');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Check Auth State on Load
+        window.addEventListener('load', () => {
+            const checkAuth = setInterval(() => {
+                if (window.firebaseAuth) {
+                    clearInterval(checkAuth);
+                    const { onAuthStateChanged } = window.authFuncs;
+                    onAuthStateChanged(window.firebaseAuth, (user) => {
+                        if (user) {
+                            showPortal(user);
+                        } else {
+                            showAuth();
+                        }
+                    });
+                }
+            }, 500);
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loader.style.display = 'flex';
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const { signInWithEmailAndPassword } = window.authFuncs;
+                await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                // Auth listener will handle the UI switch
+            } catch (err) {
+                alert('Credenciales inválidas. Por favor intente nuevamente.');
+                console.error(err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
+
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const { signOut } = window.authFuncs;
+            signOut(window.firebaseAuth);
+        });
+
+        function showAuth() {
+            authScreen.style.display = 'flex';
+            portalView.style.display = 'none';
+            logoutBtn.style.display = 'none';
+        }
+
+        async function showPortal(user) {
+            authScreen.style.display = 'none';
+            portalView.style.display = 'block';
+            logoutBtn.style.display = 'inline-block';
+
+            document.getElementById('welcome-name').textContent = `Hola, ${user.email.split('@')[0]}`;
+
+            // Load User Data (Cases & Appointments)
+            await loadUserData(user);
+        }
+
+        async function loadUserData(user) {
+            const { collection, query, where, getDocs, orderBy } = window.dbFuncs;
+            const db = window.firebaseDB;
+
+            try {
+                // 1. Load Cases (Assuming they have 'clientId' or 'ownerEmail')
+                // For client portal, we look for cases where clientId matches user.uid or email exists in a client record
+
+                // First, find the client record for this user
+                const clientQ = query(collection(db, 'clients'), where('email', '==', user.email));
+                const clientSnap = await getDocs(clientQ);
+
+                let clientId = null;
+                if (!clientSnap.empty) {
+                    const clientDoc = clientSnap.docs[0];
+                    clientId = clientDoc.id;
+                    document.getElementById('welcome-name').textContent = `Hola, ${clientDoc.data().name || user.email.split('@')[0]}`;
+                } else {
+                    // If no client record yet, maybe they are an admin or just registered.
+                    // Fallback to searching cases directly by email if field exists
+                }
+
+                if (!clientId) {
+                    document.getElementById('portal-case-list').innerHTML = '<p class="text-muted">No se encontraron expedientes asociados a su cuenta.</p>';
+                    return;
+                }
+
+                // Load Cases for this Client
+                const casesQ = query(collection(db, 'cases'), where('clientId', '==', clientId));
+                const casesSnap = await getDocs(casesQ);
+
+                const caseListEl = document.getElementById('portal-case-list');
+                const docListEl = document.getElementById('portal-doc-list');
+                caseListEl.innerHTML = '';
+                docListEl.innerHTML = '';
+
+                if (casesSnap.empty) {
+                    caseListEl.innerHTML = '<p class="text-muted">No tiene trámites registrados aún.</p>';
+                } else {
+                    casesSnap.docs.forEach(docSnap => {
+                        const data = docSnap.data();
+
+                        // Add to Case List
+                        const caseDiv = document.createElement('div');
+                        caseDiv.className = 'case-item';
+                        caseDiv.innerHTML = `
+                            <div class="case-info">
+                                <h4>${data.caseNumber || 'S/N'}</h4>
+                                <div class="case-meta">
+                                    <span>📅 ${data.createdAt ? new Date(data.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                    <span>💼 ${data.type || 'General'}</span>
+                                </div>
+                            </div>
+                            <span class="badge ${data.status === 'completed' ? 'badge-success' : 'badge-warning'}">
+                                ${data.status === 'completed' ? 'Completado' : 'En Trámite'}
+                            </span>
+                        `;
+                        caseListEl.appendChild(caseDiv);
+
+                        // If completed, add to Docs sidebar
+                        if (data.status === 'completed' || data.attachments?.length > 0) {
+                            const docs = data.attachments || [{ name: `Copia_${data.caseNumber}.pdf`, url: '#' }];
+                            docs.forEach(doc => {
+                                const li = document.createElement('li');
+                                li.className = 'doc-item';
+                                li.innerHTML = `
+                                    <div class="doc-name">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        <span>${doc.name}</span>
+                                    </div>
+                                    <a href="${doc.url}" class="btn-download" target="_blank">Descargar</a>
+                                `;
+                                docListEl.appendChild(li);
+                            });
+                        }
+                    });
+                }
+
+                // 2. Load Appointments
+                const appQ = query(collection(db, 'appointments'), where('clientId', '==', clientId));
+                const appSnap = await getDocs(appQ);
+
+                const nextAppEl = document.getElementById('portal-next-appointment');
+                if (!appSnap.empty) {
+                    // Find closest future appointment
+                    const now = new Date();
+                    const next = appSnap.docs
+                        .map(d => d.data())
+                        .filter(a => new Date(a.date) >= now)
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+
+                    if (next) {
+                        nextAppEl.innerHTML = `
+                            <p style="font-weight:700; font-size: 1.1rem; margin-bottom: 2px;">${next.date}</p>
+                            <p style="font-size: 0.85rem; opacity: 0.9;">Hora: ${next.time}</p>
+                            <p style="font-size: 0.85rem; opacity: 0.9;">Télefono: (813) 373-9797</p>
+                        `;
+                    }
+                }
+
+            } catch (err) {
+                console.error("Error loading portal data:", err);
+            }
+        }
+    </script>
+</body>
+
+</html>
