@@ -398,6 +398,7 @@
                 <span>Mi Notaría</span>
             </a>
             <div class="nav-actions" id="nav-actions">
+                <button class="btn-ghost" id="profile-btn" style="display:none;">Mi Perfil</button>
                 <a href="landing.html" class="btn-ghost" id="logout-btn" style="display:none;">Cerrar Sesión</a>
             </div>
         </nav>
@@ -502,6 +503,36 @@
         </section>
     </div>
 
+    <!-- Profile Modal -->
+    <div id="profile-modal"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center; padding:2rem;">
+        <div class="login-card" style="max-width:500px; text-align:left;">
+            <h2 style="text-align:center;">Actualizar Mis Datos</h2>
+            <p style="text-align:center; font-size:0.9rem;">Los cambios deben ser validados por la notaría antes de ser
+                permanentes.</p>
+            <form id="profile-update-form">
+                <div class="form-group">
+                    <label>Dirección Actualizada</label>
+                    <input type="text" id="profile-address" class="input-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono de Contacto</label>
+                    <input type="text" id="profile-phone" class="input-control" required>
+                </div>
+                <div id="pending-alert"
+                    style="display:none; color:var(--warning); font-size:0.85rem; margin-bottom:1rem; background:#fffbeb; padding:0.75rem; border-radius:8px; border:1px solid #fef3c7;">
+                    ⚠️ Ya tienes una solicitud de cambio pendiente de revisión.
+                </div>
+                <div style="display:flex; gap:1rem;">
+                    <button type="submit" id="submit-profile-btn" class="btn-login" style="flex:1;">Enviar
+                        Solicitud</button>
+                    <button type="button" onclick="document.getElementById('profile-modal').style.display='none'"
+                        class="btn-ghost" style="color:var(--text-main); border-color:#e2e8f0;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module" src="firebase-init.js"></script>
     <script type="module">
         const authScreen = document.getElementById('auth-screen');
@@ -509,6 +540,11 @@
         const loginForm = document.getElementById('login-form');
         const loader = document.getElementById('loading-overlay');
         const logoutBtn = document.getElementById('logout-btn');
+        const profileBtn = document.getElementById('profile-btn');
+        const profileModal = document.getElementById('profile-modal');
+        const profileForm = document.getElementById('profile-update-form');
+
+        let currentClient = null;
 
         // Check Auth State on Load
         window.addEventListener('load', () => {
@@ -561,12 +597,84 @@
             authScreen.style.display = 'none';
             portalView.style.display = 'block';
             logoutBtn.style.display = 'inline-block';
+            profileBtn.style.display = 'inline-block';
 
             document.getElementById('welcome-name').textContent = `Hola, ${user.email.split('@')[0]}`;
 
             // Load User Data (Cases & Appointments)
             await loadUserData(user);
         }
+
+        profileBtn.addEventListener('click', () => {
+            if (!currentClient) return;
+            document.getElementById('profile-address').value = currentClient.address || '';
+            document.getElementById('profile-phone').value = currentClient.phone || '';
+
+            // Check for pending requests
+            checkPendingRequest();
+
+            profileModal.style.display = 'flex';
+        });
+
+        async function checkPendingRequest() {
+            const { collection, query, where, getDocs } = window.dbFuncs;
+            const db = window.firebaseDB;
+            const alert = document.getElementById('pending-alert');
+            const submitBtn = document.getElementById('submit-profile-btn');
+
+            try {
+                const q = query(collection(db, 'requests'),
+                    where('clientId', '==', currentClient.id),
+                    where('status', '==', 'pending'));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    alert.style.display = 'block';
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                } else {
+                    alert.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { collection, addDoc } = window.dbFuncs;
+            const db = window.firebaseDB;
+
+            const newData = {
+                address: document.getElementById('profile-address').value,
+                phone: document.getElementById('profile-phone').value
+            };
+
+            loader.style.display = 'flex';
+            try {
+                await addDoc(collection(db, 'requests'), {
+                    clientId: currentClient.id,
+                    clientName: currentClient.name,
+                    ownerId: currentClient.ownerId, // For isolation
+                    type: 'profile_update',
+                    status: 'pending',
+                    oldData: {
+                        address: currentClient.address || '',
+                        phone: currentClient.phone || ''
+                    },
+                    newData: newData,
+                    createdAt: new Date().toISOString()
+                });
+                alert('Solicitud enviada con éxito. Un notario revisará sus cambios pronto.');
+                profileModal.style.display = 'none';
+            } catch (err) {
+                alert('Error al enviar la solicitud.');
+                console.error(err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
 
         async function loadUserData(user) {
             const { collection, query, where, getDocs, orderBy } = window.dbFuncs;
@@ -584,6 +692,7 @@
                 if (!clientSnap.empty) {
                     const clientDoc = clientSnap.docs[0];
                     clientId = clientDoc.id;
+                    currentClient = { id: clientId, ...clientDoc.data() };
                     document.getElementById('welcome-name').textContent = `Hola, ${clientDoc.data().name || user.email.split('@')[0]}`;
                 } else {
                     // If no client record yet, maybe they are an admin or just registered.

@@ -148,6 +148,10 @@
                 <button class="tab-btn" data-tab="emails" id="emails-tab-btn">
                     Docs & Email
                 </button>
+                <button class="tab-btn" data-tab="settings" data-i18n="nav_settings">
+                    <i data-lucide="settings"></i>
+                    Configuración
+                </button>
                 <button class="tab-btn" data-tab="reports" data-i18n="nav_reports">
                     <i data-lucide="bar-chart-3"></i>
                     Reports
@@ -1193,7 +1197,85 @@
                         </div>
                     </div>
                 </div>
+                <!-- Settings Tab -->
+                <section id="settings-tab" class="tab-content">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración del CRM</h2>
+                        <p class="section-subtitle">Personalice los campos y el comportamiento del sistema.</p>
+                    </div>
+
+                    <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
+                        <div
+                            style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Campos Personalizados</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
+                                Añada campos extra que aparecerán en el formulario de clientes.
+                                Ejemplo: "Referencia", "Facebook", "Nivel de Prioridad".
+                            </p>
+
+                            <div id="custom-fields-list"
+                                style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                                <!-- Fields will be listed here -->
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Nuevo Campo</label>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="text" id="new-custom-field-name" class="form-input"
+                                        placeholder="Nombre del campo">
+                                    <button class="btn btn-primary" onclick="NotaryCRM.addCustomField()">Añadir</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Vista Previa del Formulario
+                            </h3>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
+                                Así se verán los campos en la ficha del cliente.
+                            </p>
+                            <div id="custom-fields-preview"
+                                style="background: var(--color-gray-50); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-200);">
+                                <!-- Preview injected here -->
+                                <p class="empty-state">No hay campos personalizados configurados.</p>
+                            </div>
+                        </div>
+                    </div>
             </div>
+
+            <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem; margin-top: 2rem;">
+                <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Campos en Expedientes</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">
+                        Campos adicionales para los casos. Ejemplo: "Facilitador", "Corte", "Número de Seguimiento".
+                    </p>
+
+                    <div id="case-custom-fields-list"
+                        style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Case fields will be listed here -->
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nuevo Campo para Casos</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="new-case-custom-field-name" class="form-input"
+                                placeholder="Nombre del campo">
+                            <button class="btn btn-primary" onclick="NotaryCRM.addCustomField('case')">Añadir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--color-primary);">Vista Previa (Casos)</h3>
+                    <div id="case-custom-fields-preview"
+                        style="background: var(--color-gray-50); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--color-gray-200);">
+                        <p class="empty-state">No hay campos personalizados configurados para expedientes.</p>
+                    </div>
+                </div>
+            </div>
+            </section>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -1438,36 +1520,38 @@
                             <option value="Otro">Otro</option>
                         </select>
                     </div>
+                    <div id="client-custom-fields-container"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;"></div>
                 </div>
-
-                <!-- Step 3: Additional -->
-                <div class="form-step" data-step="3">
-                    <div class="form-group">
-                        <label class="form-label">Notas / Observaciones</label>
-                        <textarea class="form-input" name="notes" rows="3"
-                            placeholder="Detalles adicionales..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
-                        <select class="form-input" name="relatedId" id="client-related-select">
-                            <option value="">Ninguna / Sin vínculo</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
-                        <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
-                    </div>
-                </div>
-
-                <!-- Footer Navigation -->
-                <div class="form-navigation">
-                    <button type="button" class="btn" id="prev-client-step" style="visibility: hidden;">Atrás</button>
-                    <button type="button" class="btn btn-primary" id="next-client-step">Siguiente</button>
-                    <button type="submit" class="btn btn-primary" id="submit-client-form" style="display: none;">Guardar
-                        Cliente</button>
-                </div>
-            </form>
         </div>
+
+        <!-- Step 3: Additional -->
+        <div class="form-step" data-step="3">
+            <div class="form-group">
+                <label class="form-label">Notas / Observaciones</label>
+                <textarea class="form-input" name="notes" rows="3" placeholder="Detalles adicionales..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Relación Familiar (Vincular con Cliente)</label>
+                <select class="form-input" name="relatedId" id="client-related-select">
+                    <option value="">Ninguna / Sin vínculo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tags / Etiquetas (separadas por comas)</label>
+                <input type="text" class="form-input" name="tags" placeholder="VIP, Frecuente, Corporativo...">
+            </div>
+        </div>
+
+        <!-- Footer Navigation -->
+        <div class="form-navigation">
+            <button type="button" class="btn" id="prev-client-step" style="visibility: hidden;">Atrás</button>
+            <button type="button" class="btn btn-primary" id="next-client-step">Siguiente</button>
+            <button type="submit" class="btn btn-primary" id="submit-client-form" style="display: none;">Guardar
+                Cliente</button>
+        </div>
+        </form>
+    </div>
     </div>
 
     <!-- Add Case Modal -->
@@ -1556,6 +1640,8 @@
                     <textarea class="form-input" name="description" rows="2" placeholder="Case details..."
                         required></textarea>
                 </div>
+                <div id="case-custom-fields-container"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;"></div>
                 <button type="submit" class="btn btn-primary btn-block">Guardar Expediente</button>
             </form>
         </div>
@@ -2473,6 +2559,46 @@
                 <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
                     <button class="btn btn-primary" id="modal-save-sig" style="width:100%;">Confirmar e
                         Insertar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div class="modal" id="approval-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('approval-modal')"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Revisar Solicitud de Cambio</h3>
+                <button class="modal-close" data-modal="approval-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--text-light);">El cliente solicita actualizar su
+                    información de contacto. Compare los cambios antes de aprobar.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                    <div
+                        style="background: var(--color-gray-50); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--color-gray-100);">
+                        <h4
+                            style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-gray-500); margin-bottom: 1rem;">
+                            Dato Actual</h4>
+                        <div id="approval-old-data"></div>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 1.25rem; border-radius: 12px; border: 1px solid #bbf7d0;">
+                        <h4 style="font-size: 0.75rem; text-transform: uppercase; color: #166534; margin-bottom: 1rem;">
+                            Dato Propuesto</h4>
+                        <div id="approval-new-data"></div>
+                    </div>
+                </div>
+
+                <div class="confirm-actions" style="margin-top: 2rem;">
+                    <button class="btn btn-primary" id="approve-update-btn">Aprobar y Actualizar</button>
+                    <button class="btn btn-danger" id="reject-update-btn">Rechazar Cambio</button>
                 </div>
             </div>
         </div>

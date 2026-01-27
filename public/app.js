@@ -1467,7 +1467,11 @@ window.NotaryCRM = {
         casesPage: 1,
         casesPageSize: 6,
         currency: 'USD',
-        currentClientStep: 1
+        currentClientStep: 1,
+        customFields: {
+            clients: [],
+            cases: []
+        }
     },
     currentUser: null,
 
@@ -1477,6 +1481,9 @@ window.NotaryCRM = {
 
         // Initialize Theme Mode
         ThemeManager.init();
+
+        // Initialize Managers
+        this.initSettings();
 
         // Initialize Language
         I18nManager.init();
@@ -2170,6 +2177,7 @@ window.NotaryCRM = {
         addL('import-clients-file', 'change', (e) => this.importClients(e.target.files[0]));
         addL('export-report-pdf', 'click', () => this.generateReportPDF());
         addL('check-duplicates-btn', 'click', () => this.checkDuplicates());
+        addL('merge-all-duplicates-btn', 'click', () => this.mergeAllDuplicates());
 
         // Modals & Forms
         addL('calendar-form', 'submit', (e) => { e.preventDefault(); this.addAppointment(e.target); });
@@ -2620,6 +2628,10 @@ window.NotaryCRM = {
         // Reset step if it's the client modal
         if (modalId === 'client-modal') {
             this.setClientStep(1);
+            this.renderCustomFieldsInForm('client');
+        }
+        if (modalId === 'case-modal') {
+            this.renderCustomFieldsInForm('case');
         }
 
         // Announce modal opening for screen readers
@@ -2812,10 +2824,17 @@ window.NotaryCRM = {
     },
 
     // Add client
-    addClient(form) {
+    async addClient(form) {
         const formData = new FormData(form);
         const id = formData.get('id');
         const tags = formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
+
+        // Collect Custom Fields
+        const customFields = {};
+        form.querySelectorAll('.custom-field-input').forEach(input => {
+            const fieldName = input.getAttribute('data-field');
+            customFields[fieldName] = input.value;
+        });
 
         const client = {
             name: formData.get('name'),
@@ -2830,6 +2849,7 @@ window.NotaryCRM = {
             notes: formData.get('notes'),
             relatedId: formData.get('relatedId') || null,
             tags: tags,
+            customFields: customFields, // SAVE CUSTOM FIELDS
             joinDate: new Date().toISOString()
         };
 
@@ -2973,11 +2993,18 @@ window.NotaryCRM = {
     },
 
     // Add case
-    addCase(form) {
+    async addCase(form) {
         const formData = new FormData(form);
         const id = formData.get('id');
         const clientId = formData.get('clientId');
         const client = this.state.clients.find(c => c.id === clientId) || {};
+
+        // Collect Custom Fields
+        const customFields = {};
+        form.querySelectorAll('.custom-field-input').forEach(input => {
+            const fieldName = input.getAttribute('data-field');
+            customFields[fieldName] = input.value;
+        });
 
         const caseItem = {
             caseNumber: id ? formData.get('caseNumber') : this.generateCaseNumber(formData.get('type')),
@@ -2989,7 +3016,8 @@ window.NotaryCRM = {
             paymentStatus: formData.get('paymentStatus') || 'pending',
             dueDate: formData.get('dueDate'),
             description: formData.get('description'),
-            status: formData.get('status') || 'pending'
+            status: formData.get('status') || 'pending',
+            customFields: customFields // SAVE CUSTOM FIELDS
         };
 
         if (id) {
@@ -3115,6 +3143,10 @@ window.NotaryCRM = {
         const client = this.state.clients.find(c => c.id === id) || {};
         const form = document.getElementById('client-form');
         if (!form) return;
+
+        // Render custom fields first
+        this.renderCustomFieldsInForm('client');
+
         form.querySelector('input[name="id"]').value = id || '';
         form.querySelector('input[name="name"]').value = client.name || '';
         form.querySelector('input[name="email"]').value = client.email || '';
@@ -3130,6 +3162,14 @@ window.NotaryCRM = {
         if (form.querySelector('textarea[name="notes"]')) form.querySelector('textarea[name="notes"]').value = client.notes || '';
         if (form.querySelector('select[name="relatedId"]')) form.querySelector('select[name="relatedId"]').value = client.relatedId || '';
         if (form.querySelector('input[name="tags"]')) form.querySelector('input[name="tags"]').value = (client.tags || []).join(', ');
+
+        // Populate Custom Fields
+        if (client.customFields) {
+            Object.keys(client.customFields).forEach(f => {
+                const input = form.querySelector(`.custom-field-input[data-field="${f}"]`);
+                if (input) input.value = client.customFields[f];
+            });
+        }
 
         this.openModal('client-modal');
     },
@@ -3172,16 +3212,29 @@ window.NotaryCRM = {
         const caseItem = this.state.cases.find(c => c.id === id) || {};
         const form = document.getElementById('case-form');
         if (!form) return;
+
+        // Render custom fields
+        this.renderCustomFieldsInForm('case');
+
         form.querySelector('input[name="id"]').value = id || '';
         form.querySelector('input[name="caseNumber"]').value = caseItem.caseNumber || '';
-        if (form.querySelector('select[name="clientId"]')) form.querySelector('select[name="clientId"]').value = caseItem.clientId || '';
-        form.querySelector('select[name="type"]').value = caseItem.type || 'Acknowledgment';
-        if (form.querySelector('select[name="location"]')) form.querySelector('select[name="location"]').value = caseItem.location || 'Oficina';
-        form.querySelector('input[name="amount"]').value = caseItem.amount || '';
-        if (form.querySelector('select[name="paymentStatus"]')) form.querySelector('select[name="paymentStatus"]').value = caseItem.paymentStatus || 'pending';
-        form.querySelector('input[name="dueDate"]').value = caseItem.dueDate ? (new Date(caseItem.dueDate)).toISOString().split('T')[0] : '';
-        if (form.querySelector('select[name="status"]')) form.querySelector('select[name="status"]').value = caseItem.status || 'pending';
+        form.querySelector('select[name="clientId"]').value = caseItem.clientId || '';
+        form.querySelector('select[name="type"]').value = caseItem.type || 'General';
+        form.querySelector('select[name="location"]').value = caseItem.location || 'Oficina';
+        form.querySelector('input[name="amount"]').value = caseItem.amount || 0;
+        form.querySelector('select[name="paymentStatus"]').value = caseItem.paymentStatus || 'pending';
+        form.querySelector('input[name="dueDate"]').value = caseItem.dueDate || '';
         form.querySelector('textarea[name="description"]').value = caseItem.description || '';
+        form.querySelector('select[name="status"]').value = caseItem.status || 'pending';
+
+        // Populate Custom Fields
+        if (caseItem.customFields) {
+            Object.keys(caseItem.customFields).forEach(f => {
+                const input = form.querySelector(`.custom-field-input[data-field="${f}"]`);
+                if (input) input.value = caseItem.customFields[f];
+            });
+        }
+
         this.openModal('case-modal');
     },
 
@@ -4510,7 +4563,7 @@ window.NotaryCRM = {
         window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
     },
 
-    showClientDetails(id) {
+    async showClientDetails(id) {
         const client = this.state.clients.find(c => c.id === id);
         if (!client) return;
 
@@ -4519,7 +4572,36 @@ window.NotaryCRM = {
         const relatedClient = client.relatedId ? this.state.clients.find(c => c.id === client.relatedId) : null;
 
         const content = document.getElementById('client-details-content');
+
+        let pendingRequestHtml = '';
+        if (this.useFirestore) {
+            try {
+                const { collection, query, where, getDocs } = window.dbFuncs;
+                const db = window.firebaseDB;
+                const q = query(collection(db, 'requests'),
+                    where('clientId', '==', id),
+                    where('status', '==', 'pending'));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    const reqDoc = snap.docs[0];
+                    pendingRequestHtml = `
+                        <div style="background: #fffbeb; border: 1px solid #fef3c7; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; animation: pulse 2s infinite;">
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <svg style="color: #d97706; width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                <div>
+                                    <span style="display:block; font-weight: 700; color: #92400e;">Solicitud de Cambio de Perfil Pendiente</span>
+                                    <span style="font-size: 0.75rem; color: #b45309;">El cliente ha solicitado actualizar sus datos de contacto.</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="NotaryCRM.openUpdateApproval('${reqDoc.id}')">Revisar y Aprobar</button>
+                        </div>
+                    `;
+                }
+            } catch (e) { console.error(e); }
+        }
+
         content.innerHTML = `
+            ${pendingRequestHtml}
             <div class="case-details-grid" style="margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 2rem;">
                 <div class="case-detail-item"><p class="case-detail-label">Nombre</p><p class="case-detail-value">${client.name}</p></div>
                 <div class="case-detail-item"><p class="case-detail-label">DNI/ID</p><p class="case-detail-value">${client.idType}: ${client.idNumber}</p></div>
@@ -4527,53 +4609,181 @@ window.NotaryCRM = {
                 <div class="case-detail-item"><p class="case-detail-label">Teléfono</p><p class="case-detail-value">${client.phone}</p></div>
                 <div class="case-detail-item"><p class="case-detail-label">Ocupación</p><p class="case-detail-value">${client.occupation || 'N/A'}</p></div>
                 <div class="case-detail-item"><p class="case-detail-label">Vínculo Familiar</p><p class="case-detail-value">${relatedClient ? `<a href="#" onclick="NotaryCRM.showClientDetails('${relatedClient.id}')" style="color: var(--color-primary); font-weight: 600;">${relatedClient.name}</a>` : 'N/A'}</p></div>
+                ${client.customFields ? Object.keys(client.customFields).map(key => `
+                    <div class="case-detail-item"><p class="case-detail-label">${key}</p><p class="case-detail-value">${client.customFields[key] || '-'}</p></div>
+                `).join('') : ''}
             </div>
             
-            <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Historial de Casos' : 'Case History'} (${clientCases.length})</h4>
-            <div class="table-container" style="margin-bottom: 2rem;">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th data-i18n="case_num">${I18nManager.t('case_num')}</th>
-                            <th data-i18n="type">${I18nManager.t('type')}</th>
-                            <th data-i18n="status">${I18nManager.t('status')}</th>
-                            <th data-i18n="amount">${I18nManager.t('amount')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${clientCases.map(c => `
-                            <tr>
-                                <td><strong>${c.caseNumber}</strong></td>
-                                <td>${c.type}</td>
-                                <td>${this.renderStatusBadge(c.status, c.dueDate, c.id)}</td>
-                                <td>${this.formatCurrency(c.amount)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+            <div style="display:flex; gap:1rem; border-bottom: 1px solid #eee; margin-bottom: 1.5rem;">
+                <button class="btn btn-link active" onclick="NotaryCRM.switchClientDetailTab('cases', '${id}')">${I18nManager.currentLang === 'es' ? 'Casos' : 'Cases'}</button>
+                <button class="btn btn-link" onclick="NotaryCRM.switchClientDetailTab('audit', '${id}')">${I18nManager.currentLang === 'es' ? 'Auditoría / Historial' : 'Audit History'}</button>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                <div>
-                    <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Línea de Tiempo' : 'Activity Timeline'}</h4>
-                    ${TimelineManager.renderTimeline(TimelineManager.getClientTimeline(client.id))}
+            <div id="client-detail-tab-content">
+                <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Historial de Casos' : 'Case History'} (${clientCases.length})</h4>
+                <div class="table-container" style="margin-bottom: 2rem;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="case_num">${I18nManager.t('case_num')}</th>
+                                <th data-i18n="type">${I18nManager.t('type')}</th>
+                                <th data-i18n="status">${I18nManager.t('status')}</th>
+                                <th data-i18n="amount">${I18nManager.t('amount')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${clientCases.map(c => `
+                                <tr>
+                                    <td><strong>${c.caseNumber}</strong></td>
+                                    <td>${c.type}</td>
+                                    <td>${this.renderStatusBadge(c.status, c.dueDate, c.id)}</td>
+                                    <td>${this.formatCurrency(c.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
-                <div>
-                    <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Próximas Citas' : 'Upcoming Appointments'}</h4>
-                    <div class="reminders-timeline">
-                        ${clientApps.length === 0 ? `<p>${I18nManager.currentLang === 'es' ? 'No hay citas programadas.' : 'No upcoming appointments.'}</p>` : clientApps.map(a => `
-                            <div class="timeline-item" style="padding-left:0;">
-                                <div class="timeline-card" style="margin-left:0; border-left: 4px solid #10b981;">
-                                    <strong>${a.date} a las ${a.time}</strong> - ${a.type}
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Línea de Tiempo' : 'Activity Timeline'}</h4>
+                        ${TimelineManager.renderTimeline(TimelineManager.getClientTimeline(client.id))}
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: var(--color-primary);">${I18nManager.currentLang === 'es' ? 'Próximas Citas' : 'Upcoming Appointments'}</h4>
+                        <div class="reminders-timeline">
+                            ${clientApps.length === 0 ? `<p>${I18nManager.currentLang === 'es' ? 'No hay citas programadas.' : 'No upcoming appointments.'}</p>` : clientApps.map(a => `
+                                <div class="timeline-item" style="padding-left:0;">
+                                    <div class="timeline-card" style="margin-left:0; border-left: 4px solid #10b981;">
+                                        <strong>${a.date} a las ${a.time}</strong> - ${a.type}
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             </div>
         `;
 
         this.openModal('client-details-modal');
+    },
+
+    switchClientDetailTab(tab, clientId) {
+        const container = document.getElementById('client-detail-tab-content');
+        if (tab === 'audit') {
+            // Get audit logs for this client
+            const logs = AuditManager.getLogs().filter(l => l.details && l.details.includes(clientId));
+            // Or many times logs just mention the name
+            const client = this.state.clients.find(c => c.id === clientId);
+            const nameLogs = AuditManager.getLogs().filter(l => l.target === client.name);
+
+            const allLogs = [...new Set([...logs, ...nameLogs])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            container.innerHTML = `
+                <h4 style="margin-bottom: 1rem; color: var(--color-primary);">Historial de Auditoría</h4>
+                <div class="audit-list">
+                    ${allLogs.length === 0 ? '<p>No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
+                        <div style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600;">${l.action}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-light);">${l.details}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.75rem; color: var(--text-light);">${new Date(l.timestamp).toLocaleString()}</div>
+                                <div style="font-size: 0.7rem; font-weight: 700;">${l.user || 'Sistema'}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            // Reload cases tab
+            this.showClientDetails(clientId);
+        }
+    },
+
+    async openUpdateApproval(requestId) {
+        const { doc, getDoc } = window.dbFuncs;
+        const db = window.firebaseDB;
+
+        try {
+            const snap = await getDoc(doc(db, 'requests', requestId));
+            if (!snap.exists()) return;
+            const request = snap.data();
+
+            const oldEl = document.getElementById('approval-old-data');
+            const newEl = document.getElementById('approval-new-data');
+
+            const diffs = [];
+            if (request.oldData.address !== request.newData.address) diffs.push('address');
+            if (request.oldData.phone !== request.newData.phone) diffs.push('phone');
+
+            oldEl.innerHTML = `
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display:block; font-size: 0.65rem; color: var(--color-gray-400);">Dirección</label>
+                    <div style="${diffs.includes('address') ? 'color: #dc2626; text-decoration: line-through;' : ''}">${request.oldData.address}</div>
+                </div>
+                <div>
+                    <label style="display:block; font-size: 0.65rem; color: var(--color-gray-400);">Teléfono</label>
+                    <div style="${diffs.includes('phone') ? 'color: #dc2626; text-decoration: line-through;' : ''}">${request.oldData.phone}</div>
+                </div>
+            `;
+
+            newEl.innerHTML = `
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display:block; font-size: 0.65rem; color: #166534;">Dirección</label>
+                    <div style="font-weight: 600;">${request.newData.address}</div>
+                </div>
+                <div>
+                    <label style="display:block; font-size: 0.65rem; color: #166534;">Teléfono</label>
+                    <div style="font-weight: 600;">${request.newData.phone}</div>
+                </div>
+            `;
+
+            const approveBtn = document.getElementById('approve-update-btn');
+            const rejectBtn = document.getElementById('reject-update-btn');
+
+            approveBtn.onclick = () => this.processUpdateRequest(requestId, true);
+            rejectBtn.onclick = () => this.processUpdateRequest(requestId, false);
+
+            this.openModal('approval-modal');
+        } catch (e) { console.error(e); }
+    },
+
+    async processUpdateRequest(requestId, approve) {
+        const { doc, getDoc, updateDoc, deleteDoc } = window.dbFuncs;
+        const db = window.firebaseDB;
+
+        try {
+            const snap = await getDoc(doc(db, 'requests', requestId));
+            if (!snap.exists()) return;
+            const request = snap.data();
+
+            if (approve) {
+                // Update Client
+                await updateDoc(doc(db, 'clients', request.clientId), {
+                    address: request.newData.address,
+                    phone: request.newData.phone
+                });
+
+                // Mark request as approved (or delete)
+                await updateDoc(doc(db, 'requests', requestId), { status: 'approved' });
+
+                AuditManager.logAction('Aprobación de Cambio', request.clientName, `Datos actualizados: ${request.newData.address} | ${request.newData.phone}`);
+                Toast.success('Éxito', 'El perfil del cliente ha sido actualizado.');
+            } else {
+                // Rejection
+                await updateDoc(doc(db, 'requests', requestId), { status: 'rejected' });
+                Toast.warning('Solicitud Rechazada', 'Se ha ignorado el cambio solicitado.');
+            }
+
+            this.closeModal('approval-modal');
+            this.closeModal('client-details-modal'); // Refresh view
+            this.showClientDetails(request.clientId);
+        } catch (e) {
+            console.error(e);
+            Toast.error('Error', 'No se pudo procesar la solicitud.');
+        }
     },
 
     showCaseDetails(id) {
@@ -4618,6 +4828,12 @@ window.NotaryCRM = {
                             <span class="info-label">Fecha de Vencimiento</span>
                             <span class="info-value">${this.formatDate(caseItem.dueDate)}</span>
                         </div>
+                        ${caseItem.customFields ? Object.keys(caseItem.customFields).map(key => `
+                            <div class="info-item">
+                                <span class="info-label">${key}</span>
+                                <span class="info-value">${caseItem.customFields[key] || '-'}</span>
+                            </div>
+                        `).join('') : ''}
                     </div>
 
                     <div class="case-description-box">
@@ -5203,33 +5419,165 @@ window.NotaryCRM = {
             return;
         }
 
+        this.state.lastDuplicates = duplicates;
         this.renderDuplicates(duplicates);
+
+        const mergeBtn = document.getElementById('merge-all-duplicates-btn');
+        if (mergeBtn) mergeBtn.style.display = 'block';
+
         this.openModal('duplicates-modal');
+    },
+
+    async mergeAllDuplicates() {
+        if (!this.state.lastDuplicates || this.state.lastDuplicates.length === 0) return;
+
+        this.confirmAction(
+            'Fusionar Todo',
+            `¿Estás seguro de fusionar automáticamente ${this.state.lastDuplicates.length} grupos de duplicados? Esta acción es masiva y permanente.`,
+            async () => {
+                Toast.info('Procesando...', 'Iniciando fusión masiva de registros.');
+                let mergedCount = 0;
+
+                for (const group of this.state.lastDuplicates) {
+                    try {
+                        await this.executeGroupMerge(group);
+                        mergedCount++;
+                    } catch (err) {
+                        console.error('Failed to merge group:', group.key, err);
+                    }
+                }
+
+                this.closeModal('duplicates-modal');
+                Toast.success('Fusión Masiva Completada', `Se han procesado ${mergedCount} grupos de clientes.`);
+                this.state.lastDuplicates = [];
+                // Re-render handled by listeners usually, but manually trigger if needed
+                if (!this.useFirestore) {
+                    this.render();
+                }
+            }
+        );
+    },
+
+    async executeGroupMerge(group) {
+        // Deterministic keep: record with most cases/appointments or oldest
+        // For simplicity: the first one in the list (usually oldest if fetched by asc ID/date)
+        const sorted = [...group.clients].sort((a, b) => {
+            // Priority 1: Has more metadata? (can't easily check without fetching all cases/apps for all)
+            // Priority 2: Oldest createdAt
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateA - dateB;
+        });
+
+        const mainClient = sorted[0];
+        const duplicates = sorted.slice(1);
+
+        for (const dup of duplicates) {
+            await this.performClientMerge(mainClient.id, dup.id, mainClient.name);
+        }
+    },
+
+    async performClientMerge(keepId, removeId, keepName) {
+        if (keepId === removeId) return;
+
+        console.log(`Merging client ${removeId} into ${keepId}`);
+
+        if (this.useFirestore) {
+            const { collection, query, where, getDocs, updateDoc, doc, deleteDoc } = window.dbFuncs;
+            const db = window.firebaseDB;
+
+            // 1. Update Cases
+            const casesQuery = query(collection(db, 'cases'), where('clientId', '==', removeId));
+            const casesSnap = await getDocs(casesQuery);
+            for (const caseDoc of casesSnap.docs) {
+                await updateDoc(doc(db, 'cases', caseDoc.id), {
+                    clientId: keepId,
+                    clientName: keepName
+                });
+            }
+
+            // 2. Update Appointments
+            const appsQuery = query(collection(db, 'appointments'), where('clientId', '==', removeId));
+            const appsSnap = await getDocs(appsQuery);
+            for (const appDoc of appsSnap.docs) {
+                await updateDoc(doc(db, 'appointments', appDoc.id), {
+                    clientId: keepId,
+                    clientName: keepName
+                });
+            }
+
+            // 3. Delete Duplicate Client
+            await deleteDoc(doc(db, 'clients', removeId));
+
+            // 4. Log Action
+            AuditManager.logAction('Fusión de Cliente', keepName, `ID ${removeId} fusionado en ${keepId}`);
+        } else {
+            // Local storage merge
+            this.state.cases.forEach(c => {
+                if (c.clientId === removeId) {
+                    c.clientId = keepId;
+                    c.clientName = keepName;
+                }
+            });
+            this.state.appointments.forEach(a => {
+                if (a.clientId === removeId) {
+                    a.clientId = keepId;
+                    a.clientName = keepName;
+                }
+            });
+            this.state.clients = this.state.clients.filter(c => c.id !== removeId);
+            this.saveData();
+        }
     },
 
     renderDuplicates(duplicates) {
         const listEl = document.getElementById('duplicates-list');
-        listEl.innerHTML = duplicates.map(dup => `
+        listEl.innerHTML = duplicates.map((dup, index) => `
             <div class="duplicate-group" style="background: var(--color-gray-50); border: 1px solid var(--color-gray-200); border-radius: 12px; padding: 1rem;">
                 <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; margin-bottom: 0.75rem;">
-                    Grupo de Coincidencia: ${dup.key}
+                    Grupo: ${dup.key}
                 </div>
                 <div style="display: grid; gap: 0.5rem;">
                     ${dup.clients.map(c => `
                         <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--color-gray-100);">
-                            <div>
+                            <div style="flex: 1;">
                                 <div style="font-weight: 600;">${c.name}</div>
                                 <div style="font-size: 0.75rem; color: var(--text-light);">${c.email} | ${c.idNumber}</div>
                             </div>
-                            <div style="font-size: 0.7rem; color: var(--color-success); font-weight: 600;">VERIFICADO</div>
+                            <div style="font-size: 0.65rem; color: var(--color-gray-400);">ID: ${c.id.substring(0, 6)}...</div>
                         </div>
                     `).join('')}
                 </div>
-                <button class="btn btn-sm btn-block" style="margin-top: 1rem; background: var(--color-primary-light); color: var(--color-primary);" onclick="Toast.info('Fusión en Desarrollo', 'La fusión masiva estará disponible en la próxima actualización.')">
-                    Fusionar Registros
+                <button class="btn btn-sm btn-block" style="margin-top: 1rem; background: var(--color-primary); color: white;" 
+                    onclick="NotaryCRM.executeManualMerge(${index})">
+                    Fusionar este Grupo
                 </button>
             </div>
         `).join('');
+    },
+
+    async executeManualMerge(index) {
+        const group = this.state.lastDuplicates[index];
+        if (!group) return;
+
+        this.confirmAction(
+            'Fusionar Grupo',
+            `Se conservará el registro más antiguo y se transferirán todos los casos y citas de los duplicados.`,
+            async () => {
+                Toast.info('Fusionando...', 'Procesando grupo seleccionado.');
+                await this.executeGroupMerge(group);
+
+                // Refresh list
+                this.state.lastDuplicates.splice(index, 1);
+                if (this.state.lastDuplicates.length === 0) {
+                    this.closeModal('duplicates-modal');
+                    Toast.success('Éxito', 'Se han fusionado todos los duplicados del grupo.');
+                } else {
+                    this.renderDuplicates(this.state.lastDuplicates);
+                    Toast.success('Fusión Completada', 'Grupo fusionado correctamente.');
+                }
+            }
+        );
     },
 
     gdprExport() {
