@@ -405,6 +405,9 @@
             emailjs.init("R_0WEyJF67aAZaSFF");
         })();
 
+        // Global state for rescheduling
+        let rescheduleId = null;
+
         document.getElementById('public-booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -417,39 +420,12 @@
             const name = formData.get('name');
             const type = formData.get('type');
 
-            // 1. Local Persistence Check
-            const lastBooking = localStorage.getItem('active_booking');
-            if (lastBooking) {
-                const booking = JSON.parse(lastBooking);
-                if (new Date(booking.date) >= new Date().setHours(0, 0, 0, 0) && booking.status !== 'cancelled') {
-                    return alert('Ya tienes una cita pendiente para el ' + booking.date + '. No puedes agendar otra hasta completarla.');
-                }
-            }
-
             btn.disabled = true;
             btn.textContent = 'Procesando...';
 
             try {
-                const { addDoc, collection, query, where, getDocs } = window.dbFuncs;
+                const { addDoc, updateDoc, doc, collection, query, where, getDocs } = window.dbFuncs;
                 const db = window.firebaseDB;
-
-                // 2. Server-side Duplicate Check (Anti-spam)
-                // Check if email already has a future appointment
-                const todayStr = new Date().toISOString().split('T')[0];
-                const q = query(collection(db, 'appointments'), where('clientEmail', '==', email));
-                const snapshot = await getDocs(q);
-
-                const hasActive = snapshot.docs.some(doc => {
-                    const data = doc.data();
-                    return data.date >= todayStr && data.status !== 'cancelled';
-                });
-
-                if (hasActive) {
-                    alert('Ya existe una cita activa asociada a este correo electrónico (' + email + ').');
-                    btn.disabled = false;
-                    btn.textContent = 'Confirmar Cita';
-                    return;
-                }
 
                 // Prepare Data
                 const appointmentData = {
@@ -461,17 +437,55 @@
                     time: selectedTime,
                     source: 'public_web',
                     status: 'scheduled',
-                    createdAt: new Date().toISOString()
+                    lastUpdated: new Date().toISOString()
                 };
 
-                // 3. Save to Firebase
-                await addDoc(collection(db, 'appointments'), appointmentData);
+                if (!rescheduleId) {
+                    // --- NEW APPOINTMENT FLOW ---
 
-                // 4. Send Email (Background)
+                    // 1. Local Persistence Check
+                    const lastBooking = localStorage.getItem('active_booking');
+                    if (lastBooking) {
+                        const booking = JSON.parse(lastBooking);
+                        if (new Date(booking.date) >= new Date().setHours(0, 0, 0, 0) && booking.status !== 'cancelled') {
+                            alert('Ya tienes una cita pendiente. No puedes agendar otra hasta completarla.');
+                            btn.disabled = false;
+                            btn.textContent = 'Confirmar Cita';
+                            return;
+                        }
+                    }
+
+                    // 2. Server-side Duplicate Check
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const q = query(collection(db, 'appointments'), where('clientEmail', '==', email));
+                    const snapshot = await getDocs(q);
+                    const hasActive = snapshot.docs.some(doc => {
+                        const data = doc.data();
+                        return data.date >= todayStr && data.status !== 'cancelled';
+                    });
+
+                    if (hasActive) {
+                        alert('Ya existe una cita activa asociada a este correo electrónico.');
+                        btn.disabled = false;
+                        btn.textContent = 'Confirmar Cita';
+                        return;
+                    }
+
+                    appointmentData.createdAt = new Date().toISOString();
+                    await addDoc(collection(db, 'appointments'), appointmentData);
+
+                } else {
+                    // --- RESCHEDULE FLOW ---
+                    const apptRef = doc(db, 'appointments', rescheduleId);
+                    appointmentData.status = 'rescheduled';
+                    appointmentData.rescheduledFrom = new Date().toISOString(); // Audit trail
+
+                    await updateDoc(apptRef, appointmentData);
+                    alert('Su cita ha sido reprogramada exitosamente.');
+                }
+
+                // Send Email Notification
                 try {
-                    // Note: This requires an EmailJS account connected to your Gmail.
-                    // Service ID: 'service_gmail' (example)
-                    // Template ID: 'template_confirmation' (create one with {{name}}, {{date}}, {{time}})
                     await emailjs.send(
                         "service_3w3frii",
                         "template_r2kb23k",
@@ -481,16 +495,16 @@
                             date: selectedDate,
                             time: selectedTime,
                             type: type,
-                            message: `Su cita ha sido confirmada para el ${selectedDate} a las ${selectedTime}.`
+                            message: rescheduleId
+                                ? `Su cita ha sido REPROGRAMADA para el ${selectedDate} a las ${selectedTime}.`
+                                : `Su cita ha sido confirmada para el ${selectedDate} a las ${selectedTime}.`
                         }
                     );
-                    console.log('Email sent successfully');
                 } catch (emailErr) {
-                    console.warn('Email sending failed (Check EmailJS config):', emailErr);
-                    // Don't block the success flow if email fails
+                    console.warn('Email sending failed:', emailErr);
                 }
 
-                // 5. Save persistence locally
+                // Persistence
                 localStorage.setItem('active_booking', JSON.stringify({
                     date: selectedDate,
                     email: email,
@@ -498,20 +512,14 @@
                 }));
 
                 // Success UI
-                // Success UI
                 const container = document.querySelector('.booking-container');
-                container.style.display = 'flex';
-                container.style.flexDirection = 'column';
-                container.style.alignItems = 'center';
-                container.style.justifyContent = 'center';
-
                 container.innerHTML = `
                     <div style="padding: 4rem; text-align: center; color: #1e3a8a; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 600px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; margin-bottom: 1.5rem; color: #10b981;">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
                         </svg>
-                        <h2 style="font-size: 2rem; margin-bottom: 1rem;">¡Cita Confirmada!</h2>
+                        <h2 style="font-size: 2rem; margin-bottom: 1rem;">${rescheduleId ? '¡Cita Reprogramada!' : '¡Cita Confirmada!'}</h2>
                         <p style="font-size: 1.1rem; color: #4b5563; margin-bottom: 2rem;">
                             Hemos agendado tu cita para el <strong>${selectedDate}</strong> a las <strong>${selectedTime}</strong>.<br>
                             Se ha enviado un detalle a <strong>${email}</strong>.
@@ -522,11 +530,58 @@
 
             } catch (err) {
                 console.error(err);
-                alert('Hubo un error al procesar tu solicitud. Por favor intenta nuevamente.');
+                alert('Hubo un error al procesar tu solicitud.');
                 btn.disabled = false;
-                btn.textContent = 'Confirmar Cita';
+                btn.textContent = rescheduleId ? 'Reprogramar Cita' : 'Confirmar Cita';
             }
         });
+
+        // Initialize Reschedule Mode if param exists
+        async function checkReschedule() {
+            const params = new URLSearchParams(window.location.search);
+            const rId = params.get('reschedule');
+
+            if (rId && window.firebaseDB) {
+                try {
+                    const { doc, getDoc } = window.dbFuncs;
+                    const snap = await getDoc(doc(window.firebaseDB, 'appointments', rId));
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        rescheduleId = rId;
+
+                        // Show banner
+                        const container = document.querySelector('.booking-section .container');
+                        const banner = document.createElement('div');
+                        banner.style.background = '#e0f2fe';
+                        banner.style.border = '1px solid #7dd3fc';
+                        banner.style.padding = '1rem';
+                        banner.style.marginBottom = '2rem';
+                        banner.style.borderRadius = '0.5rem';
+                        banner.style.textAlign = 'center';
+                        banner.style.color = '#0369a1';
+                        banner.innerHTML = `<strong>Modo Reprogramación:</strong> Estás moviendo tu cita original del <u>${data.date}</u>. Por favor elige una nueva fecha.`;
+                        container.insertBefore(banner, container.firstChild);
+
+                        // Pre-fill form
+                        document.querySelector('input[name="name"]').value = data.clientName || '';
+                        document.querySelector('input[name="phone"]').value = data.clientPhone || '';
+                        document.querySelector('input[name="email"]').value = data.clientEmail || '';
+                        document.querySelector('select[name="type"]').value = data.type || 'General';
+
+                        // Lock email/name to prevent identity switch during reschedule? 
+                        // Optional, but safer.
+                        document.querySelector('input[name="email"]').readOnly = true;
+
+                    }
+                } catch (e) {
+                    console.error("Error fetching appointment for reschedule", e);
+                }
+            } else if (rId && !window.firebaseDB) {
+                setTimeout(checkReschedule, 500);
+            }
+        }
+
+        checkReschedule();
 
         // Navigation listeners
         document.getElementById('prev-month').onclick = () => {

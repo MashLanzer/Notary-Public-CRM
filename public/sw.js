@@ -4,8 +4,13 @@ const ASSETS = [
     '/index.html',
     '/styles.css',
     '/app.js',
+    '/booking.html',
+    '/status.html',
+    '/landing.html',
+    '/manifest.json',
     'https://cdn.jsdelivr.net/npm/chart.js',
-    'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'
+    'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js',
+    'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js'
 ];
 
 // Install event - caching assets

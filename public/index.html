@@ -195,176 +195,237 @@
                     </div>
                 </div>
 
-                <div class="actions-bar" style="margin-bottom: 1.5rem;">
-                    <h2 class="section-title">Dashboard</h2>
-                    <button class="btn" id="customize-dashboard-btn">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
-                            <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
-                            </path>
-                        </svg>
-                        Personalizar
-                    </button>
+                <div class="dashboard-body">
+                    <div class="actions-bar" style="margin-bottom: 1.5rem;">
+                        <h2 class="section-title">Dashboard</h2>
+                        <button class="btn" id="customize-dashboard-btn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 1v6m0 6v6M1 12h6m6 0h6"></path>
+                                <path d="m4.93 4.93 4.24 4.24m5.66 0 4.24-4.24M4.93 19.07l4.24-4.24m5.66 0 4.24 4.24">
+                                </path>
+                            </svg>
+                            Personalizar
+                        </button>
+                    </div>
+
+                    <div class="stats-grid" id="dashboard-stats-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                        <!-- Total Clients -->
+                        <div class="stat-card" data-widget-id="total-clients">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Total Clientes</p>
+                                    <p class="stat-value" id="total-clients">0</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #eff6ff; padding: 10px; border-radius: 12px; color: #3b82f6;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Cases -->
+                        <div class="stat-card" data-widget-id="total-cases">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Total Casos</p>
+                                    <p class="stat-value" id="total-cases">0</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #f0fdf4; padding: 10px; border-radius: 12px; color: #22c55e;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Completed -->
+                        <div class="stat-card" data-widget-id="completed-cases">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Completados</p>
+                                    <p class="stat-value" id="completed-cases">0</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #fdf2f8; padding: 10px; border-radius: 12px; color: #ec4899;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                        <polyline points="22 4 12 14.01 9 11.01" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appointments Today -->
+                        <div class="stat-card" data-widget-id="today-appointments">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Citas Hoy</p>
+                                    <p class="stat-value" id="today-appointments-count">0</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #fff7ed; padding: 10px; border-radius: 12px; color: #f97316;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                        <line x1="16" y1="2" x2="16" y2="6" />
+                                        <line x1="8" y1="2" x2="8" y2="6" />
+                                        <line x1="3" y1="10" x2="21" y2="10" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Payments -->
+                        <div class="stat-card" data-widget-id="pending-payments">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Por Cobrar</p>
+                                    <p class="stat-value" id="pending-payments-amount">$0.00</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #fef2f2; padding: 10px; border-radius: 12px; color: #ef4444;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="1" x2="12" y2="23" />
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Revenue -->
+                        <div class="stat-card" data-widget-id="total-revenue">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Ingresos Totales (Revenue)</p>
+                                    <p class="stat-value" id="total-revenue">$0.00</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #f0fdfa; padding: 10px; border-radius: 12px; color: #14b8a6;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                        <line x1="12" y1="22" x2="12" y2="7" />
+                                        <path d="M22 7l-10-4-10 4" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Avg Ticket -->
+                        <div class="stat-card" data-widget-id="avg-ticket">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Ticket Promedio</p>
+                                    <p class="stat-value" id="avg-ticket">$0.00</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #faf5ff; padding: 10px; border-radius: 12px; color: #a855f7;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path
+                                            d="M20.91 8.84 5.91 2.23a1 1 0 0 0-1.38 1.58l.74.83a2 2 0 0 1 .45 2.11L4.14 9.91a2 2 0 0 1-2.11.45l-.83-.74a1 1 0 0 0-1.58 1.38l6.61 15a1 1 0 0 0 1.91-.42l-2-8a1 1 0 0 1 .53-1.12l8-2a1 1 0 0 0 .42-1.91z" />
+                                        <path d="m22 2-7.5 7.5" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Success Rate -->
+                        <div class="stat-card" data-widget-id="success-rate">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label">Tasa de Éxito</p>
+                                    <p class="stat-value"><span id="success-rate">0</span>%</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: #fff1f2; padding: 10px; border-radius: 12px; color: #be123c;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20V10" />
+                                        <path d="M18 20V4" />
+                                        <path d="M6 20v-4" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="stats-grid" id="dashboard-stats-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
-                    <!-- Total Clients -->
-                    <div class="stat-card" data-widget-id="total-clients">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Total Clientes</p>
-                                <p class="stat-value" id="total-clients">0</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #eff6ff; padding: 10px; border-radius: 12px; color: #3b82f6;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                </svg>
-                            </div>
+                <!-- New Dashboard Widgets Row -->
+                <div class="stats-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 2rem;">
+                    <!-- Today's Agenda -->
+                    <div class="card" style="margin:0; height: 100%;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 class="card-title" style="margin:0;">📅 Agenda de Hoy</h3>
+                            <span id="today-appointments-badge" class="badge"
+                                style="background:#eff6ff; color:#1d4ed8;">0</span>
+                        </div>
+                        <div id="dashboard-agenda-list" style="max-height: 200px; overflow-y: auto;">
+                            <p class="empty-state" style="padding: 1rem 0;">No hay citas para hoy.</p>
                         </div>
                     </div>
 
-                    <!-- Total Cases -->
-                    <div class="stat-card" data-widget-id="total-cases">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Total Casos</p>
-                                <p class="stat-value" id="total-cases">0</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #f0fdf4; padding: 10px; border-radius: 12px; color: #22c55e;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                </svg>
-                            </div>
+                    <!-- Activity Summary (Replaces Pending Payments) -->
+                    <div class="card" style="margin:0; height: 100%;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 class="card-title" style="margin:0;">📊 Actividad del Mes</h3>
+                            <span class="badge" style="background:#f0fdf4; color:#15803d;">Activo</span>
                         </div>
-                    </div>
-
-                    <!-- Completed -->
-                    <div class="stat-card" data-widget-id="completed-cases">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Completados</p>
-                                <p class="stat-value" id="completed-cases">0</p>
+                        <div style="padding: 0.5rem 0;">
+                            <div
+                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b;">Casos Activos</span>
+                                <span id="dash-active-count" style="font-weight: 700; color: #0f172a;">0</span>
                             </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #fdf2f8; padding: 10px; border-radius: 12px; color: #ec4899;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                    <polyline points="22 4 12 14.01 9 11.01" />
-                                </svg>
+                            <div
+                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b;">Firmas Recibidas</span>
+                                <span id="dash-signed-count" style="font-weight: 700; color: #0f172a;">0</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Appointments Today -->
-                    <div class="stat-card" data-widget-id="today-appointments">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Citas Hoy</p>
-                                <p class="stat-value" id="today-appointments-count">0</p>
+                            <div
+                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b;">Ingresos del Mes</span>
+                                <span id="dash-month-revenue" style="font-weight: 700; color: #16a34a;">$0.00</span>
                             </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #fff7ed; padding: 10px; border-radius: 12px; color: #f97316;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
+                            <div
+                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b;">Nuevos Clientes</span>
+                                <span id="dash-new-clients" style="font-weight: 700; color: #0f172a;">0</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Pending Payments -->
-                    <div class="stat-card" data-widget-id="pending-payments">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Por Cobrar</p>
-                                <p class="stat-value" id="pending-payments-amount">$0.00</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #fef2f2; padding: 10px; border-radius: 12px; color: #ef4444;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="1" x2="12" y2="23" />
-                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Revenue -->
-                    <div class="stat-card" data-widget-id="revenue">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Ingresos Totales (Revenue)</p>
-                                <p class="stat-value" id="total-revenue">$0.00</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #f0fdfa; padding: 10px; border-radius: 12px; color: #14b8a6;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                    <line x1="12" y1="22" x2="12" y2="7" />
-                                    <path d="M22 7l-10-4-10 4" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Avg Ticket -->
-                    <div class="stat-card" data-widget-id="avg-ticket">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Ticket Promedio</p>
-                                <p class="stat-value" id="avg-ticket">$0.00</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #faf5ff; padding: 10px; border-radius: 12px; color: #a855f7;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M20.91 8.84 5.91 2.23a1 1 0 0 0-1.38 1.58l.74.83a2 2 0 0 1 .45 2.11L4.14 9.91a2 2 0 0 1-2.11.45l-.83-.74a1 1 0 0 0-1.58 1.38l6.61 15a1 1 0 0 0 1.91-.42l-2-8a1 1 0 0 1 .53-1.12l8-2a1 1 0 0 0 .42-1.91z" />
-                                    <path d="m22 2-7.5 7.5" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Success Rate -->
-                    <div class="stat-card" data-widget-id="success-rate">
-                        <div class="stat-content">
-                            <div>
-                                <p class="stat-label">Tasa de Éxito</p>
-                                <p class="stat-value"><span id="success-rate">0</span>%</p>
-                            </div>
-                            <div class="stat-icon-wrapper"
-                                style="background: #fff1f2; padding: 10px; border-radius: 12px; color: #be123c;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 20V10" />
-                                    <path d="M18 20V4" />
-                                    <path d="M6 20v-4" />
-                                </svg>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                                <button class="btn btn-sm btn-outline" onclick="NotaryCRM.switchTab('clients')">👥
+                                    Clientes</button>
+                                <button class="btn btn-sm btn-primary" onclick="NotaryCRM.switchTab('cases')">💼
+                                    Casos</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Cases -->
-                <div class="card" data-widget-id="recent-cases">
-                    <h2 class="card-title" data-i18n="recent_cases">Recent Cases</h2>
+                <div class="card" data-widget-id="recent-cases" style="margin-bottom: 2rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 class="card-title" style="margin:0;" data-i18n="recent_cases">Recent Cases</h2>
+                        <button class="btn btn-sm btn-text" onclick="NotaryCRM.switchTab('cases')">Gestionar Expedientes
+                            &rarr;</button>
+                    </div>
                     <div class="table-container">
                         <table class="table">
                             <thead>
@@ -384,6 +445,7 @@
                         </table>
                     </div>
                 </div>
+                <!-- End Dashboard Content -->
             </div>
 
             <!-- Clients Tab -->
@@ -594,20 +656,28 @@
 
                 <div class="stats-grid reports-grid" style="margin-top: 1.5rem;">
                     <div class="card" style="padding: 1.5rem;">
-                        <h3>Ingresos por Mes</h3>
-                        <canvas id="revenueChart"></canvas>
+                        <h3 style="margin-bottom: 1rem;">Ingresos por Mes</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
                     </div>
                     <div class="card" style="padding: 1.5rem;">
-                        <h3>Servicios más Solicitados</h3>
-                        <canvas id="servicesChart"></canvas>
+                        <h3 style="margin-bottom: 1rem;">Servicios más Solicitados</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="servicesChart"></canvas>
+                        </div>
                     </div>
                     <div class="card" style="padding: 1.5rem;">
-                        <h3>Estado de los Casos</h3>
-                        <canvas id="statusChart"></canvas>
+                        <h3 style="margin-bottom: 1rem;">Estado de los Casos</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
                     </div>
                     <div class="card" style="padding: 1.5rem;">
-                        <h3>Ingresos por Ubicación</h3>
-                        <canvas id="locationChart"></canvas>
+                        <h3 style="margin-bottom: 1rem;">Ingresos por Ubicación</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="locationChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -2428,7 +2498,6 @@
 
     <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
 
     <!-- PDF & Signature Libs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

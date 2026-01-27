@@ -2560,7 +2560,8 @@ window.NotaryCRM = {
         const targetTab = document.getElementById(`${tabName}-tab`);
         if (targetTab) {
             targetTab.classList.add('active');
-            targetTab.style.display = 'block'; // Force show
+            // Remove manual display manipulation, let CSS handle .tab-content.active
+            targetTab.style.display = '';
         }
 
         const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
@@ -2576,6 +2577,8 @@ window.NotaryCRM = {
         if (window.innerWidth < 1024) window.scrollTo(0, 0);
 
         // Trigger specific renders
+        if (tabName === 'dashboard') this.renderDashboard();
+        if (tabName === 'clients') this.renderClients();
         if (tabName === 'reports') this.renderReports();
         if (tabName === 'calendar') this.renderCalendar();
         if (tabName === 'emails') EmailManager.renderTemplates();
@@ -3184,6 +3187,26 @@ window.NotaryCRM = {
     showClientDetails(id) { this.editClientPrompt(id); }, // Reusing edit modal for details for now
     showCaseDetails(id) { this.editCasePrompt(id); }, // Reusing edit modal for details for now
 
+    async updateCaseStatus(id, newStatus) {
+        try {
+            await this.updateCase(id, { status: newStatus });
+            this.renderCases();
+            this.renderDashboard();
+        } catch (err) {
+            console.error('Error updating status:', err);
+        }
+    },
+
+    async updatePaymentStatus(id, newStatus) {
+        try {
+            await this.updateCase(id, { paymentStatus: newStatus });
+            this.renderCases();
+            this.renderDashboard();
+        } catch (err) {
+            console.error('Error updating payment status:', err);
+        }
+    },
+
     // Update sync indicator
     updateSyncStatus(status) {
         const text = document.getElementById('sync-text');
@@ -3224,21 +3247,31 @@ window.NotaryCRM = {
         // Update statistics
         const clientsList = this.state.clients || [];
         const totalClientsEl = document.getElementById('total-clients');
-        if (totalClientsEl) {
-            totalClientsEl.textContent = clientsList.length;
-        }
+        if (totalClientsEl) totalClientsEl.textContent = clientsList.length;
 
         const totalCases = this.state.cases.length;
-        document.getElementById('total-cases').textContent = totalCases;
+        const totalCasesEl = document.getElementById('total-cases');
+        if (totalCasesEl) totalCasesEl.textContent = totalCases;
 
         const completedCases = this.state.cases.filter(c => c.status === 'completed').length;
-        document.getElementById('completed-cases').textContent = completedCases;
+        const completedCasesEl = document.getElementById('completed-cases');
+        if (completedCasesEl) completedCasesEl.textContent = completedCases;
 
-        const totalRevenue = this.state.cases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
+        const totalRevenue = this.state.cases
+            .filter(c => c.paymentStatus === 'paid')
+            .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        const totalRevenueEl = document.getElementById('total-revenue');
+        if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
+
+        const pendingPayments = this.state.cases
+            .filter(c => c.paymentStatus !== 'paid')
+            .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        const pendingPaymentsEl = document.getElementById('pending-payments-amount');
+        if (pendingPaymentsEl) pendingPaymentsEl.textContent = this.formatCurrency(pendingPayments);
 
         // Advanced KPIs
-        const avgTicket = totalCases > 0 ? (totalRevenue / totalCases) : 0;
+        const totalPotential = totalRevenue + pendingPayments;
+        const avgTicket = totalCases > 0 ? (totalPotential / totalCases) : 0;
         const successRate = totalCases > 0 ? (completedCases / totalCases) * 100 : 0;
 
         const avgEl = document.getElementById('avg-ticket');
@@ -3248,19 +3281,92 @@ window.NotaryCRM = {
         if (rateEl) rateEl.textContent = Math.round(successRate);
 
         // Vital Stats: Today's Appointments
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayApps = this.state.appointments.filter(a => a.date === todayStr).length;
+        // Use local date string YYYY-MM-DD
+        const nowLocal = new Date();
+        const year = nowLocal.getFullYear();
+        const month = String(nowLocal.getMonth() + 1).padStart(2, '0');
+        const day = String(nowLocal.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
+        const todaysAppointments = this.state.appointments.filter(a => a.date === todayStr);
+
         const todayAppsEl = document.getElementById('today-appointments-count');
-        if (todayAppsEl) todayAppsEl.textContent = todayApps;
+        if (todayAppsEl) todayAppsEl.textContent = todaysAppointments.length;
 
-        // Vital Stats: Pending Payments
-        // Pending payments for all active or completed cases
-        const pendingValue = this.state.cases
-            .filter(c => (c.paymentStatus || '').toLowerCase() !== 'paid')
-            .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        const todayBadgeEl = document.getElementById('today-appointments-badge');
+        if (todayBadgeEl) todayBadgeEl.textContent = todaysAppointments.length;
 
-        const pendingEl = document.getElementById('pending-payments-amount');
-        if (pendingEl) pendingEl.textContent = this.formatCurrency(pendingValue);
+        const agendaListEl = document.getElementById('dashboard-agenda-list');
+        if (agendaListEl) {
+            if (todaysAppointments.length === 0) {
+                agendaListEl.innerHTML = `
+                    <div style="text-align:center; padding: 2rem 1rem; color: #94a3b8;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">☕</div>
+                        <p style="font-size: 0.9rem;">No hay citas para hoy.</p>
+                        <p style="font-size: 0.75rem;">¡Aprovecha para adelantar trabajo!</p>
+                    </div>`;
+            } else {
+                agendaListEl.innerHTML = todaysAppointments.map(app => `
+                    <div class="agenda-item" 
+                         style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 1rem; transition: background 0.2s; cursor: pointer;" 
+                         onmouseover="this.style.background='#f8fafc'" 
+                         onmouseout="this.style.background='transparent'"
+                         onclick="NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
+                        <div style="background: #eff6ff; color: #1d4ed8; padding: 0.5rem; border-radius: 10px; width: 60px; text-align: center; flex-shrink: 0;">
+                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Hoy</div>
+                            <div style="font-size: 0.9rem; font-weight: 800;">${app.time || '--:--'}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <p style="font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${app.title || 'Consulta Notarial'}
+                            </p>
+                            <p style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                                👤 ${app.clientName || app.client || 'Cliente General'}
+                            </p>
+                        </div>
+                        <div style="color: var(--color-primary); opacity: 0.5;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Vital Stats: Activity Summary
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const activeCases = this.state.cases.filter(c => !['completed', 'signed'].includes(c.status || 'pending')).length;
+        const signedCases = this.state.cases.filter(c => c.status === 'signed' || c.signature).length;
+
+        const monthRevenue = this.state.cases.filter(c => {
+            if (c.paymentStatus !== 'paid') return false;
+            let d;
+            if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
+            else if (c.createdAt) d = new Date(c.createdAt);
+            else return false;
+            return d >= firstDayOfMonth;
+        }).reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+
+        const newClientsThisMonth = (this.state.clients || []).filter(c => {
+            let d;
+            if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
+            else if (c.createdAt) d = new Date(c.createdAt);
+            else return false;
+            return d >= firstDayOfMonth;
+        }).length;
+
+        const dashActiveCountEl = document.getElementById('dash-active-count');
+        if (dashActiveCountEl) dashActiveCountEl.textContent = activeCases;
+
+        const dashSignedCountEl = document.getElementById('dash-signed-count');
+        if (dashSignedCountEl) dashSignedCountEl.textContent = signedCases;
+
+        const dashMonthRevEl = document.getElementById('dash-month-revenue');
+        if (dashMonthRevEl) dashMonthRevEl.textContent = this.formatCurrency(monthRevenue);
+
+        const dashNewClientsEl = document.getElementById('dash-new-clients');
+        if (dashNewClientsEl) dashNewClientsEl.textContent = newClientsThisMonth;
 
         // Render recent cases table
         const tbody = document.getElementById('recent-cases-table');
@@ -3272,11 +3378,11 @@ window.NotaryCRM = {
 
         const recentCases = this.state.cases.slice(0, 5);
         tbody.innerHTML = recentCases.map(c => `
-            <tr>
+            <tr onclick="NotaryCRM.showCaseDetails('${c.id}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                 <td style="font-weight: 500; color: var(--color-primary);">${c.caseNumber}</td>
                 <td style="color: var(--color-gray-700);">${c.clientName}</td>
                 <td style="color: var(--color-gray-700);">${c.type}</td>
-                <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
+                <td>${this.renderStatusBadge(c.status, c.dueDate, c.id)}</td>
                 <td style="font-weight: 600; color: var(--color-gray-900);">${this.formatCurrency(c.amount)}</td>
             </tr>
         `).join('');
@@ -3302,7 +3408,7 @@ window.NotaryCRM = {
         if (clientSelect) {
             const currentVal = clientSelect.value;
             clientSelect.innerHTML = '<option value="">Select a client</option>' +
-                this.state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                this.state.clients.map(c => `< option value = "${c.id}" > ${c.name}</option > `).join('');
             if (currentVal) clientSelect.value = currentVal;
         }
 
@@ -3422,14 +3528,14 @@ window.NotaryCRM = {
         const pageItems = filteredCases.slice(start, start + pageSize);
 
         container.innerHTML = pageItems.map(caseItem => `
-            <div class="case-card premium-case-card">
+                <div class="case-card premium-case-card">
                 <div class="case-header">
                     <div style="flex:1">
                         <div class="case-title-row">
                             <h3 class="case-number">${caseItem.caseNumber}</h3>
-                            <div style="display:flex; gap:0.5rem; flex-wrap: wrap;">
-                                ${this.renderStatusBadge(caseItem.status, caseItem.dueDate)}
-                                <span class="payment-badge ${caseItem.paymentStatus || 'pending'}">${(caseItem.paymentStatus || 'PENDIENTE').toUpperCase()}</span>
+                            <div style="display:flex; gap:0.5rem; flex-wrap: wrap; align-items: center;">
+                                ${this.renderStatusBadge(caseItem.status, caseItem.dueDate, caseItem.id)}
+                                ${this.renderPaymentStatusBadge(caseItem.paymentStatus, caseItem.id)}
                             </div>
                         </div>
                         <p class="case-description">${caseItem.description}</p>
@@ -3464,26 +3570,30 @@ window.NotaryCRM = {
                         </button>` : ''}
                     </div>
                 </div>
-                <div class="case-details-grid">
-                    <div class="case-detail-item">
-                        <p class="case-detail-label">Cliente</p>
-                        <p class="case-detail-value">${caseItem.clientName}</p>
+                <div class="case-details-row" style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Cliente</span>
+                        <span style="font-size: 0.95rem; font-weight: 500; color: #0f172a;">${caseItem.clientName}</span>
                     </div>
-                    <div class="case-detail-item">
-                        <p class="case-detail-label">Servicio</p>
-                        <p class="case-detail-value">${caseItem.type}</p>
+                    <div style="width: 1px; height: 24px; background: #e2e8f0;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Servicio</span>
+                        <span style="font-size: 0.95rem; font-weight: 500; color: #0f172a;">${caseItem.type}</span>
                     </div>
-                    <div class="case-detail-item">
-                        <p class="case-detail-label">Costo</p>
-                        <p class="case-detail-value amount">${this.formatCurrency(caseItem.amount)}</p>
+                    <div style="width: 1px; height: 24px; background: #e2e8f0;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Costo</span>
+                        <span class="amount" style="font-size: 0.95rem; font-weight: 700; color: #059669;">${this.formatCurrency(caseItem.amount)}</span>
                     </div>
-                    <div class="case-detail-item">
-                        <p class="case-detail-label">Lugar</p>
-                        <p class="case-detail-value">${caseItem.location || 'Oficina'}</p>
+                    <div style="width: 1px; height: 24px; background: #e2e8f0;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Lugar</span>
+                        <span style="font-size: 0.95rem; color: #334155;">${caseItem.location || 'Oficina'}</span>
                     </div>
-                    <div class="case-detail-item">
-                        <p class="case-detail-label">Vencimiento</p>
-                        <p class="case-detail-value">${this.formatDate(caseItem.dueDate)}</p>
+                    <div style="width: 1px; height: 24px; background: #e2e8f0;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Vencimiento</span>
+                        <span style="font-size: 0.95rem; color: #334155;">${this.formatDate(caseItem.dueDate)}</span>
                     </div>
                 </div>
             </div>
@@ -3498,7 +3608,7 @@ window.NotaryCRM = {
     },
 
     // Render status badge
-    renderStatusBadge(status, dueDate = null) {
+    renderStatusBadge(status, dueDate = null, id = null) {
         const isEs = I18nManager.currentLang === 'es';
         const statusConfig = {
             'completed': {
@@ -3531,6 +3641,24 @@ window.NotaryCRM = {
             }
         }
 
+        if (id) {
+            const options = [
+                { id: 'pending', text: isEs ? 'Pendiente' : 'Pending' },
+                { id: 'in-progress', text: isEs ? 'En Proceso' : 'In Progress' },
+                { id: 'completed', text: isEs ? 'Completado' : 'Completed' }
+            ];
+            return `
+                <div class="status-selector" style="display:inline-flex; align-items:center;" onclick="event.stopPropagation()">
+                    <select class="status-badge ${config.class}" 
+                            style="cursor:pointer; border:1px solid currentColor; appearance:none; outline:none; padding: 2px 8px;"
+                            onchange="NotaryCRM.updateCaseStatus('${id}', this.value)">
+                        ${options.map(o => `<option value="${o.id}" ${o.id === status ? 'selected' : ''}>${o.text}</option>`).join('')}
+                    </select>
+                    ${slaWarning}
+                </div>
+            `;
+        }
+
         return `
             <span class="status-badge ${config.class}" style="display: inline-flex; align-items: center;">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3538,8 +3666,37 @@ window.NotaryCRM = {
                 </svg>
                 ${config.text}
                 ${slaWarning}
-            </span>
+            </span >
         `;
+    },
+
+    renderPaymentStatusBadge(status, id = null) {
+        const isEs = I18nManager.currentLang === 'es';
+        const currentStatus = (status || 'pending').toLowerCase();
+        const statusMap = {
+            'paid': { class: 'paid', text: isEs ? 'Pagado' : 'PAID' },
+            'pending': { class: 'pending', text: isEs ? 'Pendiente' : 'PENDING' },
+            'partial': { class: 'partial', text: isEs ? 'Parcial' : 'PARTIAL' }
+        };
+        const config = statusMap[currentStatus] || statusMap['pending'];
+
+        if (id) {
+            const options = [
+                { id: 'pending', text: isEs ? 'Pendiente' : 'PENDING' },
+                { id: 'partial', text: isEs ? 'Parcial' : 'PARTIAL' },
+                { id: 'paid', text: isEs ? 'Pagado' : 'PAID' }
+            ];
+            return `
+                <div class="payment-selector" style="display:inline-block;" onclick="event.stopPropagation()">
+                    <select class="payment-badge ${config.class}" 
+                            style="cursor:pointer; border:1px solid currentColor; appearance:none; outline:none; text-transform:uppercase; padding: 2px 8px;"
+                            onchange="NotaryCRM.updatePaymentStatus('${id}', this.value)">
+                        ${options.map(o => `<option value="${o.id}" ${o.id.toLowerCase() === currentStatus ? 'selected' : ''}>${o.text}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+        }
+        return `<span class="payment-badge ${config.class}">${config.text}</span>`;
     },
 
     // Format date (handles ISO strings and Firestore Timestamps)
@@ -3574,14 +3731,14 @@ window.NotaryCRM = {
 
     formatCurrency(amount) {
         const symbol = this.state.currency === 'EUR' ? '€' : '$';
-        return `${symbol}${(parseFloat(amount) || 0).toFixed(2)}`;
+        return `${symbol}${(parseFloat(amount) || 0).toFixed(2)} `;
     },
 
     setCurrency(cur) {
         this.state.currency = cur;
         this.saveData();
         this.render();
-        Toast.success('Moneda Cambiada', `Ahora usando ${cur}`);
+        Toast.success('Moneda Cambiada', `Ahora usando ${cur} `);
     },
 
     copyToClipboard(text) {
@@ -3639,7 +3796,7 @@ window.NotaryCRM = {
                         <div class="skeleton skeleton-line" style="width: 32px; height: 32px; border-radius: 8px;"></div>
                     </div>
                 </div>
-            `;
+                `;
         }
         return skeletons;
     },
@@ -3665,6 +3822,25 @@ window.NotaryCRM = {
         const filterVal = document.getElementById('report-filter')?.value || 'all';
 
         if (!revenueCtx || !servicesCtx || !statusCtx || !locationCtx || this.state.cases.length === 0) return;
+
+        // --- Professional Chart Defaults ---
+        if (window.Chart) {
+            Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
+            Chart.defaults.color = '#64748b';
+            Chart.defaults.scale.grid.color = '#f1f5f9';
+        }
+
+        const COLORS = {
+            primary: '#3b82f6',     // Blue 500
+            primaryBg: 'rgba(59, 130, 246, 0.1)',
+            success: '#10b981',     // Emerald 500
+            successBg: 'rgba(16, 185, 129, 0.1)',
+            warning: '#f59e0b',     // Amber 500
+            danger: '#ef4444',      // Red 500
+            info: '#06b6d4',        // Cyan 500
+            purple: '#8b5cf6',      // Violet 500
+            gray: '#cbd5e1'         // Slate 300
+        };
 
         // Filter cases by date
         const now = new Date();
@@ -3694,40 +3870,59 @@ window.NotaryCRM = {
             return sum + (parseFloat(c.amount) || 0);
         }, 0);
         const revenueEl = document.getElementById('report-total-revenue');
-        if (revenueEl) revenueEl.textContent = this.formatCurrency(totalFilteredRevenue);
+        if (revenueEl) {
+            revenueEl.innerHTML = `
+                <div style="color: #10b981; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em;">
+                    ${this.formatCurrency(totalFilteredRevenue)}
+                </div>
+                `;
+        }
 
         // Revenue Projection (Based on PAID history)
         const months = {};
         this.state.cases.forEach(c => {
-            if (c.paymentStatus !== 'paid') return; // Skip unpaid for projection
+            if (c.paymentStatus !== 'paid') return; // Skip unpaid
             const d = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt || Date.now());
             const m = d.getMonth() + '-' + d.getFullYear();
             months[m] = (months[m] || 0) + (parseFloat(c.amount) || 0);
         });
         const avgMonthly = Object.values(months).length > 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
         const projectedEl = document.getElementById('report-projected-revenue');
-        if (projectedEl) projectedEl.textContent = this.formatCurrency(avgMonthly);
+        if (projectedEl) {
+            projectedEl.innerHTML = `
+                <div style="color: #3b82f6; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em;">
+                    ${this.formatCurrency(avgMonthly)}
+                </div>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Promedio mensual con base en histórico</span>
+            `;
+        }
 
-        // Cleanup existing charts if any
+        // Cleanup existing charts
         if (this.revenueChart) this.revenueChart.destroy();
         if (this.servicesChart) this.servicesChart.destroy();
         if (this.statusChart) this.statusChart.destroy();
         if (this.locationChart) this.locationChart.destroy();
 
-        // 1. Revenue by Month - ONLY PAID
+        // 1. Revenue by Month - ONLY PAID - Line Chart
         const monthlyRevenue = {};
+        // Initialize last 6 months with 0 to show nice trend
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = d.toLocaleString('es-ES', { month: 'short', year: 'numeric' });
+            monthlyRevenue[key] = 0;
+        }
+
         filteredCases.forEach(c => {
-            if (c.paymentStatus !== 'paid') return; // Skip unpaid
+            if (c.paymentStatus !== 'paid') return;
             let date;
-            if (c.createdAt && typeof c.createdAt.toDate === 'function') {
-                date = c.createdAt.toDate();
-            } else if (c.createdAt) {
-                date = new Date(c.createdAt);
-            } else {
-                date = new Date();
-            }
+            if (c.createdAt && typeof c.createdAt.toDate === 'function') date = c.createdAt.toDate();
+            else if (c.createdAt) date = new Date(c.createdAt);
+            else date = new Date();
+
             const month = date.toLocaleString('es-ES', { month: 'short', year: 'numeric' });
-            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (parseFloat(c.amount) || 0);
+            // Only add if it falls in our tracking (or was initialized) - simplistic approach for now:
+            if (monthlyRevenue[month] !== undefined) monthlyRevenue[month] += (parseFloat(c.amount) || 0);
+            else monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (parseFloat(c.amount) || 0);
         });
 
         this.revenueChart = new Chart(revenueCtx, {
@@ -3735,64 +3930,129 @@ window.NotaryCRM = {
             data: {
                 labels: Object.keys(monthlyRevenue),
                 datasets: [{
-                    label: 'Ingresos Efectivos ($)',
+                    label: 'Ingresos Efectivos',
                     data: Object.values(monthlyRevenue),
-                    borderColor: '#10b981', // Green for real money
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: COLORS.success,
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, COLORS.successBg);
+                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                        return gradient;
+                    },
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => this.formatCurrency(context.raw)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [2, 4] },
+                        ticks: { callback: (value) => '$' + value }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
         });
 
-        // 2. Most Requested Services (All cases counts)
+        // 2. Most Requested Services - Doughnut
         const serviceCounts = {};
-        filteredCases.forEach(c => {
-            serviceCounts[c.type] = (serviceCounts[c.type] || 0) + 1;
-        });
+        filteredCases.forEach(c => { serviceCounts[c.type] = (serviceCounts[c.type] || 0) + 1; });
+
+        // Pick top 5, group others
+        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
+        const topServices = sortedServices.slice(0, 5);
+        if (sortedServices.length > 5) {
+            topServices.push(['Otros', sortedServices.slice(5).reduce((sum, item) => sum + item[1], 0)]);
+        }
 
         this.servicesChart = new Chart(servicesCtx, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(serviceCounts),
+                labels: topServices.map(i => i[0]),
                 datasets: [{
-                    data: Object.values(serviceCounts),
-                    backgroundColor: ['#1e3a8a', '#3b82f6', '#93c5fd', '#bfdbfe', '#dbeafe']
+                    data: topServices.map(i => i[1]),
+                    backgroundColor: [COLORS.primary, COLORS.info, COLORS.purple, COLORS.warning, COLORS.danger, COLORS.gray],
+                    borderWidth: 0,
+                    spacing: 4,
+                    borderRadius: 4
                 }]
             },
-            options: { responsive: true }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, padding: 15 } }
+                },
+                layout: { padding: 10 }
+            }
         });
 
-        // 3. Case Status Distribution (All cases counts)
-        const statusCounts = { 'pending': 0, 'in-progress': 0, 'completed': 0 };
+        // 3. Case Status - Doughnut (Clean & Modern)
+        const statusCounts = { 'pending': 0, 'in-progress': 0, 'completed': 0, 'signed': 0 };
         filteredCases.forEach(c => {
             const s = c.status || 'pending';
             if (statusCounts[s] !== undefined) statusCounts[s]++;
         });
 
         this.statusChart = new Chart(statusCtx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: ['Pendiente', 'En Proceso', 'Completado'],
+                labels: ['Pendiente', 'En Proceso', 'Firmado', 'Completado'],
                 datasets: [{
-                    data: [statusCounts['pending'], statusCounts['in-progress'], statusCounts['completed']],
-                    backgroundColor: ['#fee2e2', '#fef9c3', '#dcfce7'],
-                    borderColor: ['#991b1b', '#854d0e', '#166534'],
-                    borderWidth: 1
+                    data: [statusCounts['pending'], statusCounts['in-progress'], statusCounts['signed'], statusCounts['completed']],
+                    backgroundColor: [COLORS.danger, COLORS.warning, COLORS.info, COLORS.success],
+                    hoverBackgroundColor: ['#dc2626', '#d97706', '#0891b2', '#059669'],
+                    borderWidth: 0,
+                    spacing: 5,
+                    borderRadius: 5
                 }]
             },
-            options: { responsive: true }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12, weight: 600 }
+                        }
+                    }
+                },
+                layout: { padding: 10 },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
         });
 
-        // 4. Revenue by Location - ONLY PAID
+        // 4. Revenue by Location - Bar Chart
         const locationRevenue = { 'Oficina': 0, 'Casa': 0, 'Online': 0 };
         filteredCases.forEach(c => {
-            if (c.paymentStatus !== 'paid') return; // Skip unpaid
+            if (c.paymentStatus !== 'paid') return;
             const loc = c.location || 'Oficina';
-            if (locationRevenue[loc] !== undefined) {
-                locationRevenue[loc] += (parseFloat(c.amount) || 0);
-            }
+            if (locationRevenue[loc] !== undefined) locationRevenue[loc] += (parseFloat(c.amount) || 0);
+            else locationRevenue['Oficina'] += (parseFloat(c.amount) || 0); // Default fallback
         });
 
         this.locationChart = new Chart(locationCtx, {
@@ -3800,15 +4060,21 @@ window.NotaryCRM = {
             data: {
                 labels: Object.keys(locationRevenue),
                 datasets: [{
-                    label: 'Ingresos por Ubicación',
+                    label: 'Ingresos',
                     data: Object.values(locationRevenue),
-                    backgroundColor: ['#10b981', '#34d399', '#6ee7b7'] // Green theme
+                    backgroundColor: [COLORS.primary, COLORS.purple, COLORS.info],
+                    borderRadius: 6,
+                    barThickness: 40
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+                    x: { grid: { display: false } }
+                }
             }
         });
 
@@ -3819,21 +4085,19 @@ window.NotaryCRM = {
 
             this.state.cases.forEach(c => {
                 if (c.paymentData) {
-                    // Modern format
                     allPayments.push({
                         date: c.paymentData.timestamp || c.lastUpdated || new Date().toISOString(),
                         txId: c.paymentData.transactionId || c.paymentData.id || 'N/A',
                         caseNum: c.caseNumber,
                         payer: c.paymentData.payerName || c.clientName || 'Desconocido',
                         method: c.paymentData.method || 'PayPal',
-                        status: 'Completado', // If paymentData exists, it is likely paid
+                        status: 'Completado',
                         amount: parseFloat(c.paymentData.amount || c.amount || 0)
                     });
                 } else if (c.paymentStatus && (c.paymentStatus.toLowerCase() === 'paid')) {
-                    // Legacy/Manual format
                     allPayments.push({
                         date: c.lastUpdated || c.createdAt || new Date().toISOString(),
-                        txId: 'MANUAL-' + c.id.substring(0, 6),
+                        txId: 'MANUAL-' + (c.id ? c.id.substring(0, 6).toUpperCase() : '000'),
                         caseNum: c.caseNumber,
                         payer: c.clientName,
                         method: 'Manual',
@@ -3847,22 +4111,22 @@ window.NotaryCRM = {
             allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (allPayments.length === 0) {
-                paymentsTable.innerHTML = '<tr><td colspan="7" class="empty-state">No hay pagos registrados aún</td></tr>';
+                paymentsTable.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center; color: var(--text-light);">No hay pagos registrados aún</td></tr>';
             } else {
                 paymentsTable.innerHTML = allPayments.map(p => {
                     let dateStr;
-                    try { dateStr = new Date(p.date).toLocaleDateString() + ' ' + new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+                    try { dateStr = new Date(p.date).toLocaleDateString() + ' <span style="color:#94a3b8; font-size:0.85em;">' + new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span>'; }
                     catch (e) { dateStr = 'Fecha inválida'; }
 
                     return `
-                    <tr>
-                        <td>${dateStr}</td>
-                        <td style="font-family:monospace; font-size:0.9em;">${p.txId}</td>
-                        <td style="font-weight:500;">${p.caseNum}</td>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 1rem;">${dateStr}</td>
+                        <td style="font-family: monospace; font-size: 0.85em; color: #64748b;">${p.txId}</td>
+                        <td style="font-weight: 500; color: var(--color-primary);">${p.caseNum}</td>
                         <td>${p.payer}</td>
-                        <td><span class="tag tag-blue">${p.method}</span></td>
-                        <td><span class="tag tag-green">${p.status}</span></td>
-                        <td style="text-align:right; font-weight:bold;">${this.formatCurrency(p.amount)}</td>
+                        <td><span class="status-badge" style="background:#eff6ff; color:#1e40af;">${p.method}</span></td>
+                        <td><span class="status-badge" style="background:#dcfce7; color:#166534;">${p.status}</span></td>
+                        <td style="text-align: right; font-weight: 600;">${this.formatCurrency(p.amount)}</td>
                     </tr>
                 `}).join('');
             }
@@ -3936,7 +4200,7 @@ window.NotaryCRM = {
                     time: timeStr
                 });
 
-                Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr} - ${timeStr}`);
+                Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr} - ${timeStr} `);
             }
         });
 
@@ -3958,7 +4222,7 @@ window.NotaryCRM = {
 
         const dateObj = new Date(dateStr + 'T00:00:00');
         const formattedDate = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        titleEl.textContent = `Agenda: ${formattedDate}`;
+        titleEl.textContent = `Agenda: ${formattedDate} `;
 
         if (appointments.length === 0) {
             const isBlocked = this.state.blockedDates?.find(b => b.date === dateStr);
@@ -3977,8 +4241,8 @@ window.NotaryCRM = {
             appointments.sort((a, b) => a.time.localeCompare(b.time));
 
             listEl.innerHTML = appointments.map(app => `
-                <div class="timeline-item" style="padding-left: 0; margin-bottom: 1rem;">
-                    <div class="timeline-card" style="margin-left: 0; border-left: 4px solid var(--color-primary); padding: 1rem;">
+                <div class="timeline-item" data-app-id="${app.id}" style="padding-left: 0; margin-bottom: 1rem;">
+                    <div class="timeline-card" style="margin-left: 0; border-left: 4px solid var(--color-primary); padding: 1rem; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
                             <div>
                                 <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.25rem;">
@@ -3993,16 +4257,16 @@ window.NotaryCRM = {
                                 </button>
                                 <div class="dropdown-menu" style="right:0; top:100%;">
                                     <button class="dropdown-item" style="color: var(--color-primary);" onclick="NotaryCRM.showClientDetails('${app.clientId}')">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> 
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                                         <strong>Ver Perfil Cliente</strong>
                                     </button>
                                     <button class="dropdown-item" style="color: var(--text-light);" onclick="NotaryCRM.editAppointment('${app.id}')">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> 
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                         Reagendar / Editar
                                     </button>
                                     <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
                                     <button class="dropdown-item" style="color: #dc2626;" onclick="NotaryCRM.deleteAppointment('${app.id}')">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> 
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                         Cancelar Cita
                                     </button>
                                 </div>
@@ -4011,18 +4275,18 @@ window.NotaryCRM = {
 
                         <!-- Quick Actions Row -->
                         <div style="display:flex; gap:0.5rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #f1f5f9;">
-                             <a href="https://wa.me/?text=${encodeURIComponent('Hola ' + app.clientName + ', confirmo su cita para el ' + formattedDate + ' a las ' + app.time)}" target="_blank" class="btn btn-sm btn-outline" style="flex:1; justify-content:center; gap: 6px; border: 1px solid var(--color-gray-200);">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> 
+                            <a href="https://wa.me/?text=${encodeURIComponent('Hola ' + app.clientName + ', confirmo su cita para el ' + formattedDate + ' a las ' + app.time)}" target="_blank" class="btn btn-sm btn-outline" style="flex:1; justify-content:center; gap: 6px; border: 1px solid var(--color-gray-200);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                                 WhatsApp
                             </a>
                             <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Cita Notarial: ' + app.clientName)}&dates=${app.date.replace(/-/g, '')}T${app.time.replace(/:/g, '')}00Z&details=${encodeURIComponent('Servicio: ' + app.type)}" target="_blank" class="btn btn-sm btn-outline" style="flex:1; justify-content:center; gap: 6px; border: 1px solid var(--color-gray-200);">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                                 G-Cal
                             </a>
                         </div>
                     </div>
                 </div>
-            `).join('');
+                `).join('');
 
             // Close dropdowns when clicking outside
             setTimeout(() => {
@@ -4048,7 +4312,7 @@ window.NotaryCRM = {
             extraActions.innerHTML = `
                 <button class="btn btn-block btn-outline" style="border: 1px solid var(--color-gray-300); color: var(--color-gray-700); justify-content: center; gap: 8px;" onclick="print()" title="Imprimir Agenda del Día">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    Imprimir
+            Imprimir
                 </button>
                 <button class="btn btn-block ${isBlocked ? 'btn-success' : 'btn-outline-danger'}" style="justify-content: center; gap: 8px; border: 1px solid ${isBlocked ? '#22c55e' : '#fecaca'};" onclick="NotaryCRM.blockDay('${dateStr}')" title="${isBlocked ? 'Reactivar citas' : 'Bloquear citas publicas'}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4056,7 +4320,7 @@ window.NotaryCRM = {
                     </svg>
                     ${isBlocked ? 'Reactivar Día' : 'Bloquear Día'}
                 </button>
-             `;
+            `;
             actionsContainer.appendChild(extraActions);
         }
 
@@ -4103,6 +4367,33 @@ window.NotaryCRM = {
         this.openModal('calendar-modal');
     },
 
+    // Navigate to a specific appointment from anywhere
+    gotoAppointment(date, id) {
+        this.switchTab('calendar');
+        if (this.fullCalendar) {
+            this.fullCalendar.gotoDate(date);
+        }
+        this.showDayDetails(date);
+
+        // Highlight after modal is open
+        setTimeout(() => {
+            const el = document.querySelector(`[data-app-id="${id}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const card = el.querySelector('.timeline-card');
+                if (card) {
+                    const originalBorder = card.style.borderLeft;
+                    card.style.borderLeft = '6px solid #fbbf24';
+                    card.style.background = '#fffbeb';
+                    setTimeout(() => {
+                        card.style.borderLeft = originalBorder;
+                        card.style.background = '';
+                    }, 3000);
+                }
+            }
+        }, 600);
+    },
+
     async blockDay(dateStr) {
         if (!this.currentUser) return alert('Debes iniciar sesión.');
 
@@ -4114,7 +4405,7 @@ window.NotaryCRM = {
         if (existingBlock) {
             this.confirmAction(
                 'Reactivar Agenda',
-                `¿Deseas volver a habilitar el día ${formattedDate} para que los clientes puedan agendar citas?`,
+                `¿Deseas volver a habilitar el día ${formattedDate} para que los clientes puedan agendar citas ? `,
                 async () => {
                     try {
                         const { doc, deleteDoc } = window.dbFuncs;
@@ -4172,10 +4463,10 @@ window.NotaryCRM = {
             const time = item.querySelector('.timeline-time').textContent;
             const client = item.querySelector('.timeline-title').textContent;
             const type = item.querySelector('span[style*="font-size: 0.75rem"]').textContent;
-            message += `⏰ *${time}* - ${client} (${type})\n`;
+            message += `⏰ * ${time}* - ${client} (${type}) \n`;
         });
 
-        message += `\nGenerado desde *NotaryCRM*`;
+        message += `\nGenerado desde * NotaryCRM * `;
         const encodedMsg = encodeURIComponent(message);
         window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
     },
@@ -4215,7 +4506,7 @@ window.NotaryCRM = {
                             <tr>
                                 <td><strong>${c.caseNumber}</strong></td>
                                 <td>${c.type}</td>
-                                <td>${this.renderStatusBadge(c.status, c.dueDate)}</td>
+                                <td>${this.renderStatusBadge(c.status, c.dueDate, c.id)}</td>
                                 <td>${this.formatCurrency(c.amount)}</td>
                             </tr>
                         `).join('')}
@@ -4268,14 +4559,12 @@ window.NotaryCRM = {
                         </div>
                         <div class="info-item">
                             <span class="info-label">Estado Actual</span>
-                            <div class="info-value">${this.renderStatusBadge(caseItem.status)}</div>
+                            <div class="info-value">${this.renderStatusBadge(caseItem.status, null, caseItem.id)}</div>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Estado de Pago</span>
                             <div class="info-value">
-                                <span class="payment-badge ${caseItem.paymentStatus || 'pending'}">
-                                    ${(caseItem.paymentStatus || 'PENDIENTE').toUpperCase()}
-                                </span>
+                                ${this.renderPaymentStatusBadge(caseItem.paymentStatus, caseItem.id)}
                             </div>
                         </div>
                         <div class="info-item">
@@ -4686,21 +4975,133 @@ window.NotaryCRM = {
         if (!window.jspdf) return Toast.error('Error', 'PDF library not loaded');
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text('NOTARY CRM - ANALYTICS', 20, 25);
-        doc.setTextColor(0, 0, 0); doc.setFontSize(10); doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 50);
-        doc.setFontSize(16); doc.text('Executive Summary', 20, 65);
-        doc.setFontSize(12);
-        doc.text(`Total Clients: ${this.state.clients.length}`, 30, 75);
-        doc.text(`Total Cases: ${this.state.cases.length}`, 30, 82);
-        const totalRev = this.state.cases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        doc.text(`Total Revenue: $${totalRev.toFixed(2)}`, 30, 89);
-        const revenueCanvas = document.getElementById('revenueChart');
-        if (revenueCanvas) {
-            try { doc.addImage(revenueCanvas.toDataURL('image/png'), 'PNG', 20, 110, 170, 70); } catch (e) { }
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+
+        // --- Branding Colors ---
+        const primaryColor = [59, 130, 246]; // Blue 500
+        const secondaryColor = [100, 116, 139]; // Slate 500
+
+        // --- Header ---
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, pageWidth, 40, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('NOTARY CRM', margin, 20);
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text('REPORTE FINANCIERO Y EJECUTIVO', margin, 32);
+
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, pageWidth - margin, 32, { align: 'right' });
+
+        // --- Executive Summary Section ---
+        let yPos = 55;
+        doc.setTextColor(...primaryColor);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Resumen Ejecutivo', margin, yPos);
+
+        // Calculate Statistics - Only PAID
+        const clientsCount = this.state.clients.length;
+        const casesCount = this.state.cases.length;
+        const paidCases = this.state.cases.filter(c => c.paymentStatus === 'paid');
+        const totalRevenue = paidCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+        const avgTicket = paidCases.length > 0 ? totalRevenue / paidCases.length : 0;
+
+        yPos += 15;
+
+        // Stats Grid
+        const stats = [
+            { label: 'Total de Clientes', value: clientsCount },
+            { label: 'Total de Expedientes', value: casesCount },
+            { label: 'Ingresos Netos (Efectivos)', value: this.formatCurrency(totalRevenue) },
+            { label: 'Ticket Promedio', value: this.formatCurrency(avgTicket) }
+        ];
+
+        doc.setFillColor(248, 250, 252); // Light Gray Background
+        doc.setDrawColor(226, 232, 240); // Border color
+
+        // Draw 2x2 Grid of cards
+        let xOffset = margin;
+        let cardY = yPos;
+        stats.forEach((stat, i) => {
+            if (i > 0 && i % 2 === 0) {
+                xOffset = margin;
+                cardY += 35;
+            } else if (i > 0) {
+                xOffset = (pageWidth / 2) + 5;
+            }
+
+            // Card Shape
+            doc.roundedRect(xOffset, cardY, (pageWidth / 2) - margin - 5, 25, 3, 3, 'FD');
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139); // Slate-500
+            doc.text(stat.label, xOffset + 5, cardY + 10);
+
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59); // Slate-800
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(stat.value), xOffset + 5, cardY + 20);
+        });
+
+        yPos = cardY + 45;
+
+        // --- Financial & Operational Charts ---
+        doc.setTextColor(...primaryColor);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Análisis Visual', margin, yPos);
+
+        yPos += 10;
+
+        const chartConfigs = [
+            { id: 'revenueChart', title: 'Tendencia de Ingresos Mensuales' },
+            { id: 'servicesChart', title: 'Desglose por Servicios' },
+            { id: 'locationChart', title: 'Ingresos por Ubicación' },
+            { id: 'statusChart', title: 'Estado Actual de Casos' }
+        ];
+
+        for (const config of chartConfigs) {
+            const canvas = document.getElementById(config.id);
+            if (canvas) {
+                // Check page break
+                if (yPos + 90 > doc.internal.pageSize.getHeight()) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFillColor(30, 41, 59);
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 41, 59);
+                doc.text(config.title, margin, yPos);
+
+                try {
+                    const imgData = canvas.toDataURL('image/png', 1.0); // High quality
+                    doc.addImage(imgData, 'PNG', margin, yPos + 5, 170, 75);
+                    yPos += 90;
+                } catch (e) {
+                    console.error('Chart capture failed', e);
+                }
+            }
         }
-        doc.save(`Analytics_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-        Toast.success('PDF Guardado', 'El reporte se ha descargado.');
+
+        // --- Disclaimer Footer ---
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(`Página ${i} de ${pageCount} - Confidencial - Notary CRM`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        }
+
+        doc.save(`NotaryOS_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        Toast.success('PDF Guardado', 'El reporte corporativo se ha generado con éxito.');
     },
 
     // --- Automations ---
@@ -4993,7 +5394,12 @@ const Reminders = {
             try {
                 const { collection, addDoc } = window.dbFuncs;
                 const db = window.firebaseDB;
-                const docRef = await addDoc(collection(db, 'reminders'), item);
+
+                // Clone item and remove temporary ID before saving to Firestore
+                const toInsert = { ...item };
+                delete toInsert.id;
+
+                const docRef = await addDoc(collection(db, 'reminders'), toInsert);
                 item.id = docRef.id;
                 this.state.items.push(item);
                 Toast.success('Recordatorio Guardado', 'El recordatorio ha sido creado.');
@@ -5019,14 +5425,26 @@ const Reminders = {
 
         if (NotaryCRM.useFirestore) {
             try {
-                const { doc, updateDoc } = window.dbFuncs;
+                const { doc, updateDoc, getDoc } = window.dbFuncs;
                 const db = window.firebaseDB;
-                await updateDoc(doc(db, 'reminders', id), { completed: newStatus });
-                item.completed = newStatus;
+                const docRef = doc(db, 'reminders', id);
+
+                // Verify document existence before updating to avoid "No document to update" error
+                // This typically happens with legacy local IDs that haven't been synced
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    await updateDoc(docRef, { completed: newStatus });
+                    item.completed = newStatus;
+                } else {
+                    console.warn(`Reminder ${id} not found in Firestore. Updating locally.`);
+                    item.completed = newStatus;
+                    this.save(); // Fallback to local
+                }
             } catch (err) {
                 console.error('Error updating reminder in Firestore:', err);
-                Toast.error('Error', 'No se pudo actualizar el estado.');
-                return;
+                // Even if Firestore fails, update local state for better UX
+                item.completed = newStatus;
+                this.render();
             }
         } else {
             item.completed = newStatus;
@@ -5096,44 +5514,26 @@ const Reminders = {
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
-        // Grouping for Timeline
-        const groups = {
-            today: { title: 'Hoy', items: [] },
-            upcoming: { title: 'Próximamente', items: [] },
-            past: { title: 'Historial / Pasados', items: [] }
-        };
-
-        sorted.forEach(it => {
-            const itDate = new Date(it.when);
-            const itDateStr = itDate.toISOString().split('T')[0];
-
-            if (itDate < now && itDateStr !== todayStr) {
-                groups.past.items.push(it);
-            } else if (itDateStr === todayStr) {
-                groups.today.items.push(it);
-            } else {
-                groups.upcoming.items.push(it);
-            }
-        });
-
         // Helper to get color/icon based on priority/category
         const getPriorityColor = (p) => {
             switch (p) {
-                case 'high': return '#ef4444';
-                case 'medium': return '#f59e0b';
-                case 'low': return '#10b981';
+                case 'high': return '#ef4444'; // Red
+                case 'medium': return '#f59e0b'; // Amber
+                case 'low': return '#10b981'; // Green
                 default: return '#64748b';
             }
         };
 
-        const getCategoryIcon = (c) => {
-            switch (c) {
-                case 'appointment': return '📅';
-                case 'call': return '📞';
-                case 'payment': return '💰';
-                case 'document': return '📄';
-                default: return '🔔';
-            }
+        const getCategoryBadge = (c) => {
+            const map = {
+                'appointment': { label: 'Cita', bg: '#eff6ff', color: '#1d4ed8' },
+                'call': { label: 'Llamada', bg: '#fef3c7', color: '#b45309' },
+                'payment': { label: 'Pago', bg: '#ecfdf5', color: '#047857' },
+                'document': { label: 'Documento', bg: '#f5f3ff', color: '#6d28d9' },
+                'other': { label: 'Otro', bg: '#f3f4f6', color: '#374151' }
+            };
+            const style = map[c] || map['other'];
+            return `<span style="background:${style.bg}; color:${style.color}; font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:600; text-transform:uppercase;">${style.label}</span>`;
         };
 
         // 1. Render Modal List
@@ -5142,87 +5542,112 @@ const Reminders = {
                 list.innerHTML = '<p class="empty-state">No hay recordatorios.</p>';
             } else {
                 list.innerHTML = sorted.map(it => `
-                    <div class="reminder-item ${it.completed ? 'completed' : ''}" 
-                         style="border-bottom: 1px solid var(--color-gray-100); padding: 12px 0; display:flex; justify-content:space-between; align-items:center; opacity: ${it.completed ? '0.6' : '1'}">
-                        <div style="display:flex; align-items:center; gap: 10px;">
-                            <input type="checkbox" ${it.completed ? 'checked' : ''} onchange="Reminders.toggleComplete('${it.id}')" style="width:18px;height:18px;cursor:pointer;">
-                            <div>
-                                <strong style="font-size:0.9rem; ${it.completed ? 'text-decoration: line-through;' : ''}">${getCategoryIcon(it.category)} ${it.title}</strong>
-                                <div style="font-size:0.75rem; color: ${getPriorityColor(it.priority)}; font-weight:600;">
-                                    ${new Date(it.when).toLocaleString()}
-                                </div>
+                    <div class="reminder-item-row ${it.completed ? 'completed' : ''}" style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; gap: 1rem; align-items: start;">
+                        <input type="checkbox" ${it.completed ? 'checked' : ''} onchange="Reminders.toggleComplete('${it.id}')" style="margin-top: 4px; border-radius: 4px; width: 18px; height: 18px; cursor: pointer;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-weight: 600; font-size: 0.95rem; color: #0f172a; ${it.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${it.title}</span>
+                                ${getCategoryBadge(it.category)}
+                            </div>
+                            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px; line-height: 1.4;">${it.message}</p>
+                            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.75rem;">
+                                <span style="color: ${getPriorityColor(it.priority)}; font-weight: 500;">
+                                    📅 ${new Date(it.when).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </span>
                             </div>
                         </div>
-                        <button class="btn-delete-item" onclick="Reminders.delete('${it.id}')" title="Eliminar">
-                            <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <button class="btn-icon-danger" onclick="Reminders.delete('${it.id}')" title="Eliminar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>
                 `).join('');
             }
         }
 
-        // 2. Render Timeline Tab
+        // 2. Render Timeline Tab (Refined Professional View)
         if (timeline) {
             if (sorted.length === 0) {
-                timeline.innerHTML = '<p class="empty-state">No tienes recordatorios creados. Comienza añadiendo uno arriba.</p>';
+                timeline.innerHTML = `
+                    <div style="text-align: center; padding: 4rem 2rem; color: #64748b;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom: 1rem;">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <p>No tienes recordatorios pendientes.</p>
+                        <button class="btn btn-sm btn-outline" onclick="NotaryCRM.openModal('reminders-modal')" style="margin-top: 1rem;">Crear Recordatorio</button>
+                    </div>
+                `;
             } else {
-                let html = '';
-                // Render groups in order: Today -> Upcoming -> Past
-                [groups.today, groups.upcoming, groups.past].forEach(group => {
-                    if (group.items.length > 0) {
-                        html += `<div class="timeline-group">
-                            <div class="timeline-header">${group.title}</div>
-                            ${group.items.map(it => {
-                            const d = new Date(it.when);
-                            const isPast = d < now;
-                            const pColor = getPriorityColor(it.priority);
-                            const cIcon = getCategoryIcon(it.category);
+                let groupList = [];
+                let currentKey = null;
 
-                            return `
-                                    <div class="timeline-item ${isPast ? 'past' : ''} ${it.completed ? 'is-completed' : ''}">
-                                        <div class="timeline-dot" style="background: ${it.completed ? '#cbd5e1' : pColor}"></div>
-                                        <div class="timeline-card" style="border-left: 4px solid ${pColor}; ${it.completed ? 'background: #f8fafc;' : ''}">
-                                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                                <div style="display:flex; gap: 15px;">
-                                                    <div style="padding-top: 4px;">
-                                                        <input type="checkbox" ${it.completed ? 'checked' : ''} 
-                                                               onchange="Reminders.toggleComplete('${it.id}')" 
-                                                               style="width: 20px; height: 20px; cursor: pointer;">
-                                                    </div>
-                                                    <div>
-                                                        <span class="timeline-time" style="color: ${pColor}; font-weight: 700;">
-                                                            ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} 
-                                                            <span style="opacity: 0.6; font-weight: 400; margin-left: 5px;">| ${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                                                        </span>
-                                                        <h4 class="timeline-title" style="${it.completed ? 'text-decoration: line-through; color: #94a3b8;' : ''}">
-                                                            ${cIcon} ${it.title}
-                                                        </h4>
-                                                        <p class="timeline-msg" style="${it.completed ? 'color: #cbd5e1;' : ''}">${it.message}</p>
-                                                        
-                                                        <div style="margin-top: 10px; display: flex; gap: 8px;">
-                                                            <span style="font-size: 0.65rem; background: ${pColor}20; color: ${pColor}; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700;">
-                                                                ${it.priority}
-                                                            </span>
-                                                            <span style="font-size: 0.65rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700;">
-                                                                ${it.category}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div style="display: flex; gap: 5px;">
-                                                    <button class="btn-delete-item" onclick="Reminders.delete('${it.id}')" title="Eliminar">
-                                                        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                    </button>
-                                                </div>
-                                            </div>
+                sorted.forEach(it => {
+                    const d = new Date(it.when);
+                    const isToday = d.toDateString() === now.toDateString();
+                    const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === d.toDateString();
+                    const isPast = d < now && !isToday;
+
+                    let key = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                    if (isToday) key = '📅 Hoy';
+                    else if (isTomorrow) key = '📅 Mañana';
+                    else if (isPast) key = '⚠️ Vencidos / Anteriores';
+                    // Capitalize first letter if it's a date string
+                    if (!key.startsWith('📅') && !key.startsWith('⚠️')) {
+                        key = key.charAt(0).toUpperCase() + key.slice(1);
+                    }
+
+                    if (key !== currentKey) {
+                        groupList.push({ title: key, items: [] });
+                        currentKey = key;
+                    }
+                    groupList[groupList.length - 1].items.push(it);
+                });
+
+                timeline.innerHTML = groupList.map(group => `
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0;">
+                            ${group.title}
+                        </h4>
+                        <div style="display: grid; gap: 0.75rem;">
+                            ${group.items.map(it => {
+                    const pColor = getPriorityColor(it.priority);
+                    return `
+                                <div class="reminder-card ${it.completed ? 'completed-card' : ''}" style="
+                                    background: white; 
+                                    border: 1px solid ${it.completed ? '#e2e8f0' : '#cbd5e1'}; 
+                                    border-left: 4px solid ${it.completed ? '#cbd5e1' : pColor};
+                                    border-radius: 8px; 
+                                    padding: 1rem; 
+                                    display: flex; 
+                                    align-items: flex-start; 
+                                    gap: 1rem;
+                                    transition: all 0.2s ease;
+                                ">
+                                    <div style="padding-top: 2px;">
+                                         <input type="checkbox" ${it.completed ? 'checked' : ''} onchange="Reminders.toggleComplete('${it.id}')" style="width: 20px; height: 20px; cursor: pointer; border-color: #cbd5e1;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+                                            <span style="font-weight: 600; color: #1e293b; font-size: 1rem; ${it.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${it.title}</span>
+                                            ${getCategoryBadge(it.category)}
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; line-height: 1.5;">${it.message}</div>
+                                        <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: #64748b; align-items: center;">
+                                            <span style="display: flex; align-items: center; gap: 4px;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                ${new Date(it.when).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                            ${it.priority === 'high' ? `<span style="color:${pColor}; font-weight:700;">Alta Prioridad</span>` : ''}
                                         </div>
                                     </div>
+                                    <button class="btn-icon-danger" onclick="Reminders.delete('${it.id}')" title="Eliminar" style="background:none; border:none; cursor:pointer; color:#ef4444; opacity:0.6; padding:4px;">
+                                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
                                 `;
-                        }).join('')}
-                        </div>`;
-                    }
-                });
-                timeline.innerHTML = html || '<p class="empty-state">No hay nada en tu agenda.</p>';
+                }).join('')}
+                        </div>
+                    </div>
+                `).join('');
             }
         }
     }
@@ -5306,7 +5731,7 @@ const NoteGenerator = {
                     </p>
 
                     <div class="doc-body-text" style="min-height: 250pt; border: 1px double #ccc; padding: 25pt; margin: 20pt 0; background: #fff; position: relative; line-height: 1.6;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60pt; color: rgba(0,0,0,0.015); pointer-events: none; white-space: nowrap; user-select: none; font-weight: 800;">OFFICIAL DOCUMENT</div>
+                        <div class="doc-watermark" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60pt; color: rgba(0,0,0,0.015); pointer-events: none; white-space: nowrap; user-select: none; font-weight: 800;">OFFICIAL DOCUMENT</div>
                         
                         <div style="position: relative; z-index: 1;">
                             ${(data.statement || '[Detalle aquí los hechos declarados. Use párrafos numerados para mayor formalidad.]').split('\n').map(p => p.trim() ? `<p style="margin-bottom: 12pt; text-align: justify;">${p}</p>` : '<br>').join('')}
@@ -10180,97 +10605,122 @@ const NoteGenerator = {
     },
 
     async generatePDF() {
-        if (!window.jspdf) return alert('Librería PDF no cargada. Por favor recarga la página.');
+        if (!window.jspdf || !window.html2canvas) {
+            return alert('Librerías de PDF no cargadas. Por favor, recargue la página.');
+        }
 
         const btn = document.getElementById('generate-pdf-btn');
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generando PDF...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Ajustando...';
         btn.disabled = true;
 
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'pt',
-                format: 'a4'
-            });
-
             const source = document.getElementById('doc-preview');
             const clone = source.cloneNode(true);
 
-            // Set fixed dimensions for the clone to match A4 proportions at 96dpi
-            // 794px is the standard pixel width for A4
-            const printWidth = 794;
+            // 2. Normalized Capture Environment (Approx A4 width at 96dpi)
+            const captureWidth = 800;
+            Object.assign(clone.style, {
+                width: captureWidth + 'px',
+                padding: '5pt 10pt', // Extreme tighter margins as requested
+                boxSizing: 'border-box',
+                background: '#ffffff',
+                color: '#000000',
+                fontSize: '11pt',
+                fontFamily: '"Times New Roman", Times, serif',
+                position: 'relative',
+                margin: '0',
+                left: '0',
+                top: '0',
+                boxShadow: 'none',
+                border: 'none',
+                height: 'auto',
+                overflow: 'visible'
+            });
 
-            // Force strict styling on the clone to prevent layout shifts
-            clone.style.width = printWidth + 'px';
-            clone.style.minHeight = '1123px';
-            clone.style.padding = '0';
-            clone.style.boxSizing = 'border-box';
-            clone.style.margin = '0';
-            clone.style.background = '#ffffff';
-            clone.style.overflow = 'visible';
-            clone.style.boxShadow = 'none';
-            clone.style.border = 'none';
-            clone.style.position = 'relative';
-
-            // Ensure consistent typography and visibility
+            // 3. Deep Clean the Clone
             clone.querySelectorAll('*').forEach(el => {
-                el.style.boxSizing = 'border-box';
-                el.style.maxWidth = '100%'; // Prevent any child from overflowing
+                el.removeAttribute('contenteditable');
                 if (el.classList.contains('sig-zone')) {
-                    el.style.background = '#f8fafc'; // Keep it light but visible
-                    el.style.border = '1px dashed #cbd5e1';
+                    el.style.border = 'none';
+                    el.style.borderBottom = '1pt solid #000';
+                    el.style.background = 'transparent';
+                    el.style.height = '50px';
                 }
                 if (el.classList.contains('notary-seal-placeholder')) {
-                    el.style.border = '1px solid #cbd5e1';
+                    el.style.border = '1px solid #000';
+                }
+                if (el.classList.contains('doc-body-text')) {
+                    el.style.background = 'transparent';
+                    el.style.border = '1px solid #eee';
+                    el.style.padding = '8pt';
+                }
+                el.style.boxShadow = 'none';
+                el.style.textShadow = 'none';
+                // Ensure all text is black for printing, EXCEPT the watermark
+                if (!el.classList.contains('doc-watermark')) {
+                    if (el.style.color && el.style.color !== 'transparent') el.style.color = '#000';
                 }
             });
 
+            // 4. Temporary Off-screen render
             const container = document.createElement('div');
-            container.style.position = 'fixed';
-            container.style.left = '0';
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
             container.style.top = '0';
-            container.style.zIndex = '-1';
-            container.style.opacity = '0';
-            container.style.pointerEvents = 'none';
-            container.style.width = printWidth + 'px';
+            container.style.width = captureWidth + 'px';
             container.appendChild(clone);
             document.body.appendChild(container);
 
-            await doc.html(clone, {
-                callback: function (pdf) {
-                    const clientName = document.getElementById('doc-client-search').value || 'Document';
-                    pdf.save(`Doc_${clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
-                    document.body.removeChild(container);
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    try { Toast.success('PDF Generado', 'Documento listo para imprimir/enviar.'); } catch (e) { }
-                },
-                margin: [30, 30, 30, 30], // Standard PDF margins in pt
-                autoPaging: 'text', // Changed back to 'text' for better multi-page support
-                x: 0,
-                y: 0,
-                width: 535, // A4 points (595) minus margins (60)
-                windowWidth: printWidth,
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: printWidth,
-                    backgroundColor: '#ffffff'
-                }
+            // 5. Capture as High-Res Image
+            const canvas = await html2canvas(clone, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: captureWidth
             });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const pdf = new jsPDF('p', 'pt', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth(); // ~595pt
+            const pageHeight = pdf.internal.pageSize.getHeight(); // ~841pt
+
+            // 6. Map capture to A4 sheet
+            // We map the 800px capture directly to the full 595pt width
+            let finalWidth = pageWidth;
+            let finalHeight = (canvas.height * finalWidth) / canvas.width;
+
+            // Fit vertically ONLY if it exceeds the page height
+            if (finalHeight > pageHeight) {
+                const ratio = pageHeight / finalHeight;
+                finalHeight = pageHeight;
+                finalWidth = finalWidth * ratio;
+            }
+
+            // Center horizontally
+            const finalX = (pageWidth - finalWidth) / 2;
+            const finalY = 0; // Top-aligned
+
+            pdf.addImage(imgData, 'JPEG', finalX, finalY, finalWidth, finalHeight, undefined, 'FAST');
+
+            const clientSearch = document.getElementById('doc-client-search');
+            const clientName = clientSearch ? clientSearch.value : 'Documento';
+            const filename = `Doc_${clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+            pdf.save(filename);
+            document.body.removeChild(container);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            try { Toast.success('PDF Generado', 'Documento ajustado a una sola página.'); } catch (e) { }
 
         } catch (err) {
             console.error('PDF Error:', err);
-            alert('Error al generar PDF: ' + err.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
-    }
+    },
 };
 
 // Expose to global for onclick handlers

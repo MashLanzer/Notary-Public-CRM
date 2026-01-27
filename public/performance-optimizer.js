@@ -132,8 +132,8 @@ const PerformanceOptimizer = {
             try {
                 const observer = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        if (entry.duration > 50) {
-                            console.warn('Long task detected:', entry);
+                        if (entry.duration > 150) {
+                            console.info('Performance note - Long task:', entry);
                         }
                     }
                 });

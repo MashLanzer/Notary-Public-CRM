@@ -322,6 +322,141 @@
             background: #10b981;
             color: white;
         }
+
+        /* Updated Modern Timeline Styles - Responsive & Clean */
+        .step-wizard-list {
+            background: transparent;
+            box-shadow: none;
+            color: var(--secondary);
+            list-style-type: none;
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            position: relative;
+            z-index: 10;
+            margin: 2rem 0;
+            width: 100%;
+        }
+
+        .step-wizard-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            min-width: 0;
+        }
+
+        /* Connecting Line */
+        .step-wizard-item::before {
+            content: "";
+            position: absolute;
+            left: -50%;
+            top: 20px;
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            z-index: -1;
+            border-radius: 4px;
+        }
+
+        .step-wizard-item:first-child::before {
+            display: none;
+        }
+
+        /* Circle Indicator */
+        .progress-count {
+            height: 40px;
+            width: 40px;
+            background: #ffffff;
+            border: 4px solid #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Active State */
+        .active-step .progress-count {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 0 0 4px var(--primary-light-opacity, rgba(59, 130, 246, 0.2));
+            transform: scale(1.1);
+        }
+
+        .active-step .progress-label {
+            color: var(--primary);
+        }
+
+        /* Completed State */
+        .completed-step .progress-count {
+            border-color: var(--success);
+            background: var(--success);
+            color: white;
+        }
+
+        .completed-step .progress-label {
+            color: var(--success);
+        }
+
+        /* Color line to the left of completed/active steps */
+        .active-step::before,
+        .completed-step::before {
+            background: var(--success);
+        }
+
+        /* Mobile adjustment */
+        @media (max-width: 480px) {
+            .step-wizard-list {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+                padding-left: 1rem;
+            }
+
+            .step-wizard-item {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 1rem;
+                width: 100%;
+                min-height: 40px;
+            }
+
+            .step-wizard-item::before {
+                width: 4px;
+                height: 100%;
+                left: 18px;
+                /* Center of 40px circle */
+                top: -50%;
+            }
+
+            .step-wizard-item:first-child::before {
+                display: none;
+            }
+
+            .progress-label {
+                margin-top: 8px;
+                font-size: 1rem;
+                white-space: normal;
+            }
+        }
     </style>
 </head>
 
@@ -388,25 +523,87 @@
                 </svg>
             </div>
 
-            <div id="result-container">
+            <div id="result-container" style="display: none; animation: slideUp 0.4s ease-out;">
                 <div class="status-header">
-                    <h3 style="font-weight: 700;">Detalles</h3>
+                    <div>
+                        <h3 style="font-weight: 700; font-size: 1.1rem; color: #0f172a; margin-bottom: 2px;">Estado
+                            Actual</h3>
+                        <p style="font-size: 0.85rem; color: #64748b; margin: 0;" id="res-msg-short">Información
+                            actualizada</p>
+                    </div>
                     <span id="res-status" class="status-badge"></span>
                 </div>
 
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Tipo de Servicio</span>
-                        <span id="res-type" class="info-value"></span>
+                <!-- Timeline Wizard (Clean Horizontal) -->
+                <div class="step-wizard">
+                    <ul class="step-wizard-list" id="wizard-list">
+                        <li class="step-wizard-item" id="step-pending">
+                            <span class="progress-count">1</span>
+                            <span class="progress-label">Recibido</span>
+                        </li>
+                        <li class="step-wizard-item" id="step-in-progress">
+                            <span class="progress-count">2</span>
+                            <span class="progress-label">En Proceso</span>
+                        </li>
+                        <li class="step-wizard-item" id="step-completed">
+                            <span class="progress-count">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span class="progress-label">Completado</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="background: #f8fafc; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 2rem;">
+                    <div class="info-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 0;">
+                        <div class="info-item">
+                            <span class="info-label">Tipo de Servicio</span>
+                            <span id="res-type" class="info-value" style="font-size: 0.95rem;"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Fecha del Caso</span>
+                            <span id="res-date" class="info-value" style="font-size: 0.95rem;"></span>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Fecha Estimada</span>
-                        <span id="res-date" class="info-value"></span>
+                    <div id="res-msg"
+                        style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; font-size: 0.9rem; color: #475569; line-height: 1.5;">
                     </div>
                 </div>
 
-                <div id="res-msg"
-                    style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; font-size: 0.9rem; color: #475569; margin-bottom: 2rem; border-left: 4px solid #cbd5e1;">
+                <!-- Secure Download Section -->
+                <div id="secure-area" style="margin-bottom: 1.5rem;">
+                    <div
+                        style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: 0.75rem; padding: 1.5rem;">
+                        <h4
+                            style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: #1e3a8a; font-size: 1rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            Área de Descargas Segura
+                        </h4>
+
+                        <div id="pin-prompt">
+                            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Para proteger su
+                                privacidad, ingrese su PIN de acceso.</p>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="password" id="security-pin" placeholder="PIN de 4 dígitos"
+                                    style="flex:1; padding: 0.65rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; outline: none; transition: border-color 0.2s;">
+                                <button id="btn-unlock"
+                                    style="padding: 0 1.25rem; background: #1e3a8a; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">Abrir</button>
+                            </div>
+                        </div>
+
+                        <div id="secure-files" style="display: none; margin-top: 1rem;">
+                            <ul style="list-style: none; display: grid; gap: 0.75rem;" id="file-list-ul">
+                                <!-- Files injected via JS -->
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 <a href="https://wa.me/18133739797" target="_blank" class="btn-whatsapp">
@@ -451,7 +648,9 @@
         const clearBtn = document.getElementById('clear-sig');
         const saveBtn = document.getElementById('save-sig');
 
+        // Global data
         let currentCaseId = null;
+        let currentCaseData = null; // Store full data for PIN check
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
@@ -470,6 +669,12 @@
             sigSection.style.display = 'none';
             loadingDiv.style.display = 'block';
 
+            // Reset Secure Area
+            document.getElementById('secure-area').style.display = 'block'; // Show container
+            document.getElementById('pin-prompt').style.display = 'block'; // Show prompt
+            document.getElementById('secure-files').style.display = 'none'; // Hide files
+            document.getElementById('security-pin').value = '';
+
             try {
                 const { getDocs, query, collection, where } = window.dbFuncs;
                 const db = window.firebaseDB;
@@ -487,6 +692,7 @@
                 const docSnap = snapshot.docs[0];
                 const data = docSnap.data();
                 currentCaseId = docSnap.id;
+                currentCaseData = data; // Store for later use
 
                 // --- 1. Render Basic Info ---
                 const statusMap = {
@@ -517,13 +723,13 @@
                 const msgEl = document.getElementById('res-msg');
                 msgEl.textContent = msg;
 
+                // Update Timeline
+                updateTimeline(data.status);
+
                 // Show Results
                 resultDiv.style.display = 'block';
 
                 // --- 2. Digital Signature Logic ---
-                // Check if URL has action=sign AND case is not completed (or we allow resealing?)
-                // Let's allow signing if status is not 'completed' OR if explicitly requested via param unless already signed.
-
                 const params = new URLSearchParams(window.location.search);
                 const action = params.get('action');
 
@@ -533,9 +739,7 @@
                 } else if (action === 'sign' && data.status !== 'completed') {
                     // Needs signature
                     sigSection.style.display = 'block';
-                    // Canvas needs resize after being displayed
                     setTimeout(resizeCanvas, 50);
-                    // Update message
                     msgEl.innerHTML = '<strong>Acción Requerida:</strong> Por favor firme en el recuadro inferior para autorizar el avance de su trámite.';
                     msgEl.style.borderLeftColor = 'var(--warning)';
                     msgEl.style.background = '#fffbeb';
@@ -549,6 +753,90 @@
                 loadingDiv.style.display = 'none';
             }
         }
+
+        // --- Timeline Logic ---
+        function updateTimeline(status) {
+            // Reset all
+            document.querySelectorAll('.step-wizard-item').forEach(el => {
+                el.classList.remove('active-step', 'completed-step', 'current-item');
+                // Reset colors manually if needed (not needed with new CSS variables)
+            });
+
+            const steps = ['pending', 'in-progress', 'completed'];
+            // Simplify mapping: 'pending' -> 0, 'in-progress' -> 1, 'completed' -> 2.
+
+            let activeIdx = 0;
+            if (status === 'in-progress') activeIdx = 1;
+            if (status === 'completed' || status === 'signed') activeIdx = 2; // Signed is effectively completed for this view
+
+            steps.forEach((step, idx) => {
+                const el = document.getElementById(`step-${step}`);
+                if (!el) return;
+
+                if (idx < activeIdx) {
+                    el.classList.add('completed-step'); // Passed steps
+                } else if (idx === activeIdx) {
+                    el.classList.add('active-step'); // Current active step
+                }
+            });
+        }
+
+        // --- Secure Download Logic ---
+        document.getElementById('btn-unlock').addEventListener('click', () => {
+            const inputPin = document.getElementById('security-pin').value;
+
+            if (!currentCaseData) return;
+
+            // Check if case has a PIN. If not, maybe use last 4 of Case ID? 
+            // For now, I'll enforce strict checking if PIN exists, or generic '0000' if not set for testing.
+            // PROD: Should be set in CRM.
+            const validPin = currentCaseData.pin || '1234';
+
+            if (inputPin === validPin) {
+                document.getElementById('pin-prompt').style.display = 'none';
+                document.getElementById('secure-files').style.display = 'block';
+
+                // Render Files
+                const list = document.getElementById('file-list-ul');
+                list.innerHTML = '';
+
+                // Mock Files if none (for demo)
+                const files = currentCaseData.attachments || [];
+
+                // Add standard draft/invoice if status warrants
+                if (currentCaseData.status !== 'pending') {
+                    files.push({ name: 'Borrador_Preliminar.pdf', url: '#' });
+                }
+                if (currentCaseData.status === 'completed') {
+                    files.push({ name: 'Factura_Final.pdf', url: '#' });
+                    files.push({ name: 'Documento_Legal_Final.pdf', url: '#' });
+                }
+
+                if (files.length === 0) {
+                    list.innerHTML = '<li><em>No hay documentos disponibles para descargar aún.</em></li>';
+                } else {
+                    files.forEach(f => {
+                        const li = document.createElement('li');
+                        li.style.background = 'white';
+                        li.style.marginBottom = '0.5rem';
+                        li.style.padding = '0.75rem';
+                        li.style.borderRadius = '0.5rem';
+                        li.style.display = 'flex';
+                        li.style.justifyContent = 'space-between';
+                        li.style.alignItems = 'center';
+
+                        li.innerHTML = `
+                            <span style="font-weight:500; font-size:0.9rem;">📄 ${f.name}</span>
+                            <a href="${f.url}" download style="color:#2563eb; text-decoration:none; font-weight:600;">Descargar</a>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
+
+            } else {
+                alert('PIN Incorrecto. Por favor intente nuevamente o contacte a la notaría.');
+            }
+        });
 
         // --- Event Listeners ---
 

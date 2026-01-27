@@ -88,16 +88,71 @@ const PaymentManager = {
 
     promptPayPalConfig() {
         const currentId = localStorage.getItem('paypal_client_id') || '';
-        const message = currentId
-            ? `Client ID actual: ${currentId.substring(0, 20)}...\n\nIntroduce tu nuevo PayPal Client ID de PRODUCCIÓN:`
-            : 'Introduce tu PayPal Client ID de PRODUCCIÓN para recibir pagos reales:\n\n(Obtén tu Client ID en: https://developer.paypal.com/dashboard/)';
+        const title = currentId ? 'Actualizar PayPal Client ID' : 'Configurar Pagos con PayPal';
+        const msg = currentId
+            ? `Tu Client ID actual termina en: ...${currentId.slice(-6)}`
+            : 'Introduce tu PayPal Client ID de PRODUCCIÓN para habilitar pagos reales.';
 
-        const newId = prompt(message, currentId);
+        // Use custom prompt if available in NotaryCRM (we'll implement/use a generic one)
+        // Since we don't have a direct "prompt" modal, we'll use a SweetAlert style or custom modal injection
+        // For now, let's look for a method to show input. If not, we'll create a simple overlay.
 
-        if (newId !== null && newId.trim() !== '' && newId !== currentId) {
-            this.savePayPalConfig(newId.trim());
-            setTimeout(() => location.reload(), 1500);
-        }
+        // Simulating a nicer prompt using existing NotaryCRM modal capabilities if possible, 
+        // otherwise falling back to a clean overlay injector.
+
+        const overlayId = 'paypal-config-overlay';
+        if (document.getElementById(overlayId)) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = overlayId;
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); animation: fadeIn 0.2s;
+        `;
+
+        overlay.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: scale(0.95); animation: zoomIn 0.2s forwards;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
+                    <h3 style="margin:0; font-size:1.25rem; color:#0f172a; font-weight:700;">${title}</h3>
+                    <button id="close-pp-config" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:#64748b;">&times;</button>
+                </div>
+                <p style="color:#475569; margin-bottom:1.5rem; line-height:1.5;">${msg}</p>
+                
+                <label style="display:block; font-size:0.875rem; font-weight:600; color:#334155; margin-bottom:0.5rem;">Client ID (Production)</label>
+                <input type="text" id="pp-client-id-input" value="${currentId}" placeholder="Aa..." style="width:100%; padding:0.75rem; border:1px solid #cbd5e1; border-radius:0.5rem; font-size:0.95rem; margin-bottom:1.5rem; outline:none; transition:border-color 0.2s;">
+                
+                <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                     <button id="cancel-pp-config" class="btn" style="background:#f1f5f9; color:#475569;">Cancelar</button>
+                     <button id="save-pp-config" class="btn btn-primary" style="background:#0f172a; color:white;">Guardar Configuración</button>
+                </div>
+                <div style="margin-top:1.5rem; font-size:0.85rem; color:#94a3b8; text-align:center;">
+                    Obtén tus credenciales en el <a href="https://developer.paypal.com/dashboard/" target="_blank" style="color:#3b82f6; text-decoration:none;">Dashboard de PayPal</a>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const close = () => document.body.removeChild(overlay);
+
+        document.getElementById('close-pp-config').onclick = close;
+        document.getElementById('cancel-pp-config').onclick = close;
+
+        const input = document.getElementById('pp-client-id-input');
+        input.focus();
+
+        document.getElementById('save-pp-config').onclick = () => {
+            const val = input.value.trim();
+            if (val && val !== currentId) {
+                this.savePayPalConfig(val);
+                setTimeout(() => location.reload(), 1000);
+                overlay.innerHTML = `<div style="color:white; font-size:1.25rem; font-weight:600;">Guardando y recargando...</div>`;
+            } else {
+                close();
+            }
+        };
     },
 
 
@@ -673,15 +728,25 @@ const PaymentManager = {
 
         const cases = window.NotaryCRM.state.cases || [];
         const yearCases = cases.filter(c => {
-            const caseYear = new Date(c.createdAt).getFullYear();
-            return caseYear === year && c.paymentStatus === 'Paid';
+            let d;
+            if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
+            else if (c.createdAt) d = new Date(c.createdAt);
+            else return false;
+
+            const caseYear = d.getFullYear();
+            const status = c.paymentStatus ? c.paymentStatus.toLowerCase() : '';
+            return caseYear === year && status === 'paid';
         });
 
         const totalRevenue = yearCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
         const casesByMonth = {};
 
         yearCases.forEach(c => {
-            const month = new Date(c.createdAt).getMonth();
+            let d;
+            if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
+            else d = new Date(c.createdAt);
+
+            const month = d.getMonth();
             casesByMonth[month] = (casesByMonth[month] || 0) + parseFloat(c.amount || 0);
         });
 
@@ -694,31 +759,54 @@ const PaymentManager = {
         };
 
         console.log('📊 Tax Report Generated:', report);
-
-        Toast.success('Reporte Fiscal Generado', `Año ${year} - Total: $${totalRevenue}`);
+        Toast.success('Reporte Fiscal Generado', `Año ${year} - Total: $${window.NotaryCRM.formatCurrency(totalRevenue)}`);
 
         return report;
     },
 
-    exportTaxReport(report) {
-        const csv = this.convertTaxReportToCSV(report);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `tax-report-${report.year}.csv`;
-        link.click();
-        URL.revokeObjectURL(link.href);
+    exportTaxReport(arg) {
+        let report;
+        // Handle if argument is just the year (number) as passed from HTML
+        if (typeof arg === 'number') {
+            report = this.generateTaxReport(arg);
+        } else {
+            report = arg;
+        }
 
-        Toast.success('Reporte Exportado', 'Reporte fiscal descargado');
+        if (!report) return;
+
+        const csv = this.convertTaxReportToCSV(report);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+
+        // Add BOM for Excel compatibility with UTF-8
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+        const blobWithBom = new Blob([bom, csv], { type: 'text/csv;charset=utf-8;' });
+
+        link.href = URL.createObjectURL(blobWithBom);
+        link.download = `Reporte_Fiscal_${report.year}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(link.href), 100);
+
+        Toast.success('Reporte Exportado', 'El archivo CSV se ha descargado correctamente.');
     },
 
     convertTaxReportToCSV(report) {
-        let csv = 'Mes,Ingresos\n';
-        Object.entries(report.monthlyBreakdown).forEach(([month, revenue]) => {
-            const monthName = new Date(2000, month, 1).toLocaleDateString('es-ES', { month: 'long' });
-            csv += `${monthName},${revenue}\n`;
+        let csv = 'Mes,Cantidad de Casos,Ingresos\n';
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        months.forEach((name, index) => {
+            const revenue = report.monthlyBreakdown[index] || 0;
+            // You might want to count cases per month too if you had that data easily available in the breakdown
+            // For now just revenue
+            csv += `${name},N/A,${revenue.toFixed(2)}\n`;
         });
-        csv += `\nTotal,${report.totalRevenue}\n`;
+
+        csv += `\nTOTAL ANUAL,${report.totalCases},${report.totalRevenue.toFixed(2)}\n`;
         return csv;
     }
 };
