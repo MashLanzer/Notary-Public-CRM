@@ -1621,26 +1621,7 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <div class="modal" id="confirm-modal">
-        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('confirm-modal')"></div>
-        <div class="modal-content modal-confirm">
-            <div class="confirm-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                    </path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            </div>
-            <h3 id="confirm-title">¿Estás seguro?</h3>
-            <p id="confirm-message">Esta acción no se puede deshacer.</p>
-            <div class="confirm-actions">
-                <button class="btn" id="confirm-cancel">Cancelar</button>
-                <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Duplicates Modal -->
     <div class="modal" id="duplicates-modal">
@@ -1656,8 +1637,11 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 1.5rem; color: var(--text-light);">Se han encontrado los siguientes posibles
-                    duplicados basados en Email o Número de Identificación.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-light); margin: 0;">Posibles duplicados encontrados por Email o ID.</p>
+                    <button class="btn btn-sm btn-primary" id="merge-all-duplicates-btn" style="display: none;">Fusionar
+                        Todo (Automático)</button>
+                </div>
                 <div id="duplicates-list" style="display: flex; flex-direction: column; gap: 1rem;">
                     <!-- Duplicates will be injected here -->
                 </div>
@@ -2490,6 +2474,27 @@
                     <button class="btn btn-primary" id="modal-save-sig" style="width:100%;">Confirmar e
                         Insertar</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('confirm-modal')"></div>
+        <div class="modal-content modal-confirm">
+            <div class="confirm-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h3 id="confirm-title">¿Estás seguro?</h3>
+            <p id="confirm-message">Esta acción no se puede deshacer.</p>
+            <div class="confirm-actions">
+                <button class="btn" id="confirm-cancel">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-proceed">Eliminar</button>
             </div>
         </div>
     </div>

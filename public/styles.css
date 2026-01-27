@@ -2119,7 +2119,11 @@ body:not(.authenticated) {
 
 /* Ensure confirm modal is on top of everything */
 #confirm-modal {
-    z-index: 10000 !important;
+    z-index: 20000 !important;
+}
+
+#confirm-modal .modal-content {
+    z-index: 20001 !important;
 }
 
 .confirm-icon {
