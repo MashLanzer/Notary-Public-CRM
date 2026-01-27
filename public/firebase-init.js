@@ -27,6 +27,11 @@ window.firebaseAuth = auth;
 window.firebaseDB = db;
 window.firebaseAnalytics = analytics;
 
+// Secondary app for creating client accounts without logging out admin
+const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+const secondaryAuth = getAuth(secondaryApp);
+window.secondaryAuth = secondaryAuth;
+
 // Firestore helper functions for non-module scripts
 window.dbFuncs = {
   collection,

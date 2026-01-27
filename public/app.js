@@ -2856,6 +2856,45 @@ window.NotaryCRM = {
                 .then(async (docRef) => {
                     this.updateSyncStatus('synced');
                     AuditManager.logAction('Creación de Cliente', client.name, `ID: ${docRef.id}`);
+
+                    // --- AUTOMATIC ACCOUNT CREATION ---
+                    // Create an auth account for the client so they can use "Mi Notaría"
+                    if (client.email && client.phone) {
+                        try {
+                            const { createUserWithEmailAndPassword, signOut } = window.authFuncs;
+                            // Use phone number as password (cleaned of non-digits)
+                            const cleanPass = client.phone.replace(/\D/g, '');
+
+                            if (cleanPass.length >= 6) {
+                                // Create user in background using secondary auth (prevents admin logout)
+                                const userCredential = await createUserWithEmailAndPassword(window.secondaryAuth, client.email, cleanPass);
+
+                                // Save additional user data for the portal
+                                const { doc, setDoc } = window.dbFuncs;
+                                const userRef = doc(window.firebaseDB, 'users', userCredential.user.uid);
+                                await setDoc(userRef, {
+                                    email: client.email,
+                                    role: 'client',
+                                    clientId: docRef.id,
+                                    workspaceId: this.currentUser.uid, // Associated with this notary
+                                    createdAt: new Date().toISOString()
+                                });
+
+                                // Significant: Sign out from secondary app immediately to clear state
+                                await signOut(window.secondaryAuth);
+
+                                console.log('Portal account created for client:', client.email);
+                                Toast.info('Cuenta Creada', `Se ha habilitado el acceso al portal para ${client.email}.`);
+                            }
+                        } catch (authErr) {
+                            if (authErr.code === 'auth/email-already-in-use') {
+                                console.log('Auth account already exists for this email.');
+                            } else {
+                                console.warn('Could not create portal account:', authErr.message);
+                            }
+                        }
+                    }
+
                     this.closeModal('client-modal');
 
                     // Clear draft after successful save
