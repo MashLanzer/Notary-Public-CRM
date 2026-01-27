@@ -156,6 +156,7 @@
 
         .hero-text h1 span {
             background: linear-gradient(to right, #1e3a8a, #2563eb);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -808,25 +809,32 @@
                 const { collection, getCountFromServer } = window.dbFuncs;
                 const db = window.firebaseDB;
 
-                // We use appointments count as a proxy for "Documentos Notarizados"
-                // and clients count for "Familias Ayudadas"
-                const appColl = collection(db, 'appointments');
+                // real data fetch
+                const casesColl = collection(db, 'cases');
                 const clientColl = collection(db, 'clients');
 
-                const [appSnap, clientSnap] = await Promise.all([
-                    getCountFromServer(appColl),
+                // For a single-notary landing page, we count everything in the collections
+                // If there are multiple notaries, we might want to filter, but usually 
+                // the landing page represents the whole company/person.
+                const [casesSnap, clientSnap] = await Promise.all([
+                    getCountFromServer(casesColl),
                     getCountFromServer(clientColl)
                 ]);
 
-                const appCount = appSnap.data().count || 150; // Fallback to 150
-                const clientCount = clientSnap.data().count || 80; // Fallback to 80
+                const casesReal = casesSnap.data().count || 0;
+                const clientsReal = clientSnap.data().count || 0;
+
+                // Base / Placeholder values to still look impressive if starting out
+                // or just show real ones if requested "reales"
+                const docCount = casesReal > 0 ? casesReal : 150;
+                const familyCount = clientsReal > 0 ? clientsReal : 80;
 
                 const caseEl = document.getElementById('stat-cases');
                 const clientEl = document.getElementById('stat-clients');
 
                 // Animate if elements are visible
-                if (caseEl) animateValue(caseEl, 0, appCount, 2000);
-                if (clientEl) animateValue(clientEl, 0, clientCount, 2000);
+                if (caseEl) animateValue(caseEl, 0, docCount, 2000);
+                if (clientEl) animateValue(clientEl, 0, familyCount, 2000);
 
             } catch (err) {
                 console.warn('Could not load stats, using defaults', err);
