@@ -1,71 +1,51 @@
-# 🚀 Hoja de Ruta: Futuras Mejoras e Implementaciones
+# Próximas Mejoras y Hoja de Ruta - Notary CRM 🚀
 
-Este documento detalla oportunidades de mejora y nuevas funcionalidades sugeridas para el ecosistema **Notary CRM**, divididas por módulo.
+Este documento detalla las funciones planificadas y las ideas para futuras actualizaciones, organizadas por módulos.
 
----
+## 📊 Panel de Control (Dashboard)
+- [ ] **Modo Oscuro Completo**: Implementación de un tema oscuro refinado para reducir la fatiga visual.
+- [ ] **Widgets Arrastrables (Drag & Drop)**: Permitir reorganizar los widgets del dashboard arrastrándolos directamente en la interfaz.
+- [ ] **Más Gráficos Interactivos**: Desglose de ingresos por mes, tipos de casos más frecuentes y origen de clientes (Referidos vs. Web).
+- [ ] **Alertas de Vencimiento Crítico**: Notificaciones visuales más prominentes para casos que vencen en menos de 24 horas.
 
-## 🏢 1. CRM Dashboard (`index.html` + `app.js`)
-*El centro de control administrativo.*
+## � Gestión de Clientes y Casos
+- [ ] **Campos Personalizados**: Permitir al notario añadir campos extra (ej. "Facilitador", "Referencia") sin cambiar el código.
+- [ ] **Etiquetas (Tags)**: Sistema de etiquetas de colores para categorizar clientes (ej. "VIP", "Corporativo", "Moroso").
+- [ ] **Historial de Auditoría por Cliente**: Ver exactamente qué se cambió y cuándo en la ficha de un cliente específico.
+- [ ] **Exportación Avanzada**: Filtros personalizados para exportar a Excel solo los datos necesarios.
 
-### ✅ Funcionalidad & Productividad
-- [ ] **Sincronización Bidireccional con Google Calendar API:** Actualmente usamos enlaces estáticos. Implementar la API real permitiría leer eventos externos (ej: reuniones personales) para evitar conflictos automáticamente.
-- [ ] **Gestor Documental con OCR:** Permitir subir fotos de DNI/Pasaportes y que el sistema extraiga automáticamente nombre, cédula y fecha de nacimiento.
-- [x] **Generador de Documentos PDF:** Crear plantillas (Poderes, Affidavits) donde se rellenen automáticamente los datos del cliente seleccionado y se descargue el PDF listo para firmar.
-- [x] **Firma Digital Integrada:** Integrar DocuSign o una solución nativa de firma en pantalla (canvas) para que los clientes firmen en la tablet del notario.
+## 🏠 Portal del Cliente (Mi Notaría)
+- [ ] **Chat Integrado**: Chat directo entre el cliente y el notario dentro del portal.
+- [ ] **Línea de Tiempo Visual**: Un gráfico tipo "Pasos" que muestre en qué etapa exacta está su documento (ej. Recibido -> Procesando -> Notarizado -> Listo).
+- [ ] **Descarga Masiva**: Botón para descargar todos los documentos notarizados de un caso en un solo archivo .ZIP.
+- [ ] **Perfil de Cliente**: Permitir que el cliente actualice su dirección o teléfono desde el portal.
 
-### 🎨 UI/UX (Interfaz)
-- [ ] **Modo Oscuro "True Black":** Optimizar el tema oscuro para pantallas OLED (actualmente fuerza modo claro en algunas secciones).
-- [ ] **Vistas Kanban para Casos:** Visualizar los trámites como tarjetas en columnas (Pendiente -> En Proceso -> Firmado -> Completado) tipo Trello.
-- [ ] **Búsqueda Global Inteligente (Cmd+K):** Una barra de comandos para navegar rápido ("Ir a cliente Juan", "Nuevo trámite", "Cambiar tema").
+## 📑 Documentos y Automatización
+- [ ] **OCR (Reconocimiento de Texto)**: Escaneo automático de identificaciones subidas para rellenar el formulario de cliente.
+- [ ] **Firma Electrónica Integrada**: Integración oficial con servicios tipo DocuSign o desarrollo de una solución propia legalmente válida.
+- [ ] **Generador de Facturas (Invoicing)**: Crear un PDF de factura profesional automáticamente al completar un caso.
+- [ ] **Marcas de Agua**: Añadir marcas de agua "Borrador" o "Copia" a los documentos generados.
 
----
+## ✉️ Comunicación y Notificaciones
+- [ ] **Integración con WhatsApp**: Enviar recordatorios de citas y estados de casos directamente a WhatsApp.
+- [ ] **Secuencias de Email**: Enviar automáticamente un correo de seguimiento 6 meses después de un testamento para revisión.
+- [ ] **SMS Gateway**: Alternativa de mensajes de texto para clientes que no usan email con frecuencia.
 
-## 🌐 2. Landing Page (`landing.html`)
-*La cara pública venta y captación de clientes.*
+## 🌐 Landing Page (Página Web)
+- [ ] **Gestor de Testimonios**: Sección desde el admin para añadir y mostrar reseñas reales de clientes.
+- [ ] **Blog Notarial**: Sección de noticias para SEO, informando sobre cambios en leyes notariales de Florida.
+- [ ] **Calculadora de Precios**: Herramienta interactiva para que los clientes estimen el costo según el número de firmas y sellos.
+- [ ] **Multi-idioma (i18n)**: Soporte completo para Inglés, Español y Francés (Haitian Creole).
 
-### 📈 Conversión & Marketing
-- [ ] **Testimonios Dinámicos (Google Reviews):** Conectar con la API de Google Maps para mostrar reseñas reales y frescas automáticamente.
-- [ ] **Chatbot IA de Captación:** Un asistente simple que responda preguntas frecuentes ("¿Qué precio tiene un poder?", "¿Abren los sábados?") y derive al Booking.
-- [ ] **Pop-up de "Exit Intent":** Si el usuario mueve el mouse para cerrar la pestaña, ofrecer un descuento o guía gratuita ("Descarga la Checklist para tu Trámite Notarial").
+## 💳 Pagos y Finanzas
+- [ ] **Pasarelas de Pago**: Integración con Stripe para aceptar Apple Pay y Google Pay.
+- [ ] **Gestión de Gastos**: Módulo para registrar gastos de la oficina (papel, sellos, gasolina) y ver la utilidad real.
+- [ ] **Reportes Fiscales**: Resumen anual de ingresos para facilitar la declaración de impuestos.
 
-### ⚡ Performance & SEO
-- [ ] **Blog Notarial:** Una sección `/blog` generada dinámicamente para artículos como "Requisitos para Apostilla 2024", vital para atraer tráfico orgánico de Google.
-- [ ] **Schema Markup JSON-LD:** Añadir metadatos estructurados avanzados para que Google muestre "Precio", "Horario" y "Valoración" directamente en los resultados de búsqueda.
-
----
-
-## 📅 3. Portal de Reservas (`booking.html`)
-*Donde los clientes agendan sus citas.*
-
-### 💳 Pagos & Monetización
-- [ ] **Pasarela de Pagos Stripe/PayPal Real:** Cobrar un depósito (ej: $20) para confirmar la cita y reducir el ausentismo (No-Show).
-- [ ] **Cupones de Descuento:** Campo para códigos promocionales (ej: "APERTURA2025").
-
-### 👤 Experiencia de Usuario
-- [ ] **Recordatorios SMS (Twilio):** Enviar un SMS 2 horas antes de la cita (más efectivo que el email).
-- [ ] **Reprogramación por el Cliente:** Permitir que el cliente mueva su cita por sí mismo mediante enlace seguro, sin tener que llamar.
-- [ ] **Detección de Zona Horaria:** Si atiendes clientes internacionales, mostrar horas en su zona local y la tuya.
-
----
-
-## 🔍 4. Portal de Estado (`status.html`)
-*Donde los clientes consultan cómo va su trámite.*
-
-### 🔒 Seguridad & Valor
-- [ ] **Área Privada de Descarga:** Que el cliente pueda descargar su borrador o factura directamente tras ingresar su número de caso y un PIN de seguridad.
-- [ ] **Línea de Tiempo Visual:** Un gráfico de progreso (step-wizard) mostrando exactamente en qué paso está su documento (ej: "En Notaría" -> "Enviado a Apostilla" -> "Listo").
+## 🛠️ Infraestructura y Seguridad
+- [ ] **Autenticación en Dos Pasos (2FA)**: Mayor seguridad para la cuenta del admin mediante código al celular.
+- [ ] **Backups Automáticos**: Exportación diaria programada de la base de datos a un storage externo.
+- [ ] **API Pública**: Permitir que otras herramientas se conecten al CRM (Zapier / Make.com).
 
 ---
-
-## 🛠️ 5. Infraestructura Técnica (Backend/Firebase)
-- [ ] **Firebase Cloud Functions:**
-    - *Auto-Emails:* Enviar emails automáticos cuando cambia el estado de un caso.
-    - *Backups Diarios:* Script que exporte todo el JSON de Firestore a Google Cloud Storage cada noche.
-- [ ] **Reglas de Seguridad Estrictas:** Auditar `firestore.rules` para asegurar que nadie pueda leer datos de otros clientes mediante inyección o consultas manipuladas (aislamiento total por `ownerId` y `clientId`).
-- [ ] **PWA (Progressive Web App):** Completar el `manifest.json` y `sw.js` para que la web permita instalación real en iPhone/Android y funcione sin internet (modo consulta).
-
----
-
-## 📊 6. Analítica Avanzada
-- [ ] **Dashboard Financiero:** Gráficos de ingresos mensuales, proyección de ganancias y ticket promedio real.
-- [ ] **Mapa de Calor de Citas:** Visualizar qué días y horas son los más demandados para ajustar horarios de atención.
+*Última actualización: 2026-01-27*
