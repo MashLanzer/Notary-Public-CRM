@@ -186,7 +186,7 @@ const ScreenReaderManager = {
         // Announce when new content is loaded
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length> 0) {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === 1) { // Element node
                             // Check for new cards or list items

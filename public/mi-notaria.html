@@ -737,7 +737,7 @@
                         caseListEl.appendChild(caseDiv);
 
                         // If completed, add to Docs sidebar
-                        if (data.status === 'completed' || data.attachments?.length > 0) {
+                        if (data.status === 'completed' || data.attachments?.length> 0) {
                             const docs = data.attachments || [{ name: `Copia_${data.caseNumber}.pdf`, url: '#' }];
                             docs.forEach(doc => {
                                 const li = document.createElement('li');

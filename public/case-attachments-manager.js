@@ -98,7 +98,7 @@ const CaseAttachmentsManager = {
                     ${att.name}
                 </span>
             </div>
-        `).join('') + (attachments.length > 3 ? `<p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">+${attachments.length - 3} más...</p>` : '');
+        `).join('') + (attachments.length> 3 ? `<p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">+${attachments.length - 3} más...</p>` : '');
     },
 
     openAttachmentModal(caseId) {

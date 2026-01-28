@@ -103,7 +103,7 @@ const AdvancedAnalytics = {
             days.forEach((day, dayIndex) => {
                 const cellData = data.find(d => d.day === dayIndex && d.hour === hour);
                 const count = cellData ? cellData.count : 0;
-                const intensity = maxValue > 0 ? count / maxValue : 0;
+                const intensity = maxValue> 0 ? count / maxValue : 0;
                 const color = this.getHeatmapColor(intensity);
 
                 html += `
@@ -120,13 +120,13 @@ const AdvancedAnalytics = {
                             justify-content: center;
                             font-size: 0.7rem;
                             font-weight: 600;
-                            color: ${intensity > 0.5 ? 'white' : 'var(--text-primary)'};
+                            color: ${intensity> 0.5 ? 'white' : 'var(--text-primary)'};
                         "
                         title="${day} ${hour}:00 - ${count} citas"
                         onmouseover="this.style.transform='scale(1.1)'"
                         onmouseout="this.style.transform='scale(1)'"
                     >
-                        ${count > 0 ? count : ''}
+                        ${count> 0 ? count : ''}
                     </div>
                 `;
             });
@@ -144,7 +144,7 @@ const AdvancedAnalytics = {
         months.forEach((month, index) => {
             const cellData = data.find(d => d.month === index);
             const count = cellData ? cellData.count : 0;
-            const intensity = maxValue > 0 ? count / maxValue : 0;
+            const intensity = maxValue> 0 ? count / maxValue : 0;
             const color = this.getHeatmapColor(intensity);
 
             html += `
@@ -221,7 +221,7 @@ const AdvancedAnalytics = {
                         return date.getDay() === day && date.getHours() === hour;
                     }).length;
 
-                    if (count > 0) {
+                    if (count> 0) {
                         data.push({ day, hour, count });
                     }
                 }
@@ -234,7 +234,7 @@ const AdvancedAnalytics = {
                     return date.getMonth() === month;
                 }).length;
 
-                if (count > 0) {
+                if (count> 0) {
                     data.push({ month, count });
                 }
             }
@@ -327,7 +327,7 @@ const AdvancedAnalytics = {
             const value2 = data2[metric.key] || 0;
             const diff = value1 - value2;
             const percentChange = value2 !== 0 ? ((diff / value2) * 100) : 0;
-            const isPositive = diff > 0;
+            const isPositive = diff> 0;
             const isNegative = diff < 0;
 
             html += `

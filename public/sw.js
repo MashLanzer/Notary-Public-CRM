@@ -8,6 +8,9 @@ const ASSETS = [
     '/status.html',
     '/landing.html',
     '/manifest.json',
+    '/image/icon-192.png',
+    '/image/icon-512.png',
+    '/image/notary-photo.png',
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js',
     'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js'

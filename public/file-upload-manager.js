@@ -107,7 +107,7 @@ const FileUploadManager = {
 
     validateFile(file) {
         // Check file size
-        if (file.size > this.maxFileSize) {
+        if (file.size> this.maxFileSize) {
             return {
                 valid: false,
                 error: `El archivo ${file.name} excede el tamaño máximo de 10MB`

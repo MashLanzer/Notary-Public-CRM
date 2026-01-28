@@ -106,7 +106,7 @@ const PerformanceOptimizer = {
                 const item = this.cache.get(key);
                 if (!item) return null;
 
-                if (Date.now() - item.timestamp > this.maxAge) {
+                if (Date.now() - item.timestamp> this.maxAge) {
                     this.cache.delete(key);
                     return null;
                 }
@@ -132,7 +132,7 @@ const PerformanceOptimizer = {
             try {
                 const observer = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        if (entry.duration > 150) {
+                        if (entry.duration> 150) {
                             console.info('Performance note - Long task:', entry);
                         }
                     }
@@ -153,9 +153,9 @@ const PerformanceOptimizer = {
     logResourceTiming() {
         if (window.performance && window.performance.getEntriesByType) {
             const resources = window.performance.getEntriesByType('resource');
-            const slowResources = resources.filter(r => r.duration > 1000);
+            const slowResources = resources.filter(r => r.duration> 1000);
 
-            if (slowResources.length > 0) {
+            if (slowResources.length> 0) {
                 console.warn('Slow resources detected:', slowResources);
             }
         }
@@ -165,7 +165,7 @@ const PerformanceOptimizer = {
         if (performance.memory) {
             setInterval(() => {
                 const usage = performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit;
-                if (usage > 0.9) {
+                if (usage> 0.9) {
                     console.warn('High memory usage:', (usage * 100).toFixed(2) + '%');
                 }
             }, 30000); // Check every 30 seconds

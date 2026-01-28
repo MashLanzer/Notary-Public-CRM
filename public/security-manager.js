@@ -114,7 +114,7 @@ const SecurityManager = {
         this.loginHistory.unshift(record);
 
         // Keep only last 100 records
-        if (this.loginHistory.length > 100) {
+        if (this.loginHistory.length> 100) {
             this.loginHistory = this.loginHistory.slice(0, 100);
         }
 
@@ -142,7 +142,7 @@ const SecurityManager = {
             Date.now() - new Date(r.timestamp).getTime() < 3600000 // Last hour
         );
 
-        if (recentFailures.length >= 3) {
+        if (recentFailures.length>= 3) {
             console.warn('⚠️ Suspicious activity detected: Multiple failed login attempts');
             Toast.warning('Actividad Sospechosa', 'Múltiples intentos fallidos detectados');
 
@@ -218,7 +218,7 @@ const SecurityManager = {
         backups.unshift(backup);
 
         // Keep only last 30 backups
-        if (backups.length > 30) {
+        if (backups.length> 30) {
             backups.splice(30);
         }
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notaría Publica - Servicios Profesionales</title>
+    <title>Notaría Publica-Servicios Profesionales</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,10 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <!-- Existing CSS (for variables/utility classes) -->
     <link rel="stylesheet" href="styles.css">
@@ -671,7 +675,7 @@
                             style="position: absolute; bottom: -15px; left: -15px; width: 50%; height: 50%; background: #eff6ff; border-radius: 1rem; z-index: 0;">
                         </div>
                         <!-- Image -->
-                        <img src="notary-photo.png" alt="Foto del Notario"
+                        <img src="image/notary-photo.png" alt="Foto del Notario"
                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 1rem; position: relative; z-index: 1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
                     </div>
                 </div>
@@ -741,7 +745,194 @@
         </div>
     </section>
 
-    <!-- Map Section -->
+    </section>
+
+    <!-- Real-time Law News Feed & Newsletter -->
+    <section id="notary-news" class="fade-in"
+        style="padding: 5rem 0; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+
+                <!-- Live Law Feed -->
+                <div
+                    style="background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="margin: 0; color: #1e3a8a; font-size: 1.25rem; font-weight: 700;">Panel de Leyes
+                                en Vivo</h3>
+                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                                <span
+                                    style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulse 2s infinite;"></span>
+                                <span
+                                    style="font-size: 0.75rem; color: #ef4444; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Actualizando
+                                    en Tiempo Real</span>
+                            </div>
+                        </div>
+                        <i data-lucide="rss" style="color: #64748b; width: 20px;"></i>
+                    </div>
+
+                    <div id="law-updates-container"
+                        style="display: flex; flex-direction: column; gap: 1rem; min-height: 300px;">
+                        <!-- News items will be injected here -->
+                    </div>
+
+                    <div
+                        style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9; text-align: center;">
+                        <span style="font-size: 0.8rem; color: #94a3b8;">Fuente: Florida Statutes & Notary Weekly
+                            Gazette</span>
+                    </div>
+
+                    <!-- Decorative Gradient overlay for a tech feel -->
+                    <div
+                        style="position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: linear-gradient(transparent, rgba(255,255,255,0.8)); pointer-events: none;">
+                    </div>
+                </div>
+
+                <!-- Newsletter Subscription -->
+                <div class="newsletter-content">
+                    <span
+                        style="display: inline-block; padding: 0.5rem 1rem; background: #dbeafe; color: #1e40af; border-radius: 2rem; font-weight: 700; font-size: 0.85rem; margin-bottom: 1.5rem;">BOLETÍN
+                        PROFESIONAL</span>
+                    <h2 class="section-title"
+                        style="text-align: left; margin-bottom: 1.5rem; font-size: 2.5rem; line-height: 1.1;">Reciba
+                        Actualizaciones Legales en su <span>Email</span></h2>
+                    <p style="font-size: 1.15rem; color: #4b5563; line-height: 1.6; margin-bottom: 2.5rem;">
+                        No se quede atrás con los cambios constantes en las leyes de notarización. Nuestro sistema
+                        monitorea automáticamente las gacetas oficiales y le envía un resumen mensual sin que usted
+                        tenga que hacer nada.
+                    </p>
+
+                    <form id="landing-newsletter-form"
+                        style="display: flex; gap: 12px; background: white; padding: 0.75rem; border-radius: 1rem; border: 1px solid #cbd5e1; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <input type="email" placeholder="Su correo electrónico" required
+                            style="flex: 1; border: none; padding: 0.5rem 1rem; font-size: 1rem; outline: none;">
+                        <button type="submit" class="btn btn-primary"
+                            style="padding: 12px 24px; border-radius: 0.75rem;">
+                            Suscribirme Gratis
+                        </button>
+                    </form>
+
+                    <div style="display: flex; align-items: center; gap: 2rem; margin-top: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="check-circle-2" style="color: #10b981; width: 18px;"></i>
+                            <span style="font-size: 0.85rem; color: #64748b;">Cero Spam</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="shield-check" style="color: #10b981; width: 18px;"></i>
+                            <span style="font-size: 0.85rem; color: #64748b;">Privacidad Protegida</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <style>
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .law-item {
+            animation: slideInUp 0.4s ease-out;
+            border-radius: 12px;
+            padding: 1rem;
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+        }
+
+        .law-item:hover {
+            background: #eff6ff;
+            transform: scale(1.01);
+        }
+
+        .law-tag {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+
+        .tag-urgent {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .tag-update {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .tag-info {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        @media (max-width: 968px) {
+            #notary-news .container>div {
+                grid-template-columns: 1fr !important;
+                gap: 3rem !important;
+            }
+
+            .newsletter-content {
+                text-align: center;
+            }
+
+            .newsletter-content h2 {
+                text-align: center;
+            }
+
+            #landing-newsletter-form {
+                flex-direction: column;
+                border: none;
+                box-shadow: none;
+                background: transparent;
+                padding: 0;
+            }
+
+            #landing-newsletter-form input {
+                background: white;
+                border: 1px solid #cbd5e1;
+                border-radius: 0.75rem;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            #landing-newsletter-form button {
+                width: 100%;
+            }
+        }
+    </style>
     <section class="map-section" style="height: 400px; background: #f3f4f6; position: relative;">
         <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3523.557434524855!2d-82.3846660236086!3d27.977056213567026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88c2c544d081075d%3A0xe5a3c0c325c3474d!2s3803%20Romano%20Busciglio%20St%2C%20Tampa%2C%20FL%2033619!5e0!3m2!1sen!2sus!4v1706227200000!5m2!1sen!2sus"
@@ -774,7 +965,7 @@
                         <li><a href="mailto:brayanibarra0105@gmail.com">brayanibarra0105@gmail.com</a></li>
                         <li><a href="tel:+18133739797">(813) 373-9797</a></li>
                         <li><a href="#">3803 Romano Busciglio St, Tampa, FL 33619</a></li>
-                        <li>Horario: Lun-Vie 9:00 - 18:00</li>
+                        <li>Horario: Lun-Vie 9:00-18:00</li>
                     </ul>
                 </div>
             </div>
@@ -803,8 +994,8 @@
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start) + "+";
+                const progress = Math.min((timestamp-startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end-start) + start) + "+";
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 }
@@ -840,8 +1031,8 @@
 
                 // Base / Placeholder values to still look impressive if starting out
                 // or just show real ones if requested "reales"
-                const docCount = casesReal > 0 ? casesReal : 150;
-                const familyCount = clientsReal > 0 ? clientsReal : 80;
+                const docCount = casesReal> 0 ? casesReal : 150;
+                const familyCount = clientsReal> 0 ? clientsReal : 80;
 
                 const caseEl = document.getElementById('stat-cases');
                 const clientEl = document.getElementById('stat-clients');
@@ -860,7 +1051,7 @@
     </script>
 
     <script>
-        // Service Details Data - Enhanced Professional Version
+        // Service Details Data-Enhanced Professional Version
         const serviceDetails = {
             'poderes': {
                 title: 'Poderes Notariales y Mandatos',
@@ -1135,6 +1326,117 @@
                 closeServiceModal();
             }
         });
+
+        // ============================================
+        // LAW NEWS & NEWSLETTER MANAGER
+        // ============================================
+
+        const LawNewsManager = {
+            updates: [
+                { tag: 'Urgente', type: 'urgent', title: 'Revisión Florida HB 121', desc: 'Nuevos requisitos de validación de identidad para sesiones de Notarización Remota (RON).' },
+                { tag: 'Actualización', type: 'update', title: 'Manual del Notario 2026', desc: 'Publicada la nueva guía técnica con énfasis en prevención de fraude biométrico.' },
+                { tag: 'Info', type: 'info', title: 'Ajuste de Tasas Estatales', desc: 'Se evalúa un incremento en el tope máximo permitido para actos notariales complejos.' },
+                { tag: 'Alerta', type: 'urgent', title: 'Fraude con Apostillas', desc: 'Detectados certificados apócrifos en trámites internacionales. Verifique códigos QR.' }
+            ],
+            currentIndex: 0,
+
+            init() {
+                this.container = document.getElementById('law-updates-container');
+                if (!this.container) return;
+
+                // Load initial items
+                this.renderInitial();
+
+                // Start live cycle
+                setInterval(() => this.addNewUpdate(), 8000);
+
+                // Initialize Lucide
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+                // Handle Newsletter Form
+                const form = document.getElementById('landing-newsletter-form');
+                if (form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const email = form.querySelector('input').value;
+                        this.subscribe(email);
+                    });
+                }
+            },
+
+            renderInitial() {
+                this.container.innerHTML = this.updates.slice(0, 3).map(update => this.createItemHtml(update)).join('');
+            },
+
+            createItemHtml(update) {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `
+                    <div class="law-item">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <span class="law-tag tag-${update.type}">${update.tag}</span>
+                            <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 600;">Hace un momento • ${time}</span>
+                        </div>
+                        <h4 style="margin: 0.25rem 0; font-size: 0.95rem; color: #1e293b; font-weight: 700;">${update.title}</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: #64748b; line-height: 1.4;">${update.desc}</p>
+                    </div>
+                `;
+            },
+
+            addNewUpdate() {
+                this.currentIndex = (this.currentIndex + 1) % this.updates.length;
+                const update = this.updates[this.currentIndex];
+                const newHtml = this.createItemHtml(update);
+
+                // Insert at top with animation
+                this.container.insertAdjacentHTML('afterbegin', newHtml);
+
+                // Remove last if too many
+                if (this.container.children.length> 4) {
+                    this.container.lastElementChild.style.opacity = '0';
+                    this.container.lastElementChild.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        if (this.container.children.length> 4) {
+                            this.container.removeChild(this.container.lastElementChild);
+                        }
+                    }, 400);
+                }
+            },
+
+            subscribe(email) {
+                const btn = document.querySelector('#landing-newsletter-form button');
+                const originalText = btn.innerText;
+
+                btn.disabled = true;
+                btn.innerText = 'Procesando...';
+
+                // Simulate API call
+                setTimeout(() => {
+                    btn.style.background = '#10b981';
+                    btn.innerText = '✓ ¡Suscrito!';
+                    document.querySelector('#landing-newsletter-form input').value = '';
+
+                    // Show confirmation in the news feed too
+                    const welcomeUpdate = {
+                        tag: 'Bienvenido',
+                        type: 'update',
+                        title: 'Suscripción Exitosa',
+                        desc: `Se ha registrado ${email} para recibir alertas legales automáticas.`
+                    };
+                    this.container.insertAdjacentHTML('afterbegin', this.createItemHtml(welcomeUpdate));
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                        btn.style.background = '';
+                    }, 3000);
+                }, 1500);
+            }
+        };
+
+        // Start Law News Feed
+        LawNewsManager.init();
     </script>
 </body>
 

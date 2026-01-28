@@ -1,5 +1,5 @@
 // ============================================
-// NOTARY CRM - VANILLA JAVASCRIPT APPLICATION
+// NOTARY CRM-VANILLA JAVASCRIPT APPLICATION
 // ============================================
 
 // Global error catchers to show issues directly in the UI
@@ -69,7 +69,7 @@ const Toast = {
         setTimeout(() => toast.classList.add('toast-show'), 10);
 
         // Auto dismiss
-        if (duration > 0) {
+        if (duration> 0) {
             const progressBar = toast.querySelector('.toast-progress');
             if (progressBar) {
                 progressBar.style.animationDuration = `${duration}ms`;
@@ -219,7 +219,7 @@ const FormValidator = {
 
         minLength: (min) => (value) => {
             if (!value) return { valid: true, message: '' };
-            const isValid = value.length >= min;
+            const isValid = value.length>= min;
             return {
                 valid: isValid,
                 message: isValid ? '' : `Mínimo ${min} caracteres`
@@ -247,7 +247,7 @@ const FormValidator = {
         min: (minValue) => (value) => {
             if (!value) return { valid: true, message: '' };
             const numValue = parseFloat(value);
-            const isValid = !isNaN(numValue) && numValue >= minValue;
+            const isValid = !isNaN(numValue) && numValue>= minValue;
             return {
                 valid: isValid,
                 message: isValid ? '' : `Valor mínimo: ${minValue}`
@@ -279,7 +279,7 @@ const FormValidator = {
             const date = new Date(value);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const isValid = date >= today;
+            const isValid = date>= today;
             return {
                 valid: isValid,
                 message: isValid ? '' : 'La fecha debe ser hoy o posterior'
@@ -463,8 +463,8 @@ const FormMasks = {
             if (input.dataset.maskApplied) return;
             input.addEventListener('input', (e) => {
                 let value = e.target.value.replace(/[^0-9.]/g, '');
-                const dots = value.split('.').length - 1;
-                if (dots > 1) value = value.substring(0, value.lastIndexOf('.'));
+                const dots = value.split('.').length-1;
+                if (dots> 1) value = value.substring(0, value.lastIndexOf('.'));
                 e.target.value = value;
             });
             input.addEventListener('blur', (e) => {
@@ -547,7 +547,7 @@ const DashboardManager = {
 
     applyConfig() {
         // Sort items by order
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
 
         const grid = document.getElementById('dashboard-stats-grid');
 
@@ -576,12 +576,12 @@ const DashboardManager = {
         if (!container) return;
 
         // Sort for display in modal
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
 
         container.innerHTML = sortedIds.map((id, index) => {
             const widget = this.config[id];
             const isFirst = index === 0;
-            const isLast = index === sortedIds.length - 1;
+            const isLast = index === sortedIds.length-1;
 
             return `
                 <div class="widget-toggle" data-id="${id}" style="display:flex; align-items:center; gap:1rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:0.5rem; margin-bottom:0.5rem;">
@@ -612,12 +612,12 @@ const DashboardManager = {
     },
 
     moveWidget(id, direction) {
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
         const currentIndex = sortedIds.indexOf(id);
         if (currentIndex === -1) return;
 
         const newIndex = currentIndex + direction;
-        if (newIndex < 0 || newIndex >= sortedIds.length) return;
+        if (newIndex < 0 || newIndex>= sortedIds.length) return;
 
         const swapId = sortedIds[newIndex];
 
@@ -671,6 +671,36 @@ const DashboardManager = {
             this.openCustomization(); // Re-render toggles
             Toast.info('Dashboard Restablecido', 'Se han restaurado los widgets predeterminados.');
         });
+    },
+
+    toggleCommanderMode() {
+        document.body.classList.toggle('commander-mode');
+        const isCommander = document.body.classList.contains('commander-mode');
+
+        if (isCommander) {
+            Toast.show({
+                type: 'info',
+                title: 'TV View Activo',
+                message: 'Información a gran escala para monitoreo. Presione ESC para salir.',
+                duration: 8000
+            });
+
+            // Try to enter fullscreen for true TV experience
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => { });
+                }
+            } catch (err) { }
+        } else {
+            // Exit fullscreen
+            try {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => { });
+                }
+            } catch (err) { }
+
+            Toast.info('Modo Normal', 'Se ha restablecido la vista estándar.');
+        }
     }
 };
 
@@ -694,7 +724,7 @@ const EmailManager = {
             {
                 id: '1',
                 name: 'Confirmación de Servicio',
-                subject: 'Confirmación de su servicio notarial - {case_number}',
+                subject: 'Confirmación de su servicio notarial-{case_number}',
                 body: 'Estimado/a {client_name},\n\nLe confirmamos que hemos iniciado el proceso para su trámite de {service_type}. El número de expediente es {case_number}.\n\nQuedamos a su disposición.\n\nAtentamente,\n{company_name}'
             },
             {
@@ -802,7 +832,7 @@ const EmailManager = {
             const client = NotaryCRM.state.clients.find(c => c.id === this.currentTarget.id);
             data = {
                 client_name: client ? client.name : 'Cliente',
-                company_name: 'Notaría Publica - CRM'
+                company_name: 'Notaría Publica-CRM'
             };
         } else if (this.currentTarget.type === 'case') {
             const caseObj = NotaryCRM.state.cases.find(c => c.id === this.currentTarget.id);
@@ -812,7 +842,7 @@ const EmailManager = {
                 service_type: caseObj ? caseObj.type : 'Servicio',
                 due_date: caseObj ? NotaryCRM.formatDate(caseObj.dueDate) : 'N/A',
                 amount: caseObj ? `$${caseObj.amount}` : '$0.00',
-                company_name: 'Notaría Publica - CRM'
+                company_name: 'Notaría Publica-CRM'
             };
         }
 
@@ -940,7 +970,7 @@ const EmailManager = {
                     const client = NotaryCRM.state.clients.find(c => c.id === this.currentTarget.id);
                     data = {
                         client_name: client ? client.name : 'Cliente',
-                        company_name: 'Notaría Publica - CRM'
+                        company_name: 'Notaría Publica-CRM'
                     };
                 } else if (this.currentTarget.type === 'case') {
                     const caseObj = NotaryCRM.state.cases.find(c => c.id === this.currentTarget.id);
@@ -950,7 +980,7 @@ const EmailManager = {
                         service_type: caseObj ? caseObj.type : 'Servicio',
                         due_date: caseObj ? NotaryCRM.formatDate(caseObj.dueDate) : 'N/A',
                         amount: caseObj ? `$${caseObj.amount}` : '$0.00',
-                        company_name: 'Notaría Publica - CRM'
+                        company_name: 'Notaría Publica-CRM'
                     };
                 }
 
@@ -1049,13 +1079,74 @@ const AuditManager = {
         return this.logs || [];
     },
 
+    async exportToCSV() {
+        if (this.logs.length === 0) {
+            Toast.warning('Sin datos', 'No hay registros para exportar.');
+            return;
+        }
+
+        const headers = ['Fecha', 'Usuario', 'Acción', 'Recurso', 'Detalles'];
+        const csvContent = [
+            headers.join(','),
+            ...this.logs.map(log => [
+                NotaryCRM.formatDate(log.timestamp, true),
+                log.userEmail,
+                `"${log.action.replace(/"/g, '""')}"`,
+                `"${log.resource ? log.resource.replace(/"/g, '""') : ''}"`,
+                `"${log.details ? log.details.replace(/"/g, '""') : ''}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `auditoria_notarial_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.logAction('Exportación de Logs', 'Auditoría', 'Se descargaron los registros en formato CSV');
+    },
+
     attachListeners() {
         const refreshBtn = document.getElementById('refresh-logs-btn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
-                Toast.info('Actualizando...', 'Recuperando los registros de auditoría.');
+                this.startListener();
+                Toast.info('Actualizando...', 'Sincronizando registros con la base de datos.');
             });
         }
+
+        const exportBtn = document.getElementById('export-logs-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportToCSV());
+        }
+
+        // Global Click Tracker for Compliance
+        document.addEventListener('click', (e) => {
+            // Find closest clickable element
+            const target = e.target.closest('button, .nav-item, .clickable, .tab-link, input[type="submit"]');
+            if (!target) return;
+
+            // Don't log if in audit tab to avoid infinite noise
+            if (target.closest('#audit-tab')) return;
+
+            // Get interaction label
+            const label = target.innerText.trim() ||
+                target.getAttribute('title') ||
+                target.getAttribute('aria-label') ||
+                target.id ||
+                'Interacción no etiquetada';
+
+            // Filter out very common/noisy clicks like "Cerrar", "Close", "X"
+            const noisyActions = ['Cerrar', 'Close', 'X', 'Actualizar', 'Refresh'];
+            if (label && !noisyActions.includes(label)) {
+                const context = document.querySelector('.tab-content:not([style*="display: none"])')?.id || 'Panel General';
+                this.logAction('Clic de Usuario', context, `Accionó: ${label.substring(0, 100)}`);
+            }
+        });
     }
 };
 
@@ -1133,7 +1224,7 @@ const TimelineManager = {
         });
 
         // Sort by date desc
-        return events.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return events.sort((a, b) => new Date(b.date)-new Date(a.date));
     },
 
     renderTimeline(events) {
@@ -1420,7 +1511,7 @@ const ThemeManager = {
     init() {
         this.toggleBtn = document.getElementById('theme-toggle');
 
-        // ALWAYS USE LIGHT MODE - Force light theme
+        // ALWAYS USE LIGHT MODE-Force light theme
         this.setTheme('light');
 
         // Hide or disable the theme toggle button
@@ -1442,6 +1533,425 @@ const ThemeManager = {
 };
 
 // ============================================
+// PROFESSIONAL WITNESS MANAGER
+// ============================================
+
+const witnessManager = {
+    init() {
+        this.listContainer = document.getElementById('witness-list-container');
+        this.searchField = document.getElementById('witness-search');
+    },
+
+    async save(form) {
+        const formData = new FormData(form);
+        const data = {
+            name: formData.get('name'),
+            idType: formData.get('idType'),
+            idNumber: formData.get('idNumber'),
+            phone: formData.get('phone'),
+            ownerId: NotaryCRM.currentUser?.uid,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            if (NotaryCRM.useFirestore) {
+                const { collection, addDoc } = window.dbFuncs;
+                await addDoc(collection(window.firebaseDB, 'witnesses'), data);
+            } else {
+                NotaryCRM.state.witnesses = NotaryCRM.state.witnesses || [];
+                NotaryCRM.state.witnesses.push({ id: Date.now().toString(), ...data });
+                NotaryCRM.saveData();
+            }
+            Toast.success('Testigo Guardado', 'El testigo profesional ha sido añadido al directorio.');
+            NotaryCRM.closeModal('add-witness-modal');
+            form.reset();
+            this.render();
+        } catch (err) {
+            console.error('Save witness failed', err);
+            Toast.error('Error', 'No se pudo guardar el testigo.');
+        }
+    },
+
+    checkConflict() {
+        const form = document.getElementById('case-form');
+        if (!form) return;
+
+        const clientSelect = form.querySelector('[name="clientId"]');
+        const clientId = clientSelect.value;
+        const witnessName = form.querySelector('[name="witness1"]').value;
+
+        if (!clientId || !witnessName) {
+            Toast.warning('Información Incompleta', 'Seleccione un cliente y escriba el nombre del testigo.');
+            return;
+        }
+
+        const client = NotaryCRM.state.clients.find(c => c.id === clientId);
+        if (!client) return;
+
+        // Conflict check: Same last name or same address
+        const clientLastName = client.name.split(' ').pop().toLowerCase();
+        const witnessLastName = witnessName.split(' ').pop().toLowerCase();
+
+        let conflict = false;
+        let reason = '';
+
+        if (clientLastName === witnessLastName) {
+            conflict = true;
+            reason = 'Posible vínculo familiar (apellidos coincidentes).';
+        }
+
+        if (conflict) {
+            Toast.error('¡Conflicto Detectado!', reason);
+            // Flash the field
+            form.querySelector('[name="witness1"]').style.borderColor = '#ef4444';
+        } else {
+            Toast.success('Sin Conflictos', 'No se detectaron vínculos directos obvios con el cliente.');
+            form.querySelector('[name="witness1"]').style.borderColor = '#10b981';
+        }
+    },
+    render() {
+        if (!this.listContainer) return;
+        const query = (this.searchField?.value || '').toLowerCase();
+        const witnesses = (NotaryCRM.state.witnesses || []).filter(w =>
+            w.name.toLowerCase().includes(query) ||
+            w.idNumber.toLowerCase().includes(query)
+        );
+
+        if (witnesses.length === 0) {
+            this.listContainer.innerHTML = '<div style="text-align:center; padding: 2rem; color: #64748b;">No se encontraron testigos.</div>';
+            return;
+        }
+
+        this.listContainer.innerHTML = witnesses.map(w => `
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div style="background: #f1f5f9; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b;">
+                        <i data-lucide="user"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #1e293b;">${w.name}</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">${w.idType}: ${w.idNumber} | 📞 ${w.phone || '-'}</div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-purple" onclick="witnessManager.select('${w.name}', '${w.idNumber}')">
+                    Seleccionar
+                </button>
+            </div>
+        `).join('');
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    select(name, id) {
+        const form = document.getElementById('case-form');
+        if (form) {
+            if (form.witness1) form.witness1.value = name;
+            if (form.witness1_id) form.witness1_id.value = id;
+            NotaryCRM.closeModal('witness-directory-modal');
+            Toast.info('Testigo Seleccionado', `Se ha cargado la información de ${name}`);
+        }
+    }
+};
+
+// ============================================
+// BIOMETRIC MANAGER
+// ============================================
+
+const biometricManager = {
+    state: {
+        isScanning: false,
+        isCaptured: false,
+        currentCaseId: null
+    },
+
+    open(caseId) {
+        this.state.currentCaseId = caseId;
+        this.reset();
+        NotaryCRM.openModal('biometric-modal');
+    },
+
+    reset() {
+        this.state.isScanning = false;
+        this.state.isCaptured = false;
+
+        const scanner = document.getElementById('fingerprint-scanner-vfx');
+        const laser = document.getElementById('scanner-laser');
+        const icon = document.getElementById('fingerprint-icon');
+        const status = document.getElementById('biometric-status');
+        const preview = document.getElementById('biometric-data-preview');
+        const btnScan = document.getElementById('btn-start-scan');
+        const btnSave = document.getElementById('btn-save-biometric');
+
+        if (scanner) scanner.className = '';
+        if (laser) laser.style.display = 'none';
+        if (icon) icon.style.color = '#cbd5e1';
+        if (status) {
+            status.textContent = 'DISPOSITIVO LISTO';
+            status.style.color = '#64748b';
+        }
+        if (preview) preview.style.display = 'none';
+        if (btnScan) btnScan.style.display = 'block';
+        if (btnSave) btnSave.style.display = 'none';
+    },
+
+    startScan() {
+        if (this.state.isScanning) return;
+        this.state.isScanning = true;
+
+        const scanner = document.getElementById('fingerprint-scanner-vfx');
+        const laser = document.getElementById('scanner-laser');
+        const status = document.getElementById('biometric-status');
+        const icon = document.getElementById('fingerprint-icon');
+
+        if (scanner) scanner.classList.add('scanning');
+        if (laser) laser.style.display = 'block';
+        if (status) {
+            status.textContent = 'ESCANEANDO...';
+            status.style.color = '#3b82f6';
+        }
+
+        setTimeout(() => {
+            this.state.isScanning = false;
+            this.state.isCaptured = true;
+
+            if (laser) laser.style.display = 'none';
+            if (icon) icon.style.color = '#10b981';
+            if (status) {
+                status.textContent = 'CAPTURA EXITOSA';
+                status.style.color = '#10b981';
+            }
+
+            const preview = document.getElementById('biometric-data-preview');
+            const btnScan = document.getElementById('btn-start-scan');
+            const btnSave = document.getElementById('btn-save-biometric');
+
+            if (preview) preview.style.display = 'flex';
+            if (btnScan) btnScan.style.display = 'none';
+            if (btnSave) btnSave.style.display = 'block';
+
+            window.confetti && window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+        }, 3000);
+    },
+
+    async save() {
+        if (!this.state.isCaptured || !this.state.currentCaseId) return;
+
+        const hash = 'BIO_' + Math.random().toString(36).substr(2, 12).toUpperCase();
+        try {
+            await NotaryCRM.updateCase(this.state.currentCaseId, {
+                biometricCaptured: true,
+                biometricHash: hash,
+                biometricDate: new Date().toISOString()
+            });
+
+            NotaryCRM.closeModal('biometric-modal');
+            NotaryCRM.showCaseDetails(this.state.currentCaseId);
+            Toast.success('Biometría Vinculada', 'La huella dactilar ha sido vinculada al expediente legal.');
+        } catch (err) {
+            console.error('Biometric save failed', err);
+            Toast.error('Error', 'No se pudo guardar el registro biométrico.');
+        }
+    }
+};
+
+// ============================================
+// MILEAGE & TAX MANAGER
+// ============================================
+
+const MileageManager = {
+    IRS_RATE: 0.67, // Rate for 2024
+
+    renderDashboardWidget() {
+        const cases = NotaryCRM.state.cases || [];
+        const totalMiles = cases.reduce((acc, c) => acc + (parseFloat(c.mileage) || 0), 0);
+        const totalDeduction = totalMiles * this.IRS_RATE;
+
+        const deductionEl = document.getElementById('dash-mileage-deduction');
+        const milesTotalEl = document.getElementById('dash-total-miles');
+
+        if (deductionEl) deductionEl.textContent = NotaryCRM.formatCurrency(totalDeduction);
+        if (milesTotalEl) milesTotalEl.textContent = `${totalMiles.toFixed(1)} total mi`;
+
+        // Make the card clickable to open log
+        const card = document.querySelector('[data-widget-id="mileage-tracking"]') || deductionEl?.closest('.stat-card');
+        if (card) {
+            card.style.cursor = 'pointer';
+            card.onclick = () => this.openLog();
+        }
+    },
+
+    openLog() {
+        const container = document.getElementById('mileage-list-container');
+        const cases = (NotaryCRM.state.cases || []).filter(c => (parseFloat(c.mileage) || 0)> 0);
+
+        const totalMiles = cases.reduce((acc, c) => acc + (parseFloat(c.mileage) || 0), 0);
+        const totalDeduction = totalMiles * this.IRS_RATE;
+
+        document.getElementById('mileage-total-deduction').textContent = NotaryCRM.formatCurrency(totalDeduction);
+        document.getElementById('mileage-total-miles').textContent = totalMiles.toFixed(1);
+
+        if (cases.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 2rem; color: #64748b;">No hay millas registradas en los expedientes.</div>';
+        } else {
+            container.innerHTML = cases.map(c => `
+                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; color: #1e293b;">${c.caseNumber}</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">${c.type} | ${c.clientName}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; color: #0f172a;">${c.mileage} mi</div>
+                        <div style="font-size: 0.75rem; color: #10b981;">+$${(c.mileage * this.IRS_RATE).toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        NotaryCRM.openModal('mileage-log-modal');
+    }
+};
+
+// ============================================
+// CREDENTIAL VALIDATOR MANAGER
+// ============================================
+
+const ValidationManager = {
+    open() {
+        const dataStr = localStorage.getItem('notary_commission');
+        const infoDisplay = document.getElementById('commission-info-display');
+        const card = document.getElementById('credential-status-card');
+
+        if (!dataStr) {
+            if (infoDisplay) infoDisplay.textContent = 'Commission Data Missing';
+            if (card) card.style.background = '#fef2f2';
+        } else {
+            const data = JSON.parse(dataStr);
+            const expiry = new Date(data.expiry);
+            const today = new Date();
+            const isValid = expiry> today;
+
+            if (infoDisplay) {
+                infoDisplay.innerHTML = `
+                    <div style="font-size: 1.25rem;">Nº ${data.number}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Vence: ${data.expiry}</div>
+                    <div style="margin-top: 10px; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; background: ${isValid ? '#dcfce7' : '#fee2e2'}; color: ${isValid ? '#166534' : '#991b1b'};">
+                        ${isValid ? 'DOCUMENTACIÓN VIGENTE' : 'COMISIÓN VENCIDA'}
+                    </div>
+                `;
+            }
+            if (card) card.style.background = isValid ? '#f0fdf4' : '#fef2f2';
+        }
+
+        NotaryCRM.openModal('credential-validator-modal');
+    }
+};
+
+// ============================================
+// HAGUE CONVENTION MANAGER
+// ============================================
+
+const HagueManager = {
+    // Extensive list of HCCH members (simplified for logic)
+    members: [
+        'Albania', 'Andorra', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan', 'Belarus', 'Belgium',
+        'Bosnia and Herzegovina', 'Brazil', 'Bulgaria', 'Burkina Faso', 'Canada', 'Chile', 'China', 'Colombia',
+        'Costa Rica', 'Croatia', 'Cyprus', 'Czech Republic', 'Denmark', 'Ecuador', 'Egypt', 'Estonia', 'European Union',
+        'Finland', 'France', 'Georgia', 'Germany', 'Greece', 'Hungary', 'Iceland', 'India', 'Ireland', 'Israel', 'Italy',
+        'Japan', 'Jordan', 'Kazakhstan', 'Korea', 'Latvia', 'Lithuania', 'Luxembourg', 'Malaysia', 'Malta', 'Mauritius',
+        'Mexico', 'Monaco', 'Montenegro', 'Morocco', 'Namibia', 'Netherlands', 'New Zealand', 'Norway', 'Panama',
+        'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Republic of Moldova', 'Republic of North Macedonia',
+        'Romania', 'Russian Federation', 'Saudi Arabia', 'Serbia', 'Singapore', 'Slovakia', 'Slovenia', 'South Africa',
+        'Spain', 'Sri Lanka', 'Suriname', 'Sweden', 'Switzerland', 'Thailand', 'Tunisia', 'Türkiye', 'Ukraine',
+        'United Kingdom', 'USA', 'Uruguay', 'Uzbekistan', 'Venezuela', 'Vietnam', 'Zambia'
+    ],
+
+    search(query) {
+        const container = document.getElementById('hague-result-container');
+        if (!container) return;
+
+        if (!query || query.length < 2) {
+            container.innerHTML = `
+                <i data-lucide="globe" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;"></i>
+                <p style="color: #64748b;">Ingrese el nombre de un país para verificar.</p>`;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        const normalizedQuery = query.toLowerCase().trim();
+        const found = this.members.find(m => m.toLowerCase() === normalizedQuery);
+        const matches = this.members.filter(m => m.toLowerCase().includes(normalizedQuery)).slice(0, 5);
+
+        if (found) {
+            container.innerHTML = `
+                <div style="background: #dcfce7; color: #166534; padding: 1.5rem; border-radius: 12px; width: 100%;">
+                    <i data-lucide="check-circle" style="width: 32px; height: 32px; margin-bottom: 0.5rem;"></i>
+                    <h4 style="margin: 0; font-size: 1.25rem;">${found} es MIEMBRO</h4>
+                    <p style="font-size: 0.9rem; margin-top: 8px;">Este país acepta <strong>Apostillas</strong> para documentos extranjeros.</p>
+                </div>`;
+        } else if (matches.length> 0) {
+            container.innerHTML = `
+                <div style="text-align: left; width: 100%;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Sugerencias:</p>
+                    ${matches.map(m => `<button class="btn btn-sm btn-outline" style="margin: 2px;" onclick="document.getElementById('hague-search-input').value='${m}'; HagueManager.search('${m}')">${m}</button>`).join('')}
+                </div>`;
+        } else {
+            container.innerHTML = `
+                <div style="background: #fee2e2; color: #991b1b; padding: 1.5rem; border-radius: 12px; width: 100%;">
+                    <i data-lucide="alert-circle" style="width: 32px; height: 32px; margin-bottom: 0.5rem;"></i>
+                    <h4 style="margin: 0; font-size: 1.25rem;">No Miembro Detectado</h4>
+                    <p style="font-size: 0.9rem; margin-top: 8px;">Es probable que este país requiera <strong>Legalización Consular</strong>.</p>
+                </div>`;
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+};
+
+// ============================================
+// FEE CALCULATOR MANAGER
+// ============================================
+
+const FeeCalculatorManager = {
+    open() {
+        NotaryCRM.openModal('fee-calculator-modal');
+        this.calculate();
+    },
+
+    calculate() {
+        const rateSelect = document.getElementById('fee-state-rate');
+        const customGroup = document.getElementById('custom-rate-group');
+        const countInput = document.getElementById('fee-count');
+        const extraInput = document.getElementById('fee-extra');
+        const totalDisplay = document.getElementById('fee-total-display');
+
+        let rate = 0;
+        if (rateSelect.value === 'custom') {
+            customGroup.style.display = 'block';
+            rate = parseFloat(document.getElementById('fee-custom-rate').value) || 0;
+        } else {
+            customGroup.style.display = 'none';
+            rate = parseFloat(rateSelect.value) || 0;
+        }
+
+        const count = parseInt(countInput.value) || 0;
+        const extra = parseFloat(extraInput.value) || 0;
+        const total = (rate * count) + extra;
+
+        totalDisplay.textContent = NotaryCRM.formatCurrency(total);
+        this.lastTotal = total;
+    },
+
+    apply() {
+        const amountInput = document.getElementById('case-amount-input');
+        if (amountInput) {
+            amountInput.value = this.lastTotal.toFixed(2);
+            // Trigger mask refresh if necessary
+            if (window.FormMasks) FormMasks.init();
+        }
+        NotaryCRM.closeModal('fee-calculator-modal');
+        Toast.success('Calculado', 'Los honorarios se han aplicado al expediente.');
+    }
+};
+
+// ============================================
 // SPECIALIZED NOTARY MANAGER
 // ============================================
 
@@ -1457,14 +1967,155 @@ const SpecializedManager = {
         const apostilleSection = document.getElementById('specialized-apostille');
         const lsaSection = document.getElementById('specialized-lsa');
         const weddingSection = document.getElementById('specialized-wedding');
+        const consularSection = document.getElementById('specialized-consular');
+        const willsSection = document.getElementById('specialized-wills');
+        const poaSection = document.getElementById('specialized-poa');
 
         if (apostilleSection) apostilleSection.style.display = (type === 'Apostille') ? 'block' : 'none';
         if (lsaSection) lsaSection.style.display = (type === 'Loan Signing') ? 'block' : 'none';
         if (weddingSection) weddingSection.style.display = (type === 'Wedding') ? 'block' : 'none';
+        if (consularSection) consularSection.style.display = (type === 'Consular') ? 'block' : 'none';
+        if (willsSection) willsSection.style.display = (type === 'Wills / Trusts') ? 'block' : 'none';
+        if (poaSection) poaSection.style.display = (type === 'Power of Attorney') ? 'block' : 'none';
+
+        const immigSection = document.getElementById('specialized-immigration');
+        const massSection = document.getElementById('specialized-signature-tracking');
+        if (immigSection) immigSection.style.display = (type === 'Immigration') ? 'block' : 'none';
+        if (massSection) massSection.style.display = (type === 'Massive Document') ? 'block' : 'none';
+
+        const protestSection = document.getElementById('specialized-protest');
+        const transSection = document.getElementById('specialized-translation');
+        if (protestSection) protestSection.style.display = (type === 'Protest') ? 'block' : 'none';
+        if (transSection) transSection.style.display = (type === 'Translation') ? 'block' : 'none';
+
+        const propSection = document.getElementById('specialized-property-mgmt');
+        if (propSection) propSection.style.display = (type === 'Property Management') ? 'block' : 'none';
+
+        const escrowSection = document.getElementById('specialized-escrow');
+        const registrySection = document.getElementById('specialized-registry');
+        if (escrowSection) escrowSection.style.display = (type === 'Escrow') ? 'block' : 'none';
+        if (registrySection) registrySection.style.display = (type === 'Registry') ? 'block' : 'none';
+
+        const batchSection = document.getElementById('specialized-batch-signing');
+        const familySection = document.getElementById('specialized-family-tree');
+        if (batchSection) batchSection.style.display = (type === 'Batch Signing') ? 'block' : 'none';
+        if (familySection) familySection.style.display = (type === 'Family Tree') ? 'block' : 'none';
+
+        const interpSection = document.getElementById('specialized-interpreter');
+        const apoControlSection = document.getElementById('specialized-apostille-control');
+        if (interpSection) interpSection.style.display = (type === 'Interpreter') ? 'block' : 'none';
+        if (apoControlSection) apoControlSection.style.display = (type === 'Apostille Control') ? 'block' : 'none';
+
+        const shipSection = document.getElementById('specialized-shipping-cost');
+        const subpoenaSection = document.getElementById('specialized-subpoena');
+        if (shipSection) shipSection.style.display = (type === 'Shipping Cost') ? 'block' : 'none';
+        if (subpoenaSection) subpoenaSection.style.display = (type === 'Subpoena') ? 'block' : 'none';
+
+        const archiveSection = document.getElementById('specialized-digital-archive');
+        const restrictedSection = document.getElementById('specialized-restricted-location');
+        if (archiveSection) archiveSection.style.display = (type === 'Digital Archive') ? 'block' : 'none';
+        if (restrictedSection) restrictedSection.style.display = (type === 'Restricted Location') ? 'block' : 'none';
+
+        const referralSection = document.getElementById('specialized-legal-referral');
+        const blankSection = document.getElementById('specialized-blank-space-check');
+        if (referralSection) referralSection.style.display = (type === 'Legal Referral') ? 'block' : 'none';
+        if (blankSection) blankSection.style.display = (type === 'Blank Space Check') ? 'block' : 'none';
+
+        const eoSection = document.getElementById('specialized-eo-insurance');
+        const proBonoSection = document.getElementById('specialized-pro-bono');
+        if (eoSection) eoSection.style.display = (type === 'EO Insurance') ? 'block' : 'none';
+        if (proBonoSection) proBonoSection.style.display = (type === 'Pro-Bono') ? 'block' : 'none';
+
+        const invalidStampSection = document.getElementById('specialized-invalidated-stamp');
+        const holographicSection = document.getElementById('specialized-holographic-seal');
+        if (invalidStampSection) invalidStampSection.style.display = (type === 'Invalidated Stamp') ? 'block' : 'none';
+        if (holographicSection) holographicSection.style.display = (type === 'Holographic Seal') ? 'block' : 'none';
+
+        const analyticsSection = document.getElementById('specialized-signing-analytics');
+        const kinshipSection = document.getElementById('specialized-kinship-control');
+        if (analyticsSection) analyticsSection.style.display = (type === 'Signing Analytics') ? 'block' : 'none';
+        if (kinshipSection) kinshipSection.style.display = (type === 'Kinship Control') ? 'block' : 'none';
+
+        const courierSection = document.getElementById('specialized-secure-courier');
+        const stateReqSection = document.getElementById('specialized-state-requirements');
+        if (courierSection) courierSection.style.display = (type === 'Secure Courier') ? 'block' : 'none';
+        if (stateReqSection) stateReqSection.style.display = (type === 'State Requirements') ? 'block' : 'none';
+
+        const idCheckSection = document.getElementById('specialized-id-checklist');
+        if (idCheckSection) {
+            const needsIdCheck = ['Property Management', 'Translation', 'Immigration', 'Protest', 'Power of Attorney', 'Wills / Trusts', 'Apostille', 'Escrow', 'Registry', 'Batch Signing', 'Family Tree', 'Interpreter', 'Apostille Control', 'Subpoena', 'Digital Archive', 'Restricted Location', 'Legal Referral', 'Blank Space Check', 'EO Insurance', 'Pro-Bono', 'Invalidated Stamp', 'Holographic Seal', 'Signing Analytics', 'Kinship Control', 'Secure Courier', 'State Requirements'].includes(type);
+            idCheckSection.style.display = needsIdCheck ? 'block' : 'none';
+        }
     },
 
     reset() {
         document.querySelectorAll('[id^="specialized-"]').forEach(el => el.style.display = 'none');
+    }
+};
+
+// ============================================
+// ID EXPIRATION MANAGER
+// ============================================
+
+const IDExpirationManager = {
+    check() {
+        const clients = NotaryCRM.state.clients || [];
+        const today = new Date();
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+        const expiringClients = clients.filter(c => {
+            if (!c.idExpiry) return false;
+            const expiry = new Date(c.idExpiry);
+            return expiry <= thirtyDaysFromNow;
+        });
+
+        this.renderAlert(expiringClients);
+    },
+
+    renderAlert(clients) {
+        let container = document.getElementById('id-expiry-alerts');
+        if (!container) {
+            // Create container if it doesn't exist (above recent cases or so)
+            const dashboardHome = document.getElementById('dashboard-home');
+            if (!dashboardHome) return;
+
+            container = document.createElement('div');
+            container.id = 'id-expiry-alerts';
+            container.style.marginBottom = '1.5rem';
+
+            const recentCasesHeader = dashboardHome.querySelector('h3');
+            if (recentCasesHeader) {
+                dashboardHome.insertBefore(container, recentCasesHeader);
+            } else {
+                dashboardHome.appendChild(container);
+            }
+        }
+
+        if (clients.length === 0) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div style="background: #fff7ed; border: 1px solid #ffedd5; border-left: 4px solid #f97316; padding: 1rem; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; color: #9a3412; font-weight: 700;">
+                    <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                    Atención: Documentos por Vencer
+                </div>
+                <div style="font-size: 0.85rem; color: #7c2d12;">
+                    ${clients.map(c => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span><strong>${c.name}</strong>-ID vence el: ${c.idExpiry}</span>
+                            <button class="btn btn-sm" onclick="NotaryCRM.editClientPrompt('${c.id}')" style="padding: 2px 8px; font-size: 0.7rem; background: #ffedd5; border: 1px solid #fdba74; color: #9a3412;">Contactar</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons({ root: container });
     }
 };
 
@@ -1485,7 +2136,58 @@ if (typeof window !== 'undefined') {
     window.FormMasks = FormMasks;
     window.FileUploadManager = FileUploadManager;
     window.SpecializedManager = SpecializedManager;
+    window.witnessManager = witnessManager;
+    window.biometricManager = biometricManager;
+    window.MileageManager = MileageManager;
+    window.ValidationManager = ValidationManager;
+    window.HagueManager = HagueManager;
+    window.FeeCalculatorManager = FeeCalculatorManager;
+    window.IDExpirationManager = IDExpirationManager;
 }
+
+// ============================================
+// ID SCANNER MANAGER (PDF417 Simulation)
+// ============================================
+
+const IDScannerManager = {
+    simulateScan() {
+        Toast.info('Escaneando...', 'Procesando código PDF417 de la licencia...');
+
+        // Simulation delay
+        setTimeout(() => {
+            const form = document.getElementById('client-form');
+            if (!form) return;
+
+            // Sample data from a "scanned" license
+            const mockData = {
+                name: "CARLOS ANDRES MENDOZA",
+                address: "123 FLAGER ST, MIAMI, FL 33130",
+                birthDate: "1985-05-20",
+                idNumber: "M532-441-85-140-0",
+                idType: "Driver License",
+                idExpiry: "2030-05-20"
+            };
+
+            form.querySelector('[name="name"]').value = mockData.name;
+            form.querySelector('[name="address"]').value = mockData.address;
+            form.querySelector('[name="birthDate"]').value = mockData.birthDate;
+            form.querySelector('[name="idNumber"]').value = mockData.idNumber;
+            form.querySelector('[name="idType"]').value = mockData.idType;
+            form.querySelector('[name="idExpiry"]').value = mockData.idExpiry;
+
+            Toast.success('ID Escaneado', 'Los datos se han cargado automáticamente.');
+            // Flash effect
+            const fields = ['name', 'address', 'birthDate', 'idNumber', 'idExpiry'];
+            fields.forEach(f => {
+                const el = form.querySelector(`[name = "${f}"]`);
+                if (el) {
+                    el.style.backgroundColor = '#f0fdf4';
+                    setTimeout(() => el.style.backgroundColor = '', 1000);
+                }
+            });
+        }, 1500);
+    }
+};
 
 
 // Application State
@@ -1509,7 +2211,8 @@ window.NotaryCRM = {
         customFields: {
             clients: [],
             cases: []
-        }
+        },
+        witnesses: []
     },
     currentUser: null,
 
@@ -1541,6 +2244,7 @@ window.NotaryCRM = {
         I18nManager.init();
 
         this.attachEventListeners();
+        witnessManager.init();
 
         // ensure no stray active modals block clicks
         document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
@@ -1573,7 +2277,7 @@ window.NotaryCRM = {
         }
 
         // Performance log
-        console.log(`%c Notary CRM v1.5 %c Loaded in ${performance.now().toFixed(0)}ms`,
+        console.log(`% c Notary CRM v1.5 % c Loaded in ${performance.now().toFixed(0)} ms`,
             'background: #2563eb; color: #fff; border-radius: 4px; padding: 2px 6px; font-weight: bold;',
             'color: #2563eb; font-weight: bold;');
 
@@ -1740,18 +2444,18 @@ window.NotaryCRM = {
         const fields = this.state.customFields[type === 'client' ? 'clients' : 'cases'] || [];
 
         listEl.innerHTML = fields.map((f, index) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:0.75rem; border-radius:8px; border:1px solid #e2e8f0;">
+            <div style = "display:flex; justify-content:space-between; align-items:center; background:#fff; padding:0.75rem; border-radius:8px; border:1px solid #e2e8f0;">
                 <span style="font-weight:600;">${f}</span>
                 <button class="btn btn-sm btn-danger-link" onclick="NotaryCRM.removeCustomField('${f}', '${type}')">Eliminar</button>
             </div>
-        `).join('') || '<p style="font-size:0.85rem; color:#94a3b8;">No hay campos extra.</p>';
+    `).join('') || '<p style="font-size:0.85rem; color:#94a3b8;">No hay campos extra.</p>';
 
         previewEl.innerHTML = fields.map(f => `
-            <div class="form-group" style="margin-bottom:1rem;">
+    <div class="form-group" style = "margin-bottom:1rem;">
                 <label class="form-label">${f}</label>
                 <input type="text" class="form-input" placeholder="Ej: Dato para ${f}" disabled>
             </div>
-        `).join('') || '<p style="text-align:center; color:#94a3b8; padding:1rem;">No hay campos personalizados configurados.</p>';
+`).join('') || '<p style="text-align:center; color:#94a3b8; padding:1rem;">No hay campos personalizados configurados.</p>';
     },
 
     async addCustomField(type = 'client') {
@@ -1803,11 +2507,11 @@ window.NotaryCRM = {
         const fields = Array.isArray(this.state.customFields[key]) ? this.state.customFields[key] : [];
 
         container.innerHTML = fields.map(f => `
-            <div class="form-group">
+    <div class="form-group">
                 <label class="form-label">${f}</label>
                 <input type="text" class="form-input custom-field-input" data-field="${f}" name="cf_${f.replace(/\s+/g, '_')}" placeholder="Ingrese ${f.toLowerCase()}">
             </div>
-        `).join('');
+`).join('');
     },
 
     // Initialize form validation
@@ -2041,6 +2745,15 @@ window.NotaryCRM = {
                 this.renderCalendar();
             });
 
+            // Witnesses Listener
+            const witnessCol = collection(db, 'witnesses');
+            const witnessQuery = query(witnessCol, where('ownerId', '==', this.currentUser.uid));
+            onSnapshot(witnessQuery, snapshot => {
+                this.state.witnesses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                witnessManager.render();
+                console.log('Witnesses synced:', this.state.witnesses.length);
+            });
+
             // Users listener is only attached for admins
             this.state.users = this.state.users || [];
         } catch (err) {
@@ -2098,13 +2811,13 @@ window.NotaryCRM = {
         );
 
         // Sorting (by date desc)
-        cases.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+        cases.sort((a, b) => new Date(b.dueDate)-new Date(a.dueDate));
 
         // Pagination
-        const start = (this.state.casesPage - 1) * this.state.casesPageSize;
+        const start = (this.state.casesPage-1) * this.state.casesPageSize;
         const pagedCases = cases.slice(start, start + this.state.casesPageSize);
 
-        document.getElementById('cases-page-indicator').textContent = `Page ${this.state.casesPage}`;
+        document.getElementById('cases-page-indicator').textContent = `Page ${this.state.casesPage} `;
 
         if (pagedCases.length === 0) {
             listContainer.innerHTML = '<p class="empty-state">No cases found.</p>';
@@ -2112,7 +2825,7 @@ window.NotaryCRM = {
         }
 
         listContainer.innerHTML = pagedCases.map(c => `
-            <div class="case-card">
+    <div class="case-card">
                 <div class="case-header">
                     <div class="case-title-row">
                         <span class="case-number">${c.caseNumber}</span>
@@ -2138,7 +2851,7 @@ window.NotaryCRM = {
                     </div>
                 </div>
             </div>
-        `).join('');
+    `).join('');
     },
 
     toggleCaseView(view) {
@@ -2196,7 +2909,7 @@ window.NotaryCRM = {
 
         // Generate HTML
         container.innerHTML = Object.keys(columns).map(status => `
-            <div class="kanban-column">
+    <div class="kanban-column">
                 <div class="kanban-header">
                     <span>${columns[status].title}</span>
                     <span class="badge" style="background:var(--color-gray-200); color:var(--text-secondary); font-size:0.75rem;">${columns[status].items.length}</span>
@@ -2216,7 +2929,7 @@ window.NotaryCRM = {
                     ${columns[status].items.length === 0 ? '<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin trámites</div>' : ''}
                 </div>
             </div>
-        `).join('');
+    `).join('');
     },
 
     // Render users list for admin
@@ -2229,7 +2942,7 @@ window.NotaryCRM = {
         }
 
         container.innerHTML = this.state.users.map(u => `
-            <div class="user-row">
+    <div class="user-row">
                 <div class="user-info">
                     <div class="user-avatar-small">${(u.email || '?').charAt(0).toUpperCase()}</div>
                     <div class="user-details">
@@ -2248,7 +2961,7 @@ window.NotaryCRM = {
                     </select>
                 </div>
             </div>
-        `).join('');
+    `).join('');
     },
 
     async setUserRole(uid, role) {
@@ -2265,7 +2978,7 @@ window.NotaryCRM = {
         try {
             const ref = doc(window.firebaseDB, 'users', uid);
             await updateDoc(ref, { role });
-            AuditManager.logAction('Cambio de Rol', `Usuario: ${uid}`, `Nuevo rol: ${role}`);
+            AuditManager.logAction('Cambio de Rol', `Usuario: ${uid} `, `Nuevo rol: ${role} `);
             Toast.success('Rol Actualizado', `El usuario ahora tiene el rol de ${role}.`);
         } catch (e) {
             console.error('setUserRole failed', e);
@@ -2297,7 +3010,7 @@ window.NotaryCRM = {
                 if (!pass) { wrapper.style.display = 'none'; return; }
                 wrapper.style.display = 'block';
                 let strength = 0;
-                if (pass.length > 6) strength += 25;
+                if (pass.length> 6) strength += 25;
                 if (pass.match(/[A-Z]/)) strength += 25;
                 if (pass.match(/[0-9]/)) strength += 25;
                 if (pass.match(/[^A-Za-z0-9]/)) strength += 25;
@@ -2314,21 +3027,25 @@ window.NotaryCRM = {
             if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); this.openModal('case-modal'); }
             if (e.altKey && e.key.toLowerCase() === 'c') { e.preventDefault(); this.openModal('client-modal'); }
             if (e.ctrlKey && e.key === '/') { e.preventDefault(); (document.getElementById('search-clients') || document.getElementById('search-cases'))?.focus(); }
-            if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
+            if (e.ctrlKey && e.key>= '1' && e.key <= '6') {
                 const tabs = ['dashboard', 'clients', 'cases', 'reminders', 'calendar', 'reports'];
-                if (tabs[e.key - 1]) { e.preventDefault(); this.switchTab(tabs[e.key - 1]); }
+                if (tabs[e.key-1]) { e.preventDefault(); this.switchTab(tabs[e.key-1]); }
             }
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal.active').forEach(m => this.closeModal(m.id));
+                // Add exit for Commander Mode
+                if (document.body.classList.contains('commander-mode')) {
+                    DashboardManager.toggleCommanderMode();
+                }
             }
         });
 
         // Pagination controls
         const addL = (id, ev, fn) => document.getElementById(id)?.addEventListener(ev, fn);
-        addL('clients-prev', 'click', () => { if (this.state.clientsPage > 1) { this.state.clientsPage--; this.renderClients(); } });
+        addL('clients-prev', 'click', () => { if (this.state.clientsPage> 1) { this.state.clientsPage--; this.renderClients(); } });
         addL('clients-next', 'click', () => { this.state.clientsPage++; this.renderClients(); });
         addL('clients-page-size', 'change', (e) => { this.state.clientsPageSize = parseInt(e.target.value, 10); this.state.clientsPage = 1; this.renderClients(); });
-        addL('cases-prev', 'click', () => { if (this.state.casesPage > 1) { this.state.casesPage--; this.renderCases(); } });
+        addL('cases-prev', 'click', () => { if (this.state.casesPage> 1) { this.state.casesPage--; this.renderCases(); } });
         addL('cases-next', 'click', () => { this.state.casesPage++; this.renderCases(); });
         addL('cases-page-size', 'change', (e) => { this.state.casesPageSize = parseInt(e.target.value, 10); this.state.casesPage = 1; this.renderCases(); });
 
@@ -2350,13 +3067,14 @@ window.NotaryCRM = {
         addL('add-client-btn', 'click', () => this.openModal('client-modal'));
         addL('add-case-btn', 'click', () => this.openModal('case-modal'));
         addL('open-reminders-panel', 'click', () => this.switchTab('reminders'));
+        addL('scan-id-btn', 'click', () => IDScannerManager.simulateScan());
 
         // Client Multi-step Navigation
         addL('next-client-step', 'click', () => {
             if (this.state.currentClientStep < 3) this.setClientStep(this.state.currentClientStep + 1);
         });
         addL('prev-client-step', 'click', () => {
-            if (this.state.currentClientStep > 1) this.setClientStep(this.state.currentClientStep - 1);
+            if (this.state.currentClientStep> 1) this.setClientStep(this.state.currentClientStep-1);
         });
 
         document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
@@ -2377,7 +3095,7 @@ window.NotaryCRM = {
         if (globalSearch && searchResults) {
             globalSearch.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
-                searchResults.style.display = query.length > 0 ? 'block' : 'none';
+                searchResults.style.display = query.length> 0 ? 'block' : 'none';
 
                 if (query.length === 0) return;
 
@@ -2402,33 +3120,33 @@ window.NotaryCRM = {
 
                 let html = '';
 
-                if (filteredCmds.length > 0) {
-                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">COMMANDS</div>`;
+                if (filteredCmds.length> 0) {
+                    html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> COMMANDS</div> `;
                     html += filteredCmds.map(cmd => `
-                        <div class="search-result-item" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background: #f1f5f9;" onclick="window.NotaryCRM.execGlobalCommand(${commands.indexOf(cmd)})">
-                            <span style="color: var(--color-primary); margin-right: 8px;">Run</span> ${cmd.label}
+    <div class="search-result-item" style = "padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background: #f1f5f9;" onclick = "window.NotaryCRM.execGlobalCommand(${commands.indexOf(cmd)})">
+        <span style="color: var(--color-primary); margin-right: 8px;">Run</span> ${cmd.label}
                         </div>
-                    `).join('');
+    `).join('');
                 }
 
-                if (filteredClients.length > 0) {
-                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">CLIENTS</div>`;
+                if (filteredClients.length> 0) {
+                    html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> CLIENTS</div> `;
                     html += filteredClients.map(c => `
-                        <div class="search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="window.NotaryCRM.openEditModal('${c.id}')">
+    <div class="search-result-item" style = "padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick = "window.NotaryCRM.openEditModal('${c.id}')">
                             <div style="font-weight: 500;">${c.name}</div>
                             <div style="font-size: 0.8rem; color: #94a3b8;">${c.email}</div>
                         </div>
-                    `).join('');
+    `).join('');
                 }
 
-                if (filteredCases.length > 0) {
-                    html += `<div style="padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;">CASES</div>`;
+                if (filteredCases.length> 0) {
+                    html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> CASES</div> `;
                     html += filteredCases.map(c => `
-                        <div class="search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick="window.NotaryCRM.switchTab('cases'); window.NotaryCRM.state.searchCaseQuery='${c.caseNumber}'; window.NotaryCRM.renderCases();">
-                            <div style="font-weight: 500;">${c.caseNumber} - ${c.clientName}</div>
+    <div class="search-result-item" style = "padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick = "window.NotaryCRM.switchTab('cases'); window.NotaryCRM.state.searchCaseQuery='${c.caseNumber}'; window.NotaryCRM.renderCases();">
+                            <div style="font-weight: 500;">${c.caseNumber}-${c.clientName}</div>
                             <div style="font-size: 0.8rem; color: #94a3b8;">${c.type}</div>
                         </div>
-                    `).join('');
+    `).join('');
                 }
 
                 if (!html) html = '<div style="padding: 12px; color: #94a3b8; text-align: center;">No results found</div>';
@@ -2504,14 +3222,14 @@ window.NotaryCRM = {
             document.body.classList.add('authenticated');
             // show user email and sign out
             if (authArea) authArea.innerHTML = `
-                <div class="user-profile-badge">
+    <div class="user-profile-badge">
                    <div class="user-info-mini">
                       <span class="user-email">${user.email}</span>
                       <span class="user-role-tag" id="current-user-role-display">Cargando...</span>
                    </div>
                    <button class="btn btn-signout btn-sm" id="sign-out-btn">Cerrar sesión</button>
                 </div>
-            `;
+    `;
             const signOutBtn = document.getElementById('sign-out-btn');
             if (signOutBtn) signOutBtn.addEventListener('click', () => this.signOutUser());
             this.closeModal('auth-modal');
@@ -2547,7 +3265,7 @@ window.NotaryCRM = {
                     if (roleDisplay) {
                         const roleNames = { 'admin': 'Propietario', 'editor': 'Editor', 'viewer': 'Lector' };
                         roleDisplay.textContent = roleNames[this.currentUserRole] || this.currentUserRole;
-                        roleDisplay.className = `user-role-tag role-${this.currentUserRole}`;
+                        roleDisplay.className = `user-role-tag role-${this.currentUserRole} `;
                     }
 
                     // Sidebar items visibility based on user request (Permanently Hidden)
@@ -2588,7 +3306,7 @@ window.NotaryCRM = {
         } else {
             document.body.classList.remove('authenticated');
             this.currentUserRole = null;
-            if (authArea) authArea.innerHTML = `<button class="btn" id="sign-in-btn">Iniciar sesión</button>`;
+            if (authArea) authArea.innerHTML = `<button class="btn" id = "sign-in-btn"> Iniciar sesión</button> `;
             const signInBtn = document.getElementById('sign-in-btn');
             if (signInBtn) signInBtn.addEventListener('click', () => this.openModal('auth-modal'));
 
@@ -2784,7 +3502,7 @@ window.NotaryCRM = {
         }
 
         container.innerHTML = completedCases.map(c => `
-            <tr>
+    <tr>
                 <td style="font-size: 0.8rem;">${c.dueDate || 'N/A'}</td>
                 <td><span class="badge" style="background:#fef3c7; color:#92400e; font-size: 0.75rem;">${c.type}</span></td>
                 <td><strong>${c.clientName}</strong></td>
@@ -2797,7 +3515,7 @@ window.NotaryCRM = {
                     </button>
                 </td>
             </tr>
-        `).join('');
+    `).join('');
 
         if (window.lucide) window.lucide.createIcons();
     },
@@ -2832,8 +3550,8 @@ window.NotaryCRM = {
 
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139);
-            doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 27);
-            doc.text(`Notario: ${this.currentUser?.displayName || 'Profesional'}`, 14, 32);
+            doc.text(`Generado el: ${new Date().toLocaleString()} `, 14, 27);
+            doc.text(`Notario: ${this.currentUser?.displayName || 'Profesional'} `, 14, 32);
 
             // Table Data
             const tableHeaders = [['Fecha', 'Caso #', 'Cliente', 'Tipo de Acto', 'Identificación', 'Testigos', 'Monto']];
@@ -2842,8 +3560,8 @@ window.NotaryCRM = {
                 c.caseNumber || 'N/A',
                 c.clientName || 'N/A',
                 c.type || 'N/A',
-                c.idType ? `${c.idType}: ${c.idNumber || '-'}` : 'N/A',
-                c.witness1 ? `${c.witness1}${c.witness2 ? ', ' + c.witness2 : ''}` : 'N/A',
+                c.idType ? `${c.idType}: ${c.idNumber || '-'} ` : 'N/A',
+                c.witness1 ? `${c.witness1}${c.witness2 ? ', ' + c.witness2 : ''} ` : 'N/A',
                 this.formatCurrency(c.amount)
             ]);
 
@@ -2875,7 +3593,7 @@ window.NotaryCRM = {
                 tableRows.forEach(row => {
                     row.forEach((cell, i) => doc.text(String(cell), 14 + (i * 35), y));
                     y += 7;
-                    if (y > 180) { doc.addPage(); y = 20; }
+                    if (y> 180) { doc.addPage(); y = 20; }
                 });
             }
 
@@ -2950,8 +3668,8 @@ window.NotaryCRM = {
             if (select) {
                 const currentVal = select.value;
                 const isEs = I18nManager.currentLang === 'es';
-                select.innerHTML = `<option value="">${isEs ? 'Selecciona un cliente' : 'Select a client'}</option>` +
-                    this.state.clients.map(c => `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.name}</option>`).join('');
+                select.innerHTML = `<option value = ""> ${isEs ? 'Selecciona un cliente' : 'Select a client'}</option> ` +
+                    this.state.clients.map(c => `<option value = "${c.id}" ${c.id === currentVal ? 'selected' : ''}> ${c.name}</option> `).join('');
             }
         });
 
@@ -2969,11 +3687,11 @@ window.NotaryCRM = {
     addPaperStock() {
         const start = parseInt(document.getElementById('paper-start').value);
         const end = parseInt(document.getElementById('paper-end').value);
-        if (isNaN(start) || isNaN(end) || end < start) {
+        if (isNaN(start) || isNaN(end) || end <start) {
             Toast.error('Error', 'Rango de folios inválido');
             return;
         }
-        const count = end - start + 1;
+        const count = end-start + 1;
         const current = parseInt(localStorage.getItem('notary_paper_stock') || '0');
         const total = current + count;
         localStorage.setItem('notary_paper_stock', total);
@@ -3014,16 +3732,42 @@ window.NotaryCRM = {
 
     checkCommissionExpiry() {
         const dataStr = localStorage.getItem('notary_commission');
-        if (!dataStr) return;
+        const container = document.getElementById('commission-alert-container');
+        if (!dataStr) {
+            if (container) container.innerHTML = '';
+            return;
+        }
+
         const data = JSON.parse(dataStr);
         const expiry = new Date(data.expiry);
         const today = new Date();
-        const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((expiry-today) / (1000 * 60 * 60 * 24));
 
-        if (diffDays > 0 && diffDays <= 90) {
-            Toast.warning('Vencimiento de Comisión', `Tu comisión notarial vence en ${diffDays} días. ¡Inicia tu proceso de renovación!`);
+        if (container) {
+            if (diffDays <= 90) {
+                const color = diffDays <= 15 ? '#ef4444' : '#f59e0b';
+                const bgColor = diffDays <= 15 ? '#fef2f2' : '#fffbeb';
+                const borderColor = diffDays <= 15 ? '#fecaca' : '#fef3c7';
+
+                container.innerHTML = `
+    <div style = "background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; color: ${color};">
+                        <div style="background: ${color}; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">!</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; font-size: 1rem;">${diffDays <= 0 ? '¡COMISIÓN VENCIDA!' : 'Aviso de Vencimiento de Comisión'}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">Tu comisión (${data.number}) expira en <strong>${diffDays} días</strong> (${data.expiry}). Por favor, inicia el trámite de renovación.</div>
+                        </div>
+                        <button class="btn btn-sm" style="background: ${color}; color: white; border: none;" onclick="NotaryCRM.openModal('notary-commission-modal')">Actualizar</button>
+                    </div>
+    `;
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        if (diffDays> 0 && diffDays <= 90) {
+            Toast.warning('Vencimiento de Comisión', `Tu comisión notarial vence en ${diffDays} días.`);
         } else if (diffDays <= 0) {
-            Toast.error('Comisión Vencida', 'Tu comisión notarial ha expirado. Debes renovarla para continuar ejerciendo.');
+            Toast.error('Comisión Vencida', 'Tu comisión notarial ha expirado.');
         }
     },
     switchHelpTab(tabName) {
@@ -3041,7 +3785,7 @@ window.NotaryCRM = {
             content.classList.remove('active');
         });
 
-        const activeContent = document.getElementById(`help-tab-${tabName}`);
+        const activeContent = document.getElementById(`help-tab-${tabName} `);
         if (activeContent) {
             activeContent.style.display = 'block';
             setTimeout(() => activeContent.classList.add('active'), 10);
@@ -3078,7 +3822,7 @@ window.NotaryCRM = {
 
         // Generate HTML
         container.innerHTML = faqs.map((item) => `
-            <div class="accordion-item">
+    <div class="accordion-item">
                 <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
                     ${this.escapeHtml(item.q)}
                     <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -3087,7 +3831,7 @@ window.NotaryCRM = {
                     ${this.escapeHtml(item.a)}
                 </div>
             </div>
-        `).join('');
+    `).join('');
     },
 
     // Helper: Escape HTML to prevent XSS
@@ -3160,7 +3904,7 @@ window.NotaryCRM = {
         document.querySelectorAll('#client-step-indicator .step').forEach(el => {
             const s = parseInt(el.getAttribute('data-step'));
             el.classList.toggle('active', s === step);
-            el.classList.toggle('completed', s < step);
+            el.classList.toggle('completed', s <step);
         });
 
         // Update Buttons
@@ -3208,6 +3952,7 @@ window.NotaryCRM = {
             idNumber: formData.get('idNumber'),
             maritalStatus: formData.get('maritalStatus'),
             occupation: formData.get('occupation'),
+            idExpiry: formData.get('idExpiry'),
             notes: formData.get('notes'),
             relatedId: formData.get('relatedId') || null,
             tags: tags,
@@ -3237,7 +3982,7 @@ window.NotaryCRM = {
             addDoc(clientsCol, toInsert)
                 .then(async (docRef) => {
                     this.updateSyncStatus('synced');
-                    AuditManager.logAction('Creación de Cliente', client.name, `ID: ${docRef.id}`);
+                    AuditManager.logAction('Creación de Cliente', client.name, `ID: ${docRef.id} `);
 
                     // --- AUTOMATIC ACCOUNT CREATION ---
                     // Create an auth account for the client so they can use "Mi Notaría"
@@ -3247,7 +3992,7 @@ window.NotaryCRM = {
                             // Use phone number as password (cleaned of non-digits)
                             const cleanPass = client.phone.replace(/\D/g, '');
 
-                            if (cleanPass.length >= 6) {
+                            if (cleanPass.length>= 6) {
                                 // Create user in background using secondary auth (prevents admin logout)
                                 const userCredential = await createUserWithEmailAndPassword(window.secondaryAuth, client.email, cleanPass);
 
@@ -3327,7 +4072,7 @@ window.NotaryCRM = {
                     const clientRef = doc(window.firebaseDB, 'clients', id);
                     deleteDoc(clientRef)
                         .then(() => {
-                            AuditManager.logAction('Eliminación de Cliente', client ? client.name : 'Unknown', `ID: ${id}`);
+                            AuditManager.logAction('Eliminación de Cliente', client ? client.name : 'Unknown', `ID: ${id} `);
                             Toast.success('Cliente Eliminado', 'El cliente ha sido eliminado correctamente.');
                         })
                         .catch(err => {
@@ -3345,7 +4090,7 @@ window.NotaryCRM = {
                 (async () => {
                     try {
                         const api = getApiBase();
-                        await fetch(api + `/api/clients/${id}`, { method: 'DELETE' });
+                        await fetch(api + `/ api / clients / ${id} `, { method: 'DELETE' });
                     } catch (e) {
                         console.warn('SQL delete failed', e);
                     }
@@ -3382,18 +4127,145 @@ window.NotaryCRM = {
             status: formData.get('status') || 'pending',
             customFields: customFields,
             // Specialized Notary Fields
+            witness1: formData.get('witness1'),
+            witness1_id: formData.get('witness1_id'),
+            // Specialized Notary Fields
             apostilleDestination: formData.get('apostilleDestination'),
             apostilleTracking: formData.get('apostilleTracking'),
             lsa_closing_disclosure: formData.get('lsa_closing_disclosure') === 'on',
             lsa_the_note: formData.get('lsa_the_note') === 'on',
             lsa_deed_of_trust: formData.get('lsa_deed_of_trust') === 'on',
             lsa_pcor: formData.get('lsa_pcor') === 'on',
+            lsa_id_verified: formData.get('lsa_id_verified') === 'on',
             weddingSpouse1: formData.get('weddingSpouse1'),
             weddingSpouse2: formData.get('weddingSpouse2'),
             weddingLicense: formData.get('weddingLicense'),
+            weddingLicenseExpiry: formData.get('weddingLicenseExpiry'),
             weddingCounty: formData.get('weddingCounty'),
-            witness1: formData.get('witness1'),
-            witness1_id: formData.get('witness1_id')
+            consularEmbassy: formData.get('consularEmbassy'),
+            consularCountry: formData.get('consularCountry'),
+            willExecutor: formData.get('willExecutor'),
+            willBeneficiaries: formData.get('willBeneficiaries'),
+            willWitness1: formData.get('willWitness1'),
+            willWitness2: formData.get('willWitness2'),
+            poa_general: formData.get('poa_general') === 'on',
+            poa_special: formData.get('poa_special') === 'on',
+            poa_financial: formData.get('poa_financial') === 'on',
+            poa_medical: formData.get('poa_medical') === 'on',
+            poa_durable: formData.get('poa_durable') === 'on',
+            poa_real_estate: formData.get('poa_real_estate') === 'on',
+            // Immigration
+            immigFormType: formData.get('immigFormType'),
+            immigLanguage: formData.get('immigLanguage'),
+            immigHasTranslator: formData.get('immigHasTranslator') === 'on',
+            immigVerifiedIdentity: formData.get('immigVerifiedIdentity') === 'on',
+            // Signature Tracking
+            signatureMap: formData.get('signatureMap'),
+            signerCount: parseInt(formData.get('signerCount')) || 1,
+            notarizedPageCount: parseInt(formData.get('notarizedPageCount')) || 1,
+            // Protest
+            protestInstrument: formData.get('protestInstrument'),
+            protestAmount: parseFloat(formData.get('protestAmount')) || 0,
+            protestReason: formData.get('protestReason'),
+            protestDate: formData.get('protestDate'),
+            // Translation
+            transSourceLang: formData.get('transSourceLang'),
+            transTargetLang: formData.get('transTargetLang'),
+            transName: formData.get('transName'),
+            transLicense: formData.get('transLicense'),
+            transCount: formData.get('transCount'),
+            // Property Management
+            propDocType: formData.get('propDocType'),
+            propAddress: formData.get('propAddress'),
+            // ID Checklist
+            id_check_photo: formData.get('id_check_photo') === 'on',
+            id_check_tamper: formData.get('id_check_tamper') === 'on',
+            id_check_expiry: formData.get('id_check_expiry') === 'on',
+            id_check_present: formData.get('id_check_present') === 'on',
+            // Escrow
+            escrowAmount: parseFloat(formData.get('escrowAmount')) || 0,
+            escrowDepositDate: formData.get('escrowDepositDate'),
+            escrowConditions: formData.get('escrowConditions'),
+            // Registry
+            registryBoxCode: formData.get('registryBoxCode'),
+            registryFolio: formData.get('registryFolio'),
+            registryDocDesc: formData.get('registryDocDesc'),
+            // Batch Signing
+            batchDocCount: parseInt(formData.get('batchDocCount')) || 1,
+            batchTemplateUsed: formData.get('batchTemplateUsed'),
+            batchDescription: formData.get('batchDescription'),
+            // Family Tree
+            familyMainTestator: formData.get('familyMainTestator'),
+            familyHeirCount: parseInt(formData.get('familyHeirCount')) || 0,
+            familyTreeData: formData.get('familyTreeData'),
+            // Interpreter
+            interpName: formData.get('interpName'),
+            interpLicense: formData.get('interpLicense'),
+            interpSourceLang: formData.get('interpSourceLang'),
+            interpTargetLang: formData.get('interpTargetLang'),
+            // Apostille Control
+            apostilleCertNum: formData.get('apostilleCertNum'),
+            apostilleState: formData.get('apostilleState'),
+            apostilleStampId: formData.get('apostilleStampId'),
+            // Shipping Cost
+            shipCarrier: formData.get('shipCarrier'),
+            shipCost: parseFloat(formData.get('shipCost')) || 0,
+            shipTrackingNum: formData.get('shipTrackingNum'),
+            // Subpoena
+            subpoenaCaseNum: formData.get('subpoenaCaseNum'),
+            subpoenaCourt: formData.get('subpoenaCourt'),
+            subpoenaDate: formData.get('subpoenaDate'),
+            // Digital Archive
+            archiveDuration: parseInt(formData.get('archiveDuration')) || 10,
+            archiveRetentionExp: formData.get('archiveRetentionExp'),
+            archiveBoxId: formData.get('archiveBoxId'),
+            // Restricted Location
+            restrictedFacilityType: formData.get('restrictedFacilityType'),
+            restrictedContactPerson: formData.get('restrictedContactPerson'),
+            restrictedEntryPermit: formData.get('restrictedEntryPermit'),
+            restrictedVisitationTime: formData.get('restrictedVisitationTime'),
+            // Legal Referral
+            referralAttorney: formData.get('referralAttorney'),
+            referralCommissionRate: parseInt(formData.get('referralCommissionRate')) || 0,
+            referralPaymentStatus: formData.get('referralPaymentStatus'),
+            // Blank Space Check
+            blankSpaceVerified: formData.get('blankSpaceVerified') === 'true',
+            blankLineCrossed: formData.get('blankLineCrossed') === 'true',
+            blankSpaceNotes: formData.get('blankSpaceNotes'),
+            // EO Insurance
+            eoCompany: formData.get('eoCompany'),
+            eoCoverageAmount: parseFloat(formData.get('eoCoverageAmount')) || 0,
+            eoPolicyNum: formData.get('eoPolicyNum'),
+            eoExpiration: formData.get('eoExpiration'),
+            // Pro-Bono
+            proBonoReason: formData.get('proBonoReason'),
+            proBonoWaivedAmount: parseFloat(formData.get('proBonoWaivedAmount')) || 0,
+            // Invalidated Stamp
+            invalidStampReason: formData.get('invalidStampReason'),
+            invalidStampId: formData.get('invalidStampId'),
+            invalidStampReportDate: formData.get('invalidStampReportDate'),
+            invalidStampPoliceReport: formData.get('invalidStampPoliceReport'),
+            // Holographic Seal
+            holographicSerial: formData.get('holographicSerial'),
+            holographicType: formData.get('holographicType'),
+            holographicApplied: formData.get('holographicApplied') === 'true',
+            // Signing Analytics
+            signingStartTime: formData.get('signingStartTime'),
+            signingEndTime: formData.get('signingEndTime'),
+            signingDelayMins: parseInt(formData.get('signingDelayMins')) || 0,
+            // Kinship Control
+            kinshipDegree: formData.get('kinshipDegree'),
+            economicInterest: formData.get('economicInterest'),
+            kinshipVerified: formData.get('kinshipVerified') === 'true',
+            // Secure Courier
+            courierPerson: formData.get('courierPerson'),
+            courierBagId: formData.get('courierBagId'),
+            courierIdVerified: formData.get('courierIdVerified'),
+            courierDispatchTime: formData.get('courierDispatchTime'),
+            // State Requirements
+            stateJurisdiction: formData.get('stateJurisdiction'),
+            stateAppliedReq: formData.get('stateAppliedReq'),
+            stateLawsChecked: formData.get('stateLawsChecked') === 'true'
         };
 
         if (id) {
@@ -3441,7 +4313,7 @@ window.NotaryCRM = {
                                 clientName: caseItem.clientName,
                                 date: caseItem.dueDate,
                                 time: '09:00', // Hora por defecto para vencimiento de casos
-                                type: `Vencimiento: ${caseItem.type}`,
+                                type: `Vencimiento: ${caseItem.type} `,
                                 ownerId: this.currentUser.uid,
                                 createdAt: new Date().toISOString(),
                                 caseId: docRef.id, // Referencia al caso
@@ -3455,7 +4327,7 @@ window.NotaryCRM = {
                     }
 
                     this.closeModal('case-modal');
-                    AuditManager.logAction('Creación de Caso', caseItem.caseNumber, `DocID: ${docRef.id}`);
+                    AuditManager.logAction('Creación de Caso', caseItem.caseNumber, `DocID: ${docRef.id} `);
                     Toast.success('Caso Creado', `Caso ${caseItem.caseNumber} ha sido creado exitosamente.`);
                 })
                 .catch(err => {
@@ -3488,7 +4360,7 @@ window.NotaryCRM = {
                     const caseRef = doc(window.firebaseDB, 'cases', id);
                     deleteDoc(caseRef)
                         .then(() => {
-                            AuditManager.logAction('Eliminación de Caso', caseItem ? caseItem.caseNumber : 'Unknown', `ID: ${id}`);
+                            AuditManager.logAction('Eliminación de Caso', caseItem ? caseItem.caseNumber : 'Unknown', `ID: ${id} `);
                             Toast.success('Caso Eliminado', 'El caso ha sido eliminado correctamente.');
                         })
                         .catch(err => {
@@ -3505,7 +4377,7 @@ window.NotaryCRM = {
                 (async () => {
                     try {
                         const api = getApiBase();
-                        await fetch(api + `/api/cases/${id}`, { method: 'DELETE' });
+                        await fetch(api + `/ api / cases / ${id} `, { method: 'DELETE' });
                     } catch (e) {
                         console.warn('SQL delete failed', e);
                     }
@@ -3535,6 +4407,7 @@ window.NotaryCRM = {
         if (form.querySelector('input[name="idNumber"]')) form.querySelector('input[name="idNumber"]').value = client.idNumber || '';
         if (form.querySelector('select[name="maritalStatus"]')) form.querySelector('select[name="maritalStatus"]').value = client.maritalStatus || 'Single';
         if (form.querySelector('select[name="occupation"]')) form.querySelector('select[name="occupation"]').value = client.occupation || 'Empleado';
+        if (form.querySelector('input[name="idExpiry"]')) form.querySelector('input[name="idExpiry"]').value = client.idExpiry || '';
         if (form.querySelector('textarea[name="notes"]')) form.querySelector('textarea[name="notes"]').value = client.notes || '';
         if (form.querySelector('select[name="relatedId"]')) form.querySelector('select[name="relatedId"]').value = client.relatedId || '';
         if (form.querySelector('input[name="tags"]')) form.querySelector('input[name="tags"]').value = (client.tags || []).join(', ');
@@ -3558,7 +4431,7 @@ window.NotaryCRM = {
             try {
                 await updateDoc(ref, updates);
                 const clientItem = this.state.clients.find(c => c.id === id);
-                AuditManager.logAction('Actualización de Cliente', updates.name || (clientItem ? clientItem.name : id), `ID: ${id}`);
+                AuditManager.logAction('Actualización de Cliente', updates.name || (clientItem ? clientItem.name : id), `ID: ${id} `);
                 Toast.success('Cliente Actualizado', 'Los datos del cliente han sido actualizados.');
             } catch (err) {
                 console.error('Update client failed', err);
@@ -3573,7 +4446,7 @@ window.NotaryCRM = {
         (async () => {
             try {
                 const api = getApiBase();
-                await fetch(api + `/api/clients/${id}`, {
+                await fetch(api + `/ api / clients / ${id} `, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(Object.assign({ id }, updates))
@@ -3630,6 +4503,163 @@ window.NotaryCRM = {
         if (form.querySelector('input[name="witness1"]')) form.querySelector('input[name="witness1"]').value = caseItem.witness1 || '';
         if (form.querySelector('input[name="witness1_id"]')) form.querySelector('input[name="witness1_id"]').value = caseItem.witness1_id || '';
 
+        // New specialized fields
+        if (form.querySelector('input[name="weddingLicenseExpiry"]')) form.querySelector('input[name="weddingLicenseExpiry"]').value = caseItem.weddingLicenseExpiry || '';
+        if (form.querySelector('input[name="lsa_id_verified"]')) form.querySelector('input[name="lsa_id_verified"]').checked = !!caseItem.lsa_id_verified;
+
+        if (form.querySelector('input[name="consularEmbassy"]')) form.querySelector('input[name="consularEmbassy"]').value = caseItem.consularEmbassy || '';
+        if (form.querySelector('input[name="consularCountry"]')) form.querySelector('input[name="consularCountry"]').value = caseItem.consularCountry || '';
+
+        if (form.querySelector('input[name="willExecutor"]')) form.querySelector('input[name="willExecutor"]').value = caseItem.willExecutor || '';
+        if (form.querySelector('textarea[name="willBeneficiaries"]')) form.querySelector('textarea[name="willBeneficiaries"]').value = caseItem.willBeneficiaries || '';
+        if (form.querySelector('input[name="willWitness1"]')) form.querySelector('input[name="willWitness1"]').value = caseItem.willWitness1 || '';
+        if (form.querySelector('input[name="willWitness2"]')) form.querySelector('input[name="willWitness2"]').value = caseItem.willWitness2 || '';
+
+        if (form.querySelector('input[name="poa_general"]')) form.querySelector('input[name="poa_general"]').checked = !!caseItem.poa_general;
+        if (form.querySelector('input[name="poa_special"]')) form.querySelector('input[name="poa_special"]').checked = !!caseItem.poa_special;
+        if (form.querySelector('input[name="poa_financial"]')) form.querySelector('input[name="poa_financial"]').checked = !!caseItem.poa_financial;
+        if (form.querySelector('input[name="poa_medical"]')) form.querySelector('input[name="poa_medical"]').checked = !!caseItem.poa_medical;
+        if (form.querySelector('input[name="poa_durable"]')) form.querySelector('input[name="poa_durable"]').checked = !!caseItem.poa_durable;
+        if (form.querySelector('input[name="poa_real_estate"]')) form.querySelector('input[name="poa_real_estate"]').checked = !!caseItem.poa_real_estate;
+
+        // Immigration
+        if (form.querySelector('select[name="immigFormType"]')) form.querySelector('select[name="immigFormType"]').value = caseItem.immigFormType || 'I-9';
+        if (form.querySelector('input[name="immigLanguage"]')) form.querySelector('input[name="immigLanguage"]').value = caseItem.immigLanguage || '';
+        if (form.querySelector('input[name="immigHasTranslator"]')) form.querySelector('input[name="immigHasTranslator"]').checked = !!caseItem.immigHasTranslator;
+        if (form.querySelector('input[name="immigVerifiedIdentity"]')) form.querySelector('input[name="immigVerifiedIdentity"]').checked = !!caseItem.immigVerifiedIdentity;
+
+        // Signature Tracking
+        if (form.querySelector('textarea[name="signatureMap"]')) form.querySelector('textarea[name="signatureMap"]').value = caseItem.signatureMap || '';
+        if (form.querySelector('input[name="signerCount"]')) form.querySelector('input[name="signerCount"]').value = caseItem.signerCount || 1;
+        if (form.querySelector('input[name="notarizedPageCount"]')) form.querySelector('input[name="notarizedPageCount"]').value = caseItem.notarizedPageCount || 1;
+
+        // Protest
+        if (form.querySelector('input[name="protestInstrument"]')) form.querySelector('input[name="protestInstrument"]').value = caseItem.protestInstrument || '';
+        if (form.querySelector('input[name="protestAmount"]')) form.querySelector('input[name="protestAmount"]').value = caseItem.protestAmount || 0;
+        if (form.querySelector('select[name="protestReason"]')) form.querySelector('select[name="protestReason"]').value = caseItem.protestReason || 'Falta de Pago';
+        if (form.querySelector('input[name="protestDate"]')) form.querySelector('input[name="protestDate"]').value = caseItem.protestDate || '';
+
+        // Translation
+        if (form.querySelector('input[name="transSourceLang"]')) form.querySelector('input[name="transSourceLang"]').value = caseItem.transSourceLang || '';
+        if (form.querySelector('input[name="transTargetLang"]')) form.querySelector('input[name="transTargetLang"]').value = caseItem.transTargetLang || '';
+        if (form.querySelector('input[name="transName"]')) form.querySelector('input[name="transName"]').value = caseItem.transName || '';
+        if (form.querySelector('input[name="transLicense"]')) form.querySelector('input[name="transLicense"]').value = caseItem.transLicense || '';
+        if (form.querySelector('input[name="transCount"]')) form.querySelector('input[name="transCount"]').value = caseItem.transCount || '';
+
+        // Property Management
+        if (form.querySelector('select[name="propDocType"]')) form.querySelector('select[name="propDocType"]').value = caseItem.propDocType || 'Lease';
+        if (form.querySelector('input[name="propAddress"]')) form.querySelector('input[name="propAddress"]').value = caseItem.propAddress || '';
+
+        // ID Checklist
+        if (form.querySelector('input[name="id_check_photo"]')) form.querySelector('input[name="id_check_photo"]').checked = !!caseItem.id_check_photo;
+        if (form.querySelector('input[name="id_check_tamper"]')) form.querySelector('input[name="id_check_tamper"]').checked = !!caseItem.id_check_tamper;
+        if (form.querySelector('input[name="id_check_expiry"]')) form.querySelector('input[name="id_check_expiry"]').checked = !!caseItem.id_check_expiry;
+        if (form.querySelector('input[name="id_check_present"]')) form.querySelector('input[name="id_check_present"]').checked = !!caseItem.id_check_present;
+
+        // Escrow
+        if (form.querySelector('input[name="escrowAmount"]')) form.querySelector('input[name="escrowAmount"]').value = caseItem.escrowAmount || 0;
+        if (form.querySelector('input[name="escrowDepositDate"]')) form.querySelector('input[name="escrowDepositDate"]').value = caseItem.escrowDepositDate || '';
+        if (form.querySelector('textarea[name="escrowConditions"]')) form.querySelector('textarea[name="escrowConditions"]').value = caseItem.escrowConditions || '';
+
+        // Registry
+        if (form.querySelector('input[name="registryBoxCode"]')) form.querySelector('input[name="registryBoxCode"]').value = caseItem.registryBoxCode || '';
+        if (form.querySelector('input[name="registryFolio"]')) form.querySelector('input[name="registryFolio"]').value = caseItem.registryFolio || '';
+        if (form.querySelector('input[name="registryDocDesc"]')) form.querySelector('input[name="registryDocDesc"]').value = caseItem.registryDocDesc || '';
+
+        // Batch Signing
+        if (form.querySelector('input[name="batchDocCount"]')) form.querySelector('input[name="batchDocCount"]').value = caseItem.batchDocCount || 1;
+        if (form.querySelector('input[name="batchTemplateUsed"]')) form.querySelector('input[name="batchTemplateUsed"]').value = caseItem.batchTemplateUsed || '';
+        if (form.querySelector('textarea[name="batchDescription"]')) form.querySelector('textarea[name="batchDescription"]').value = caseItem.batchDescription || '';
+
+        // Family Tree
+        if (form.querySelector('input[name="familyMainTestator"]')) form.querySelector('input[name="familyMainTestator"]').value = caseItem.familyMainTestator || '';
+        if (form.querySelector('input[name="familyHeirCount"]')) form.querySelector('input[name="familyHeirCount"]').value = caseItem.familyHeirCount || 0;
+        if (form.querySelector('textarea[name="familyTreeData"]')) form.querySelector('textarea[name="familyTreeData"]').value = caseItem.familyTreeData || '';
+
+        // Interpreter
+        if (form.querySelector('input[name="interpName"]')) form.querySelector('input[name="interpName"]').value = caseItem.interpName || '';
+        if (form.querySelector('input[name="interpLicense"]')) form.querySelector('input[name="interpLicense"]').value = caseItem.interpLicense || '';
+        if (form.querySelector('input[name="interpSourceLang"]')) form.querySelector('input[name="interpSourceLang"]').value = caseItem.interpSourceLang || '';
+        if (form.querySelector('input[name="interpTargetLang"]')) form.querySelector('input[name="interpTargetLang"]').value = caseItem.interpTargetLang || '';
+
+        // Apostille Control
+        if (form.querySelector('input[name="apostilleCertNum"]')) form.querySelector('input[name="apostilleCertNum"]').value = caseItem.apostilleCertNum || '';
+        if (form.querySelector('input[name="apostilleState"]')) form.querySelector('input[name="apostilleState"]').value = caseItem.apostilleState || '';
+        if (form.querySelector('input[name="apostilleStampId"]')) form.querySelector('input[name="apostilleStampId"]').value = caseItem.apostilleStampId || '';
+
+        // Shipping Cost
+        if (form.querySelector('select[name="shipCarrier"]')) form.querySelector('select[name="shipCarrier"]').value = caseItem.shipCarrier || 'UPS';
+        if (form.querySelector('input[name="shipCost"]')) form.querySelector('input[name="shipCost"]').value = caseItem.shipCost || 0;
+        if (form.querySelector('input[name="shipTrackingNum"]')) form.querySelector('input[name="shipTrackingNum"]').value = caseItem.shipTrackingNum || '';
+
+        // Subpoena
+        if (form.querySelector('input[name="subpoenaCaseNum"]')) form.querySelector('input[name="subpoenaCaseNum"]').value = caseItem.subpoenaCaseNum || '';
+        if (form.querySelector('input[name="subpoenaCourt"]')) form.querySelector('input[name="subpoenaCourt"]').value = caseItem.subpoenaCourt || '';
+        if (form.querySelector('input[name="subpoenaDate"]')) form.querySelector('input[name="subpoenaDate"]').value = caseItem.subpoenaDate || '';
+
+        // Digital Archive
+        if (form.querySelector('input[name="archiveDuration"]')) form.querySelector('input[name="archiveDuration"]').value = caseItem.archiveDuration || 10;
+        if (form.querySelector('input[name="archiveRetentionExp"]')) form.querySelector('input[name="archiveRetentionExp"]').value = caseItem.archiveRetentionExp || '';
+        if (form.querySelector('input[name="archiveBoxId"]')) form.querySelector('input[name="archiveBoxId"]').value = caseItem.archiveBoxId || '';
+
+        // Restricted Location
+        if (form.querySelector('select[name="restrictedFacilityType"]')) form.querySelector('select[name="restrictedFacilityType"]').value = caseItem.restrictedFacilityType || 'Hospital';
+        if (form.querySelector('input[name="restrictedContactPerson"]')) form.querySelector('input[name="restrictedContactPerson"]').value = caseItem.restrictedContactPerson || '';
+        if (form.querySelector('input[name="restrictedEntryPermit"]')) form.querySelector('input[name="restrictedEntryPermit"]').value = caseItem.restrictedEntryPermit || '';
+        if (form.querySelector('input[name="restrictedVisitationTime"]')) form.querySelector('input[name="restrictedVisitationTime"]').value = caseItem.restrictedVisitationTime || '';
+
+        // Legal Referral
+        if (form.querySelector('input[name="referralAttorney"]')) form.querySelector('input[name="referralAttorney"]').value = caseItem.referralAttorney || '';
+        if (form.querySelector('input[name="referralCommissionRate"]')) form.querySelector('input[name="referralCommissionRate"]').value = caseItem.referralCommissionRate || 0;
+        if (form.querySelector('select[name="referralPaymentStatus"]')) form.querySelector('select[name="referralPaymentStatus"]').value = caseItem.referralPaymentStatus || 'Pending';
+
+        // Blank Space Check
+        if (form.querySelector('input[name="blankSpaceVerified"]')) form.querySelector('input[name="blankSpaceVerified"]').checked = !!caseItem.blankSpaceVerified;
+        if (form.querySelector('input[name="blankLineCrossed"]')) form.querySelector('input[name="blankLineCrossed"]').checked = !!caseItem.blankLineCrossed;
+        if (form.querySelector('textarea[name="blankSpaceNotes"]')) form.querySelector('textarea[name="blankSpaceNotes"]').value = caseItem.blankSpaceNotes || '';
+
+        // EO Insurance
+        if (form.querySelector('input[name="eoCompany"]')) form.querySelector('input[name="eoCompany"]').value = caseItem.eoCompany || '';
+        if (form.querySelector('input[name="eoCoverageAmount"]')) form.querySelector('input[name="eoCoverageAmount"]').value = caseItem.eoCoverageAmount || '';
+        if (form.querySelector('input[name="eoPolicyNum"]')) form.querySelector('input[name="eoPolicyNum"]').value = caseItem.eoPolicyNum || '';
+        if (form.querySelector('input[name="eoExpiration"]')) form.querySelector('input[name="eoExpiration"]').value = caseItem.eoExpiration || '';
+
+        // Pro-Bono
+        if (form.querySelector('select[name="proBonoReason"]')) form.querySelector('select[name="proBonoReason"]').value = caseItem.proBonoReason || 'Hardship';
+        if (form.querySelector('input[name="proBonoWaivedAmount"]')) form.querySelector('input[name="proBonoWaivedAmount"]').value = caseItem.proBonoWaivedAmount || '';
+
+        // Invalidated Stamp
+        if (form.querySelector('select[name="invalidStampReason"]')) form.querySelector('select[name="invalidStampReason"]').value = caseItem.invalidStampReason || 'Lost';
+        if (form.querySelector('input[name="invalidStampId"]')) form.querySelector('input[name="invalidStampId"]').value = caseItem.invalidStampId || '';
+        if (form.querySelector('input[name="invalidStampReportDate"]')) form.querySelector('input[name="invalidStampReportDate"]').value = caseItem.invalidStampReportDate || '';
+        if (form.querySelector('input[name="invalidStampPoliceReport"]')) form.querySelector('input[name="invalidStampPoliceReport"]').value = caseItem.invalidStampPoliceReport || '';
+
+        // Holographic Seal
+        if (form.querySelector('input[name="holographicSerial"]')) form.querySelector('input[name="holographicSerial"]').value = caseItem.holographicSerial || '';
+        if (form.querySelector('select[name="holographicType"]')) form.querySelector('select[name="holographicType"]').value = caseItem.holographicType || 'Tamper Evident';
+        if (form.querySelector('input[name="holographicApplied"]')) form.querySelector('input[name="holographicApplied"]').checked = !!caseItem.holographicApplied;
+
+        // Signing Analytics
+        if (form.querySelector('input[name="signingStartTime"]')) form.querySelector('input[name="signingStartTime"]').value = caseItem.signingStartTime || '';
+        if (form.querySelector('input[name="signingEndTime"]')) form.querySelector('input[name="signingEndTime"]').value = caseItem.signingEndTime || '';
+        if (form.querySelector('input[name="signingDelayMins"]')) form.querySelector('input[name="signingDelayMins"]').value = caseItem.signingDelayMins || 0;
+
+        // Kinship Control
+        if (form.querySelector('select[name="kinshipDegree"]')) form.querySelector('select[name="kinshipDegree"]').value = caseItem.kinshipDegree || 'None';
+        if (form.querySelector('select[name="economicInterest"]')) form.querySelector('select[name="economicInterest"]').value = caseItem.economicInterest || 'No';
+        if (form.querySelector('input[name="kinshipVerified"]')) form.querySelector('input[name="kinshipVerified"]').checked = !!caseItem.kinshipVerified;
+
+        // Secure Courier
+        if (form.querySelector('input[name="courierPerson"]')) form.querySelector('input[name="courierPerson"]').value = caseItem.courierPerson || '';
+        if (form.querySelector('input[name="courierBagId"]')) form.querySelector('input[name="courierBagId"]').value = caseItem.courierBagId || '';
+        if (form.querySelector('select[name="courierIdVerified"]')) form.querySelector('select[name="courierIdVerified"]').value = caseItem.courierIdVerified || 'Yes';
+        if (form.querySelector('input[name="courierDispatchTime"]')) form.querySelector('input[name="courierDispatchTime"]').value = caseItem.courierDispatchTime || '';
+
+        // State Requirements
+        if (form.querySelector('input[name="stateJurisdiction"]')) form.querySelector('input[name="stateJurisdiction"]').value = caseItem.stateJurisdiction || '';
+        if (form.querySelector('select[name="stateAppliedReq"]')) form.querySelector('select[name="stateAppliedReq"]').value = caseItem.stateAppliedReq || 'Stamp Placement';
+        if (form.querySelector('input[name="stateLawsChecked"]')) form.querySelector('input[name="stateLawsChecked"]').checked = !!caseItem.stateLawsChecked;
+
         // Trigger toggle fields based on type
         if (window.SpecializedManager) SpecializedManager.toggleFields(caseItem.type);
 
@@ -3644,16 +4674,16 @@ window.NotaryCRM = {
 
             // Get current case for better logging
             const caseItem = this.state.cases.find(c => c.id === id);
-            const caseName = caseItem ? `Expediente #${caseItem.caseItem || caseItem.caseNumber}` : id;
+            const caseName = caseItem ? `Expediente #${caseItem.caseItem || caseItem.caseNumber} ` : id;
 
             try {
                 await updateDoc(ref, updates);
 
                 // Detailed audit details
-                let details = [`ID: ${id}`];
-                if (updates.status) details.push(`Estado: ${updates.status.toUpperCase()}`);
-                if (updates.paymentStatus) details.push(`Pago: ${updates.paymentStatus.toUpperCase()}`);
-                if (updates.amount) details.push(`Monto: ${this.formatCurrency(updates.amount)}`);
+                let details = [`ID: ${id} `];
+                if (updates.status) details.push(`Estado: ${updates.status.toUpperCase()} `);
+                if (updates.paymentStatus) details.push(`Pago: ${updates.paymentStatus.toUpperCase()} `);
+                if (updates.amount) details.push(`Monto: ${this.formatCurrency(updates.amount)} `);
 
                 AuditManager.logAction('Actualización de Caso', caseName, details.join(' | '));
                 Toast.success('Caso Actualizado', 'Los datos del expediente han sido actualizados.');
@@ -3671,7 +4701,7 @@ window.NotaryCRM = {
             try {
                 const payload = Object.assign({}, updates);
                 const api = getApiBase();
-                await fetch(api + `/api/cases/${id}`, {
+                await fetch(api + `/ api / cases / ${id} `, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(Object.assign({ id }, payload))
@@ -3712,10 +4742,10 @@ window.NotaryCRM = {
             const setField = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
-                else console.warn(`Element not found: ${id}`);
+                else console.warn(`Element not found: ${id} `);
             };
 
-            setField('detail-case-number', `Expediente #${caseItem.caseNumber}`);
+            setField('detail-case-number', `Expediente #${caseItem.caseNumber} `);
             setField('detail-client-name', caseItem.clientName);
             setField('detail-case-type', caseItem.type);
             setField('detail-due-date', caseItem.dueDate || 'Sin fecha');
@@ -3728,7 +4758,7 @@ window.NotaryCRM = {
             const statusEl = document.getElementById('detail-case-status');
             if (statusEl) {
                 statusEl.textContent = caseItem.status ? caseItem.status.toUpperCase() : 'UNKNOWN';
-                statusEl.className = `badge badge-${caseItem.status || 'pending'}`;
+                statusEl.className = `badge badge-${caseItem.status || 'pending'} `;
             }
 
             // Specialized Content
@@ -3738,7 +4768,7 @@ window.NotaryCRM = {
 
                 // -- Section: Additional Standard & Custom Fields --
                 let standardInfo = `
-            <div style="margin-bottom: 2rem;">
+    <div style = "margin-bottom: 2rem;">
                 <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Información Adicional</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
                    <div>
@@ -3753,45 +4783,45 @@ window.NotaryCRM = {
                    </div>
                 </div>
             </div>
-        `;
+    `;
 
                 let tasksHtml = '';
                 if (window.TaskManager && typeof TaskManager.renderTaskList === 'function') {
                     tasksHtml = `
-                    <div style="margin-bottom: 2rem;">
-                        ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
-                    </div>`;
+    <div style = "margin-bottom: 2rem;">
+        ${TaskManager.renderTaskList(caseItem.id, caseItem.tasks)}
+                    </div> `;
                 }
 
                 let notesHtml = '';
                 if (window.NoteManager && typeof NoteManager.renderNotes === 'function') {
                     notesHtml = `
-                    <div style="margin-bottom: 2rem;">
-                        ${NoteManager.renderNotes(caseItem.id, caseItem.internalNotes)}
-                    </div>`;
+    <div style = "margin-bottom: 2rem;">
+        ${NoteManager.renderNotes(caseItem.id, caseItem.internalNotes)}
+                    </div> `;
                 }
 
                 let customFieldsHtml = '';
-                if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                if (caseItem.customFields && Object.keys(caseItem.customFields).length> 0) {
                     let fieldsList = Object.entries(caseItem.customFields).map(([key, value]) => `
-                <div style="background: white; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;">
+    <div style = "background: white; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;">
                     <span style="color: #64748b; display: block; font-size: 0.75rem; text-transform: uppercase;">${key}</span>
                     <span style="font-weight: 600; color: #334155;">${value || '-'}</span>
                 </div>
-            `).join('');
+    `).join('');
 
                     customFieldsHtml = `
-            <div style="margin-bottom: 2rem;">
+    <div style = "margin-bottom: 2rem;">
                 <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Campos Personalizados</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
                     ${fieldsList}
                 </div>
-            </div>`;
+            </div> `;
                 }
 
                 // -- Section: Sidebar Layout --
                 const sidebarHtml = `
-                <div class="case-details-sidebar" style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+    <div class="case-details-sidebar" style = "background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
                     <div style="margin-bottom: 2rem;">
                         <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
                             <i data-lucide="user" style="width: 16px;"></i> Cliente
@@ -3817,10 +4847,24 @@ window.NotaryCRM = {
                             <button class="btn btn-block" style="background: #25d366; color: white; justify-content: center; gap: 10px;" onclick="NotaryCRM.sendReminder('${caseItem.id}', 'whatsapp')">
                                 <i data-lucide="message-circle" style="width: 18px;"></i> WhatsApp
                             </button>
+                            <hr style="border-top: 1px solid #e2e8f0; margin: 0.25rem 0;">
+                            <button class="btn btn-outline-purple btn-block" onclick="biometricManager.open('${caseItem.id}')" style="justify-content: center; gap: 10px;">
+                                <i data-lucide="fingerprint" style="width: 18px;"></i> ${caseItem.biometricCaptured ? 'Actualizar Huella' : 'Capturar Huella'}
+                            </button>
                         </div>
                     </div>
                 </div>
-                `;
+    ${caseItem.biometricCaptured ? `
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem; margin-top: 1rem; display: flex; align-items: center; gap: 10px; color: #166534; font-size: 0.8rem;">
+                    <i data-lucide="check-circle" style="width: 16px;"></i>
+                    <div>
+                        <div style="font-weight: 700;">Biometría Verificada</div>
+                        <div style="font-family: monospace; font-size: 0.7rem; opacity: 0.8;">Hash: ${caseItem.biometricHash}</div>
+                    </div>
+                </div>
+                ` : ''
+                    }
+`;
 
                 // Wrapper if we want standard grid
                 container.style.display = 'grid';
@@ -3829,79 +4873,139 @@ window.NotaryCRM = {
                 container.style.alignItems = 'start';
 
                 const mainContentHtml = `
-                    <div class="case-details-main-content">
-                        ${standardInfo}
+    <div class="case-details-main-content">
+        ${standardInfo}
                         ${tasksHtml}
                         ${notesHtml}
                         ${customFieldsHtml}
                     </div>
-                `;
+    `;
 
                 container.innerHTML = mainContentHtml + sidebarHtml;
 
                 // -- Section: Specialized Type-Specific --
+                const APOSTILLE_STATUSES = [
+                    { id: 'pending', label: 'Pendiente / Recibido', color: '#64748b' },
+                    { id: 'docs_received', label: 'Documentos Recibidos', color: '#3b82f6' },
+                    { id: 'sent_to_sos', label: 'Enviado a SOS / Estado', color: '#f59e0b' },
+                    { id: 'sealed', label: 'Finalizado / Sellado', color: '#10b981' },
+                    { id: 'returned', label: 'Retornado al Cliente', color: '#8b5cf6' }
+                ];
+
                 if (caseItem.type === 'Apostille') {
+                    const currentStatus = caseItem.apostilleStatus || 'pending';
                     container.innerHTML += `
-                <div style="background: #eff6ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #dbeafe; margin-top: 1.5rem;">
-                    <h5 style="margin: 0 0 1rem 0; color: #1e40af; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="globe" style="width: 18px; height: 18px;"></i> Detalles de Apostilla
-                    </h5>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                        <div>
-                            <span style="font-size: 0.8rem; color: #1e3a8a; display: block;">País de Destino</span>
-                            <span style="font-weight: 600; font-size: 1.1rem; color: #1e3a8a;">${caseItem.apostilleDestination || 'N/A'}</span>
+    <div style = "background: #eff6ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #dbeafe; margin-top: 1.5rem;">
+                        <h5 style="margin: 0 0 1rem 0; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="globe" style="width: 18px; height: 18px;"></i> Gestión de Apostilla (Tracking)
+                        </h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <label style="font-size: 0.75rem; color: #1e3a8a; font-weight: 700; display: block; margin-bottom: 4px;">PAÍS DE DESTINO</label>
+                                <div style="font-weight: 600; font-size: 1.1rem; color: #1e3a8a;">${caseItem.apostilleDestination || 'N/A'}</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: #1e3a8a; font-weight: 700; display: block; margin-bottom: 4px;">TRACKING FEDERAL/ESTATAL</label>
+                                <div style="font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; border:1px solid #dbeafe; display: inline-block;">${caseItem.apostilleTracking || 'Pendiente'}</div>
+                            </div>
                         </div>
-                        <div>
-                             <span style="font-size: 0.8rem; color: #1e3a8a; display: block;">Tracking #</span>
-                             <span style="font-family: monospace; background: white; padding: 2px 6px; border-radius: 4px;">${caseItem.apostilleTracking || 'N/A'}</span>
+
+                        <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                             <label style="font-size: 0.8rem; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Estado del Trámite</label>
+                             <div style="display: flex; gap: 4px;">
+                                ${APOSTILLE_STATUSES.map(s => `
+                                    <button class="btn btn-sm" 
+                                            style="flex: 1; font-size: 0.7rem; padding: 0.4rem; border: 1px solid ${s.id === currentStatus ? s.color : '#e2e8f0'}; background: ${s.id === currentStatus ? s.color : 'white'}; color: ${s.id === currentStatus ? 'white' : '#64748b'};"
+                                            onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'apostilleStatus', '${s.id}')">
+                                        ${s.label.split(' / ')[0]}
+                                    </button>
+                                `).join('')}
+                             </div>
                         </div>
                     </div>
-                </div>
-            `;
+    `;
                 } else if (caseItem.type === 'Loan Signing') {
+                    const loanTypes = ['Refinance', 'Purchase', 'HELOC', 'Seller', 'Reverse'];
+                    const currentLoanType = caseItem.loanType || 'General';
+                    const lsa_check1 = caseItem.lsa_closing_disclosure;
+                    const lsa_check2 = caseItem.lsa_the_note;
+                    const lsa_check3 = caseItem.lsa_deed_of_trust;
+                    const lsa_check4 = caseItem.lsa_pcor;
+                    const lsa_check5 = caseItem.lsa_id_verified;
+
                     container.innerHTML += `
-                <div style="background: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #dcfce7; margin-top: 1.5rem;">
-                     <h5 style="margin: 0 0 1rem 0; color: #166534; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="file-check" style="width: 18px; height: 18px;"></i> Checklist de Cierre (LSA)
-                    </h5>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            ${caseItem.lsa_closing_disclosure ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} Closing Disclosure
+    <div style = "background: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #dcfce7; margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.25rem;">
+                             <h5 style="margin: 0; color: #166534; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="file-check" style="width: 18px; height: 18px;"></i> Checklist LSA: ${currentLoanType}
+                            </h5>
+                            <select onchange="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'loanType', this.value)" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">
+                                <option value="">Tipo de Préstamo...</option>
+                                ${loanTypes.map(t => `<option value="${t}" ${t === currentLoanType ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            ${caseItem.lsa_the_note ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} The Note
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            ${caseItem.lsa_deed_of_trust ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} Deed of Trust
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            ${caseItem.lsa_pcor ? '<i data-lucide="check-circle-2" style="color: #16a34a; width: 16px;"></i>' : '<i data-lucide="circle" style="color: #cbd5e1; width: 16px;"></i>'} PCOR
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'lsa_closing_disclosure', ${!lsa_check1})">
+                                ${lsa_check1 ? '<i data-lucide="check-square" style="color: #16a34a; width: 18px;"></i>' : '<i data-lucide="square" style="color: #94a3b8; width: 18px;"></i>'} Closing Disclosure
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'lsa_the_note', ${!lsa_check2})">
+                                ${lsa_check2 ? '<i data-lucide="check-square" style="color: #16a34a; width: 18px;"></i>' : '<i data-lucide="square" style="color: #94a3b8; width: 18px;"></i>'} The Note (Firmado)
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'lsa_deed_of_trust', ${!lsa_check3})">
+                                ${lsa_check3 ? '<i data-lucide="check-square" style="color: #16a34a; width: 18px;"></i>' : '<i data-lucide="square" style="color: #94a3b8; width: 18px;"></i>'} Deed of Trust
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'lsa_pcor', ${!lsa_check4})">
+                                ${lsa_check4 ? '<i data-lucide="check-square" style="color: #16a34a; width: 18px;"></i>' : '<i data-lucide="square" style="color: #94a3b8; width: 18px;"></i>'} PCOR / Tax Forms
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'lsa_id_verified', ${!lsa_check5})">
+                                ${lsa_check5 ? '<i data-lucide="check-square" style="color: #16a34a; width: 18px;"></i>' : '<i data-lucide="square" style="color: #94a3b8; width: 18px;"></i>'} ID Colectado & Verificado
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; color: #15803d; font-weight: 700;">
+                                <i data-lucide="alert-circle" style="width: 14px;"></i> Firmar todas las páginas
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+    `;
                 } else if (caseItem.type === 'Wedding') {
+                    const w_check1 = caseItem.wedding_license_verified;
+                    const w_check2 = caseItem.wedding_ceremony_done;
+                    const w_check3 = caseItem.wedding_signed_mailed;
+
                     container.innerHTML += `
-                <div style="background: #fff1f2; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe4e6; margin-top: 1.5rem;">
-                    <h5 style="margin: 0 0 1rem 0; color: #9f1239; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="heart" style="width: 18px; height: 18px;"></i> Detalles de la Boda
-                    </h5>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-                        <p style="margin: 0; font-size: 1.1rem; text-align: center; font-family: serif; font-style: italic; color: #881337;">
-                            ${caseItem.weddingSpouse1 || '???'} & ${caseItem.weddingSpouse2 || '???'}
-                        </p>
-                        <hr style="border-top: 1px dashed #fecdd3; margin: 0.5rem 0;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
-                             <div>
-                                <strong>Licencia:</strong> ${caseItem.weddingLicense || 'N/A'}
-                             </div>
-                             <div>
-                                <strong>Condado:</strong> ${caseItem.weddingCounty || 'N/A'}
-                             </div>
+    <div style = "background: #fff1f2; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe4e6; margin-top: 1.5rem;">
+                        <h5 style="margin: 0 0 1.25rem 0; color: #9f1239; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="heart" style="width: 18px; height: 18px;"></i> Servicio de Boda Finalizado
+                        </h5>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #fecdd3;">
+                                <label style="font-size: 0.65rem; color: #9f1239; font-weight: 800; display: block; margin-bottom: 4px; text-transform: uppercase;">Licencia #</label>
+                                <div style="font-weight: 600; color: #e11d48;">${caseItem.weddingLicense || 'No registrada'}</div>
+                            </div>
+                            <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #fecdd3;">
+                                <label style="font-size: 0.65rem; color: #9f1239; font-weight: 800; display: block; margin-bottom: 4px; text-transform: uppercase;">Estado Licencia</label>
+                                <div style="font-weight: 600; color: #e11d48;">Vence: ${caseItem.weddingLicenseExpiry || 'N/A'}</div>
+                            </div>
                         </div>
+
+                        <div style="background: rgba(255,255,255,0.5); padding: 1rem; border-radius: 8px; display: grid; gap: 0.75rem; font-size: 0.9rem;">
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'wedding_license_verified', ${!w_check1})">
+                                ${w_check1 ? '<i data-lucide="check-circle" style="color: #e11d48; width: 18px;"></i>' : '<i data-lucide="circle" style="color: #fda4af; width: 18px;"></i>'} Licencia original verificada
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'wedding_ceremony_done', ${!w_check2})">
+                                ${w_check2 ? '<i data-lucide="check-circle" style="color: #e11d48; width: 18px;"></i>' : '<i data-lucide="circle" style="color: #fda4af; width: 18px;"></i>'} Ceremonia Realizada
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="NotaryCRM.updateCaseAttribute('${caseItem.id}', 'wedding_signed_mailed', ${!w_check3})">
+                                ${w_check3 ? '<i data-lucide="check-circle" style="color: #e11d48; width: 18px;"></i>' : '<i data-lucide="circle" style="color: #fda4af; width: 18px;"></i>'} Firmada & Enviada al Condado
+                            </div>
+                        </div>
+
+                        <button class="btn btn-sm btn-block" style="margin-top: 1rem; background: #be123c; color: white;" onclick="NotaryCRM.openModal('legal-library-modal')">
+                            Ver Guion de Ceremonia
+                        </button>
                     </div>
-                </div>
-            `;
+    `;
                 }
 
                 // Witnesses
@@ -3915,7 +5019,7 @@ window.NotaryCRM = {
                     if (caseItem.witness1) {
                         witnessSection.style.display = 'block';
                         witnessList.innerHTML = `
-                    <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; width: 100%;">
+    <div style = "background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; width: 100%;">
                         <div style="background: #e2e8f0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                             <i data-lucide="user" style="color: #64748b;"></i>
                         </div>
@@ -3924,7 +5028,7 @@ window.NotaryCRM = {
                             <div style="font-size: 0.8rem; color: #64748b;">ID: ${caseItem.witness1_id || 'N/A'}</div>
                         </div>
                     </div>
-                `;
+    `;
                     } else {
                         witnessSection.style.display = 'none';
                     }
@@ -3954,6 +5058,26 @@ window.NotaryCRM = {
             this.renderDashboard();
         } catch (err) {
             console.error('Error updating status:', err);
+        }
+    },
+
+    async updateCaseAttribute(caseId, attribute, value) {
+        try {
+            const updateData = {};
+            updateData[attribute] = value;
+
+            // Optimistic log
+            console.log(`Updating Case ${caseId}: ${attribute} = ${value} `);
+
+            await this.updateCase(caseId, updateData);
+
+            // Re-render UI to reflect changes
+            this.showCaseDetails(caseId);
+            this.renderCases();
+            Toast.success('Información Actualizada', 'El expediente ha sido actualizado correctamente.');
+        } catch (err) {
+            console.error('Error updating case attribute:', err);
+            Toast.error('Error', 'No se pudo actualizar el registro.');
         }
     },
 
@@ -3989,21 +5113,46 @@ window.NotaryCRM = {
             icon.style.color = 'var(--color-danger)';
             icon.classList.remove('spin');
         }
-        if (window.lucide) window.lucide.createIcons();
+        if (window.lucide) {
+            const container = document.getElementById('sync-indicator');
+            if (container) window.lucide.createIcons({ root: container });
+        }
     },
 
-    // Render entire UI
+    // Render entire UI (Throttled to avoid UI freeze during bulk updates)
     render() {
-        this.applyUIPermissions();
-        this.renderDashboard();
-        this.renderClients();
-        this.renderCases();
-        this.renderReports();
-        if (window.lucide) window.lucide.createIcons();
+        if (this._renderThrottle) return;
+        this._renderThrottle = true;
+        setTimeout(() => {
+            this._renderThrottle = false;
+            this.applyUIPermissions();
+            this.renderDashboard();
+            this.renderClients();
+            this.renderCases();
+            this.renderReports();
+            if (window.lucide) {
+                // Surgically create icons only in relevant areas to save CPU
+                const areas = ['#dashboard-home', '#clients-list-container', '#cases-list-container'];
+                areas.forEach(selector => {
+                    const el = document.querySelector(selector);
+                    if (el) window.lucide.createIcons({ root: el });
+                });
+            }
+        }, 300);
     },
 
-    // Render dashboard
+    // Render dashboard with throttling to avoid lag during sync
     renderDashboard() {
+        if (this._dashboardThrottle) return;
+        this._dashboardThrottle = true;
+        setTimeout(() => { this._dashboardThrottle = false; }, 500);
+
+        // ID Expiration Check
+        if (window.IDExpirationManager) IDExpirationManager.check();
+
+        // Commission Check First
+        this.checkCommissionExpiry();
+
         // Update statistics
         const clientsList = this.state.clients || [];
         const totalClientsEl = document.getElementById('total-clients');
@@ -4028,9 +5177,6 @@ window.NotaryCRM = {
         const revEl = document.getElementById('total-revenue');
         if (revEl) revEl.textContent = this.formatCurrency(totalRevenue);
 
-        // Add mileage to report if possible
-        console.log(`Log de Kilometraje acumulado: ${totalMileage} millas`);
-
         const pendingPayments = this.state.cases
             .filter(c => c.paymentStatus !== 'paid')
             .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
@@ -4039,8 +5185,8 @@ window.NotaryCRM = {
 
         // Advanced KPIs
         const totalPotential = totalRevenue + pendingPayments;
-        const avgTicket = totalCases > 0 ? (totalPotential / totalCases) : 0;
-        const successRate = totalCases > 0 ? (completedCases / totalCases) * 100 : 0;
+        const avgTicket = totalCases> 0 ? (totalPotential / totalCases) : 0;
+        const successRate = totalCases> 0 ? (completedCases / totalCases) * 100 : 0;
 
         const avgEl = document.getElementById('avg-ticket');
         if (avgEl) avgEl.textContent = this.formatCurrency(avgTicket);
@@ -4054,7 +5200,7 @@ window.NotaryCRM = {
         const year = nowLocal.getFullYear();
         const month = String(nowLocal.getMonth() + 1).padStart(2, '0');
         const day = String(nowLocal.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+        const todayStr = `${year} -${month} -${day} `;
 
         const todaysAppointments = this.state.appointments.filter(a => a.date === todayStr);
 
@@ -4068,18 +5214,18 @@ window.NotaryCRM = {
         if (agendaListEl) {
             if (todaysAppointments.length === 0) {
                 agendaListEl.innerHTML = `
-                    <div style="text-align:center; padding: 2rem 1rem; color: #94a3b8;">
+    <div style = "text-align:center; padding: 2rem 1rem; color: #94a3b8;">
                         <div style="font-size: 2rem; margin-bottom: 0.5rem;">☕</div>
                         <p style="font-size: 0.9rem;">No hay citas para hoy.</p>
                         <p style="font-size: 0.75rem;">¡Aprovecha para adelantar trabajo!</p>
-                    </div>`;
+                    </div> `;
             } else {
                 agendaListEl.innerHTML = todaysAppointments.map(app => `
-                    <div class="agenda-item" 
-                         style="padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 1rem; transition: background 0.2s; cursor: pointer;" 
-                         onmouseover="this.style.background='#f8fafc'" 
-                         onmouseout="this.style.background='transparent'"
-                         onclick="NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
+    <div class="agenda-item"
+style = "padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 1rem; transition: background 0.2s; cursor: pointer;"
+onmouseover = "this.style.background='#f8fafc'"
+onmouseout = "this.style.background='transparent'"
+onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
                         <div style="background: #eff6ff; color: #1d4ed8; padding: 0.5rem; border-radius: 10px; width: 60px; text-align: center; flex-shrink: 0;">
                             <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Hoy</div>
                             <div style="font-size: 0.9rem; font-weight: 800;">${app.time || '--:--'}</div>
@@ -4096,7 +5242,7 @@ window.NotaryCRM = {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>
                     </div>
-                `).join('');
+    `).join('');
             }
         }
 
@@ -4113,7 +5259,7 @@ window.NotaryCRM = {
             if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
             else if (c.createdAt) d = new Date(c.createdAt);
             else return false;
-            return d >= firstDayOfMonth;
+            return d>= firstDayOfMonth;
         }).reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
 
         const newClientsThisMonth = (this.state.clients || []).filter(c => {
@@ -4121,7 +5267,7 @@ window.NotaryCRM = {
             if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
             else if (c.createdAt) d = new Date(c.createdAt);
             else return false;
-            return d >= firstDayOfMonth;
+            return d>= firstDayOfMonth;
         }).length;
 
         const dashActiveCountEl = document.getElementById('dash-active-count');
@@ -4146,14 +5292,17 @@ window.NotaryCRM = {
 
         const recentCases = this.state.cases.slice(0, 5);
         tbody.innerHTML = recentCases.map(c => `
-            <tr onclick="NotaryCRM.showCaseDetails('${c.id}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+    <tr onclick = "NotaryCRM.showCaseDetails('${c.id}')" style = "cursor: pointer; transition: background 0.2s;" onmouseover = "this.style.background='#f8fafc'" onmouseout = "this.style.background='transparent'">
                 <td style="font-weight: 500; color: var(--color-primary);">${c.caseNumber}</td>
                 <td style="color: var(--color-gray-700);">${c.clientName}</td>
                 <td style="color: var(--color-gray-700);">${c.type}</td>
                 <td>${this.renderStatusBadge(c.status, c.dueDate, c.id)}</td>
                 <td style="font-weight: 600; color: var(--color-gray-900);">${this.formatCurrency(c.amount)}</td>
             </tr>
-        `).join('');
+    `).join('');
+
+        // Update Mileage Widget
+        if (window.MileageManager) MileageManager.renderDashboardWidget();
     },
 
     // Render clients
@@ -4176,7 +5325,7 @@ window.NotaryCRM = {
         if (clientSelect) {
             const currentVal = clientSelect.value;
             clientSelect.innerHTML = '<option value="">Select a client</option>' +
-                this.state.clients.map(c => `< option value = "${c.id}" > ${c.name}</option > `).join('');
+                this.state.clients.map(c => `<option value = "${c.id}"> ${c.name}</option> `).join('');
             if (currentVal) clientSelect.value = currentVal;
         }
 
@@ -4199,13 +5348,13 @@ window.NotaryCRM = {
         const pageSize = this.state.clientsPageSize || 6;
         const totalItems = filteredClients.length;
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-        if (this.state.clientsPage > totalPages) this.state.clientsPage = totalPages;
+        if (this.state.clientsPage> totalPages) this.state.clientsPage = totalPages;
         if (this.state.clientsPage < 1) this.state.clientsPage = 1;
-        const start = (this.state.clientsPage - 1) * pageSize;
+        const start = (this.state.clientsPage-1) * pageSize;
         const pageItems = filteredClients.slice(start, start + pageSize);
 
         container.innerHTML = pageItems.map(client => `
-            <div class="client-card premium-card">
+    <div class="client-card premium-card">
                 <div class="client-header">
                     <div class="client-info">
                         <img class="client-avatar" src="https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=random&color=fff" alt="${client.name}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
@@ -4249,12 +5398,12 @@ window.NotaryCRM = {
                     </div>
                 </div>
                 ${client.notes ? `<div class="client-notes"><strong>Notas:</strong> ${client.notes}</div>` : ''}
-                <div class="client-footer">
-                    <span>Registrado: ${this.formatDate(client.joinDate)}</span>
-                    <button class="btn btn-primary btn-sm" onclick="NotaryCRM.showClientDetails('${client.id}')">Expediente Completo</button>
-                </div>
+<div class="client-footer">
+    <span>Registrado: ${this.formatDate(client.joinDate)}</span>
+    <button class="btn btn-primary btn-sm" onclick="NotaryCRM.showClientDetails('${client.id}')">Expediente Completo</button>
+</div>
             </div>
-        `).join('');
+    `).join('');
 
         // Update pagination
         const indicator = document.getElementById('clients-page-indicator');
@@ -4262,7 +5411,7 @@ window.NotaryCRM = {
         const prevBtn = document.getElementById('clients-prev');
         const nextBtn = document.getElementById('clients-next');
         if (prevBtn) prevBtn.disabled = this.state.clientsPage <= 1;
-        if (nextBtn) nextBtn.disabled = this.state.clientsPage >= totalPages;
+        if (nextBtn) nextBtn.disabled = this.state.clientsPage>= totalPages;
     },
 
     // Render cases
@@ -4290,9 +5439,9 @@ window.NotaryCRM = {
         const pageSize = this.state.casesPageSize || 6;
         const totalItems = filteredCases.length;
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-        if (this.state.casesPage > totalPages) this.state.casesPage = totalPages;
+        if (this.state.casesPage> totalPages) this.state.casesPage = totalPages;
         if (this.state.casesPage < 1) this.state.casesPage = 1;
-        const start = (this.state.casesPage - 1) * pageSize;
+        const start = (this.state.casesPage-1) * pageSize;
         const pageItems = filteredCases.slice(start, start + pageSize);
 
         container.innerHTML = pageItems.map(caseItem => `
@@ -4372,7 +5521,7 @@ window.NotaryCRM = {
         const prevBtn = document.getElementById('cases-prev');
         const nextBtn = document.getElementById('cases-next');
         if (prevBtn) prevBtn.disabled = this.state.casesPage <= 1;
-        if (nextBtn) nextBtn.disabled = this.state.casesPage >= totalPages;
+        if (nextBtn) nextBtn.disabled = this.state.casesPage>= totalPages;
     },
 
     // Render status badge
@@ -4402,7 +5551,7 @@ window.NotaryCRM = {
         if (dueDate && (status === 'pending' || status === 'in-progress')) {
             const due = new Date(dueDate);
             const now = new Date();
-            const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+            const diffDays = Math.ceil((due-now) / (1000 * 60 * 60 * 24));
             if (diffDays <= 3) {
                 const color = diffDays < 0 ? '#b91c1c' : '#d97706';
                 slaWarning = `<svg class="icon" style="color:${color}; margin-left: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
@@ -4434,7 +5583,7 @@ window.NotaryCRM = {
                 </svg>
                 ${config.text}
                 ${slaWarning}
-            </span >
+            </span>
         `;
     },
 
@@ -4552,7 +5701,7 @@ window.NotaryCRM = {
     // Render skeleton placeholders
     renderSkeletons(count) {
         let skeletons = '';
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i <count; i++) {
             skeletons += `
                 <div class="skeleton-card fade-in">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
@@ -4622,12 +5771,12 @@ window.NotaryCRM = {
             else return true;
 
             if (filterVal === 'week') {
-                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return d >= oneWeekAgo;
+                const oneWeekAgo = new Date(now.getTime()-7 * 24 * 60 * 60 * 1000);
+                return d>= oneWeekAgo;
             } else if (filterVal === 'month') {
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             } else if (filterVal === 'lastMonth') {
-                const lastM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastM = new Date(now.getFullYear(), now.getMonth()-1, 1);
                 return d.getMonth() === lastM.getMonth() && d.getFullYear() === lastM.getFullYear();
             } else if (filterVal === 'year') {
                 return d.getFullYear() === now.getFullYear();
@@ -4635,7 +5784,7 @@ window.NotaryCRM = {
             return true;
         });
 
-        // Update Total Revenue Stat - ONLY PAID CASES
+        // Update Total Revenue Stat-ONLY PAID CASES
         const totalFilteredRevenue = filteredCases.reduce((sum, c) => {
             if (c.paymentStatus !== 'paid') return sum;
             return sum + (parseFloat(c.amount) || 0);
@@ -4657,7 +5806,7 @@ window.NotaryCRM = {
             const m = d.getMonth() + '-' + d.getFullYear();
             months[m] = (months[m] || 0) + (parseFloat(c.amount) || 0);
         });
-        const avgMonthly = Object.values(months).length > 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
+        const avgMonthly = Object.values(months).length> 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
         const projectedEl = document.getElementById('report-projected-revenue');
         if (projectedEl) {
             projectedEl.innerHTML = `
@@ -4674,11 +5823,11 @@ window.NotaryCRM = {
         if (this.statusChart) this.statusChart.destroy();
         if (this.locationChart) this.locationChart.destroy();
 
-        // 1. Revenue by Month - ONLY PAID - Line Chart
+        // 1. Revenue by Month-ONLY PAID-Line Chart
         const monthlyRevenue = {};
         // Initialize last 6 months with 0 to show nice trend
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        for (let i = 5; i>= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
             const key = d.toLocaleString('es-ES', { month: 'short', year: 'numeric' });
             monthlyRevenue[key] = 0;
         }
@@ -4691,7 +5840,7 @@ window.NotaryCRM = {
             else date = new Date();
 
             const month = date.toLocaleString('es-ES', { month: 'short', year: 'numeric' });
-            // Only add if it falls in our tracking (or was initialized) - simplistic approach for now:
+            // Only add if it falls in our tracking (or was initialized)-simplistic approach for now:
             if (monthlyRevenue[month] !== undefined) monthlyRevenue[month] += (parseFloat(c.amount) || 0);
             else monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (parseFloat(c.amount) || 0);
         });
@@ -4741,14 +5890,14 @@ window.NotaryCRM = {
             }
         });
 
-        // 2. Most Requested Services - Doughnut
+        // 2. Most Requested Services-Doughnut
         const serviceCounts = {};
         filteredCases.forEach(c => { serviceCounts[c.type] = (serviceCounts[c.type] || 0) + 1; });
 
         // Pick top 5, group others
-        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
+        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1]-a[1]);
         const topServices = sortedServices.slice(0, 5);
-        if (sortedServices.length > 5) {
+        if (sortedServices.length> 5) {
             topServices.push(['Otros', sortedServices.slice(5).reduce((sum, item) => sum + item[1], 0)]);
         }
 
@@ -4775,7 +5924,7 @@ window.NotaryCRM = {
             }
         });
 
-        // 3. Case Status - Doughnut (Clean & Modern)
+        // 3. Case Status-Doughnut (Clean & Modern)
         const statusCounts = { 'pending': 0, 'in-progress': 0, 'completed': 0, 'signed': 0 };
         filteredCases.forEach(c => {
             const s = c.status || 'pending';
@@ -4817,7 +5966,7 @@ window.NotaryCRM = {
             }
         });
 
-        // 4. Revenue by Location - Bar Chart
+        // 4. Revenue by Location-Bar Chart
         const locationRevenue = { 'Oficina': 0, 'Casa': 0, 'Online': 0 };
         filteredCases.forEach(c => {
             if (c.paymentStatus !== 'paid') return;
@@ -4879,7 +6028,7 @@ window.NotaryCRM = {
             });
 
             // Sort by date desc
-            allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+            allPayments.sort((a, b) => new Date(b.date)-new Date(a.date));
 
             if (allPayments.length === 0) {
                 paymentsTable.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center; color: var(--text-light);">No hay pagos registrados aún</td></tr>';
@@ -4913,7 +6062,7 @@ window.NotaryCRM = {
 
         // Regular Appointments
         const events = this.state.appointments.map(app => ({
-            title: `${app.clientName} - ${app.type}`,
+            title: `${app.clientName}-${app.type}`,
             start: `${app.date}T${app.time}`,
             color: '#1e3a8a'
         }));
@@ -4971,7 +6120,7 @@ window.NotaryCRM = {
                     time: timeStr
                 });
 
-                Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr} - ${timeStr} `);
+                Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr}-${timeStr} `);
             }
         });
 
@@ -5234,7 +6383,7 @@ window.NotaryCRM = {
             const time = item.querySelector('.timeline-time').textContent;
             const client = item.querySelector('.timeline-title').textContent;
             const type = item.querySelector('span[style*="font-size: 0.75rem"]').textContent;
-            message += `⏰ * ${time}* - ${client} (${type}) \n`;
+            message += `⏰ * ${time}*-${client} (${type}) \n`;
         });
 
         message += `\nGenerado desde * NotaryCRM * `;
@@ -5345,7 +6494,7 @@ window.NotaryCRM = {
                             ${clientApps.length === 0 ? `<p>${I18nManager.currentLang === 'es' ? 'No hay citas programadas.' : 'No upcoming appointments.'}</p>` : clientApps.map(a => `
                                 <div class="timeline-item" style="padding-left:0;">
                                     <div class="timeline-card" style="margin-left:0; border-left: 4px solid #10b981;">
-                                        <strong>${a.date} a las ${a.time}</strong> - ${a.type}
+                                        <strong>${a.date} a las ${a.time}</strong>-${a.type}
                                     </div>
                                 </div>
                             `).join('')}
@@ -5361,7 +6510,7 @@ window.NotaryCRM = {
                 const allLogs = [...new Set([...logs, ...resourceLogs])].sort((a, b) => {
                     const dateA = a.timestamp && a.timestamp.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
                     const dateB = b.timestamp && b.timestamp.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
-                    return dateB - dateA;
+                    return dateB-dateA;
                 });
 
                 return allLogs.length === 0 ? '<p class="empty-state">No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
@@ -5495,7 +6644,7 @@ window.NotaryCRM = {
         let baseDate = new Date(formData.get('date') + 'T' + formData.get('time'));
 
         const count = isRecurring ? 4 : 1;
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i <count; i++) {
             const current = new Date(baseDate);
             current.setDate(baseDate.getDate() + (i * 7));
 
@@ -5600,7 +6749,7 @@ window.NotaryCRM = {
         const primaryColor = [30, 58, 138]; // Navy Blue
         const secondaryColor = [107, 114, 128]; // Gray
 
-        // 🏦 Header - Notary Logo/Name
+        // 🏦 Header-Notary Logo/Name
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(22);
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -5741,7 +6890,7 @@ window.NotaryCRM = {
             const phone = client.phone ? client.phone.replace(/\D/g, '') : '';
             window.open(`https://wa.me/${phone}?text=${encodedMsg}`, '_blank');
         } else {
-            const subject = encodeURIComponent(`Firma Digital - Caso ${caseItem.caseNumber}`);
+            const subject = encodeURIComponent(`Firma Digital-Caso ${caseItem.caseNumber}`);
             window.location.href = `mailto:${client.email}?subject=${subject}&body=${encodedMsg}`;
         }
     },
@@ -5771,7 +6920,7 @@ window.NotaryCRM = {
             if (lines.length < 2) return;
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
             let count = 0;
-            for (let i = 1; i < lines.length; i++) {
+            for (let i = 1; i <lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const vals = lines[i].split(',');
                 const data = {};
@@ -5832,7 +6981,7 @@ window.NotaryCRM = {
         doc.text('REPORTE FINANCIERO Y EJECUTIVO', margin, 32);
 
         doc.setFontSize(10);
-        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, pageWidth - margin, 32, { align: 'right' });
+        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, pageWidth-margin, 32, { align: 'right' });
 
         // --- Executive Summary Section ---
         let yPos = 55;
@@ -5841,12 +6990,12 @@ window.NotaryCRM = {
         doc.setFont('helvetica', 'bold');
         doc.text('Resumen Ejecutivo', margin, yPos);
 
-        // Calculate Statistics - Only PAID
+        // Calculate Statistics-Only PAID
         const clientsCount = this.state.clients.length;
         const casesCount = this.state.cases.length;
         const paidCases = this.state.cases.filter(c => c.paymentStatus === 'paid');
         const totalRevenue = paidCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        const avgTicket = paidCases.length > 0 ? totalRevenue / paidCases.length : 0;
+        const avgTicket = paidCases.length> 0 ? totalRevenue / paidCases.length : 0;
 
         yPos += 15;
 
@@ -5865,15 +7014,15 @@ window.NotaryCRM = {
         let xOffset = margin;
         let cardY = yPos;
         stats.forEach((stat, i) => {
-            if (i > 0 && i % 2 === 0) {
+            if (i> 0 && i % 2 === 0) {
                 xOffset = margin;
                 cardY += 35;
-            } else if (i > 0) {
+            } else if (i> 0) {
                 xOffset = (pageWidth / 2) + 5;
             }
 
             // Card Shape
-            doc.roundedRect(xOffset, cardY, (pageWidth / 2) - margin - 5, 25, 3, 3, 'FD');
+            doc.roundedRect(xOffset, cardY, (pageWidth / 2)-margin-5, 25, 3, 3, 'FD');
 
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139); // Slate-500
@@ -5906,7 +7055,7 @@ window.NotaryCRM = {
             const canvas = document.getElementById(config.id);
             if (canvas) {
                 // Check page break
-                if (yPos + 90 > doc.internal.pageSize.getHeight()) {
+                if (yPos + 90> doc.internal.pageSize.getHeight()) {
                     doc.addPage();
                     yPos = 20;
                 }
@@ -5933,7 +7082,7 @@ window.NotaryCRM = {
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Página ${i} de ${pageCount} - Confidencial - Notary CRM`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+            doc.text(`Página ${i} de ${pageCount}-Confidencial-Notary CRM`, pageWidth / 2, doc.internal.pageSize.getHeight()-10, { align: 'center' });
         }
 
         doc.save(`NotaryOS_Report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -5943,8 +7092,8 @@ window.NotaryCRM = {
     // --- Automations ---
     checkAutomations() {
         const now = new Date();
-        const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) < now);
-        if (overdue.length > 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
+        const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) <now);
+        if (overdue.length> 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
     },
 
     sendReminder(caseId, type = 'whatsapp') {
@@ -5990,7 +7139,7 @@ window.NotaryCRM = {
 
         const duplicates = [];
         matches.forEach((list, key) => {
-            if (list.length > 1) {
+            if (list.length> 1) {
                 duplicates.push({ key, clients: list });
             }
         });
@@ -6047,7 +7196,7 @@ window.NotaryCRM = {
             // Priority 2: Oldest createdAt
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateA - dateB;
+            return dateA-dateB;
         });
 
         const mainClient = sorted[0];
@@ -6224,10 +7373,10 @@ const Reminders = {
             if (it.completed) return;
 
             const dueTime = new Date(it.when);
-            const diffInMinutes = (now - dueTime) / 60000;
+            const diffInMinutes = (now-dueTime) / 60000;
 
             // If due exactly now or within the last minute (and we haven't notified yet)
-            if (diffInMinutes >= 0 && diffInMinutes < 1.05 && !it.notified) {
+            if (diffInMinutes>= 0 && diffInMinutes < 1.05 && !it.notified) {
                 this.showDueNotification(it);
                 it.notified = true;
             }
@@ -6478,7 +7627,7 @@ const Reminders = {
             if (statusFilter === 'pending') filteredItems = filteredItems.filter(it => !it.completed);
         }
 
-        const sorted = filteredItems.sort((a, b) => new Date(a.when) - new Date(b.when));
+        const sorted = filteredItems.sort((a, b) => new Date(a.when)-new Date(b.when));
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
@@ -6552,7 +7701,7 @@ const Reminders = {
                     const d = new Date(it.when);
                     const isToday = d.toDateString() === now.toDateString();
                     const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === d.toDateString();
-                    const isPast = d < now && !isToday;
+                    const isPast = d <now && !isToday;
 
                     let key = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
                     if (isToday) key = '📅 Hoy';
@@ -6567,7 +7716,7 @@ const Reminders = {
                         groupList.push({ title: key, items: [] });
                         currentKey = key;
                     }
-                    groupList[groupList.length - 1].items.push(it);
+                    groupList[groupList.length-1].items.push(it);
                 });
 
                 timeline.innerHTML = groupList.map(group => `
@@ -11454,7 +12603,7 @@ const NoteGenerator = {
 
         let clients = [];
         // Prioritize Cases as they have client info
-        if (NotaryCRM.state && NotaryCRM.state.cases && NotaryCRM.state.cases.length > 0) {
+        if (NotaryCRM.state && NotaryCRM.state.cases && NotaryCRM.state.cases.length> 0) {
             const uniqueClients = new Map();
             NotaryCRM.state.cases.forEach(c => {
                 if (c.clientName && !uniqueClients.has(c.clientName)) {
@@ -11472,8 +12621,8 @@ const NoteGenerator = {
         // Fallback mock
         if (clients.length === 0) {
             clients = [
-                { id: '1', name: 'Juan Perez - Ejemplo', email: 'juan@example.com' },
-                { id: '2', name: 'Maria Lopez - Ejemplo', email: 'maria@example.com' }
+                { id: '1', name: 'Juan Perez-Ejemplo', email: 'juan@example.com' },
+                { id: '2', name: 'Maria Lopez-Ejemplo', email: 'maria@example.com' }
             ];
         }
 
@@ -11661,14 +12810,14 @@ const NoteGenerator = {
             let finalHeight = (canvas.height * finalWidth) / canvas.width;
 
             // Fit vertically ONLY if it exceeds the page height
-            if (finalHeight > pageHeight) {
+            if (finalHeight> pageHeight) {
                 const ratio = pageHeight / finalHeight;
                 finalHeight = pageHeight;
                 finalWidth = finalWidth * ratio;
             }
 
             // Center horizontally
-            const finalX = (pageWidth - finalWidth) / 2;
+            const finalX = (pageWidth-finalWidth) / 2;
             const finalY = 0; // Top-aligned
 
             pdf.addImage(imgData, 'JPEG', finalX, finalY, finalWidth, finalHeight, undefined, 'FAST');

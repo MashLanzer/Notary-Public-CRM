@@ -3126,6 +3126,22 @@ body:not(.authenticated) {
     color: #6b21a8;
 }
 
+.action-clic-de-usuario {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.action-exportacin-de-logs {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.action-envo-de-recordatorio {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
 /* Skeleton Loaders */
 .skeleton {
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -3571,4 +3587,164 @@ body:not(.authenticated) {
 /* Override modal z-index to be above landing page */
 .modal {
     z-index: 11000 !important;
+}
+
+/* ============================================
+   COMMANDER MODE (TV VIEW)
+   ============================================ */
+body.commander-mode {
+    background: #020617 !important;
+    overflow: hidden;
+}
+
+body.commander-mode .sidebar,
+body.commander-mode .app-header,
+body.commander-mode .nav-tabs,
+body.commander-mode .breadcrumb,
+body.commander-mode .search-command-bar,
+body.commander-mode #commission-alert-container {
+    display: none !important;
+}
+
+body.commander-mode .main-content {
+    margin-left: 0 !important;
+    padding: 3rem !important;
+    width: 100vw;
+    height: 100vh;
+}
+
+body.commander-mode .dashboard-body {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+body.commander-mode .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 3rem !important;
+}
+
+body.commander-mode .stat-card {
+    background: #1e293b !important;
+    border: 2px solid #334155 !important;
+    padding: 4rem 3rem !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.commander-mode .stat-label {
+    font-size: 2.5rem !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+}
+
+body.commander-mode .stat-value {
+    font-size: 8rem !important;
+    font-weight: 900 !important;
+    color: #38bdf8 !important;
+    line-height: 1;
+}
+
+body.commander-mode .stat-icon-wrapper {
+    transform: scale(3.5);
+    margin-right: 2rem;
+}
+
+body.commander-mode .section-title {
+    font-size: 4rem !important;
+    color: #f8fafc !important;
+    margin-bottom: 4rem !important;
+    text-align: center;
+}
+
+.commander-exit-btn {
+    display: none;
+    position: fixed;
+    bottom: 3rem;
+    right: 3rem;
+    background: #ef4444;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.5rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 15px rgba(239, 68, 68, 0.3);
+    z-index: 99999;
+}
+
+body.commander-mode .commander-exit-btn {
+    display: block;
+}
+
+/* ============================================
+   TABLET OPTIMIZATION (TOUCH)
+   ============================================ */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 80px;
+        padding: 1.5rem 0.5rem;
+    }
+
+    .sidebar span {
+        display: none;
+    }
+
+    .sidebar .nav-item {
+        justify-content: center;
+        padding: 1.25rem;
+    }
+
+    .main-content {
+        margin-left: 80px;
+    }
+
+    /* Larger touch targets */
+    .btn {
+        min-height: 48px;
+        padding: 0 24px;
+    }
+
+    .form-input,
+    .search-input {
+        min-height: 50px;
+        font-size: 1.1rem;
+    }
+
+    /* Signature optimization */
+    .signature-area {
+        touch-action: none;
+        /* Prevents scrolling while signing */
+        height: 350px !important;
+    }
+
+    .tab-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        margin-bottom: 70px;
+        /* Space for bottom nav */
+    }
+
+    .sidebar {
+        width: 100%;
+        height: 70px;
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid #e2e8f0;
+        z-index: 1000;
+    }
+
+    .logo-container {
+        display: none;
+    }
 }

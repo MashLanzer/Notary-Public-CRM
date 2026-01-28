@@ -39,7 +39,7 @@ const InteractiveCharts = {
 
         // Add click event
         chart.options.onClick = (event, activeElements) => {
-            if (activeElements.length > 0) {
+            if (activeElements.length> 0) {
                 const element = activeElements[0];
                 const datasetIndex = element.datasetIndex;
                 const index = element.index;
@@ -52,7 +52,7 @@ const InteractiveCharts = {
 
         // Add hover cursor
         chart.options.onHover = (event, activeElements) => {
-            event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            event.native.target.style.cursor = activeElements.length> 0 ? 'pointer' : 'default';
         };
 
         chart.update();
@@ -104,7 +104,7 @@ const InteractiveCharts = {
             return caseMonth.toLowerCase() === month.toLowerCase();
         });
 
-        const avgRevenue = monthCases.length > 0 ? revenue / monthCases.length : 0;
+        const avgRevenue = monthCases.length> 0 ? revenue / monthCases.length : 0;
         const paidCases = monthCases.filter(c => c.paymentStatus === 'Paid').length;
 
         return `
@@ -133,7 +133,7 @@ const InteractiveCharts = {
         const cases = window.NotaryCRM.state.cases || [];
         const serviceCases = cases.filter(c => c.type === service);
         const totalRevenue = serviceCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        const avgRevenue = serviceCases.length > 0 ? totalRevenue / serviceCases.length : 0;
+        const avgRevenue = serviceCases.length> 0 ? totalRevenue / serviceCases.length : 0;
 
         return `
             <div class="stat-card">
@@ -215,7 +215,7 @@ const InteractiveCharts = {
         // In production, this would use historical data
         const random = Math.random();
 
-        if (random > 0.6) {
+        if (random> 0.6) {
             return {
                 direction: 'up',
                 percentage: Math.floor(Math.random() * 30 + 5)

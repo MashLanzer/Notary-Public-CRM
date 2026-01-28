@@ -323,7 +323,7 @@
             color: white;
         }
 
-        /* Updated Modern Timeline Styles - Responsive & Clean */
+        /* Updated Modern Timeline Styles-Responsive & Clean */
         .step-wizard-list {
             background: transparent;
             box-shadow: none;
@@ -773,7 +773,7 @@
                 const el = document.getElementById(`step-${step}`);
                 if (!el) return;
 
-                if (idx < activeIdx) {
+                if (idx <activeIdx) {
                     el.classList.add('completed-step'); // Passed steps
                 } else if (idx === activeIdx) {
                     el.classList.add('active-step'); // Current active step
@@ -893,8 +893,8 @@
             const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
 
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: clientX-rect.left,
+                y: clientY-rect.top
             };
         }
 

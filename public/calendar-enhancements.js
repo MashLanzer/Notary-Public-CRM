@@ -128,7 +128,7 @@ const CalendarEnhancements = {
             }
         });
 
-        if (conflicts.length > 0) {
+        if (conflicts.length> 0) {
             this.showConflictWarning(conflicts, newStart, newEnd);
             return true;
         }
@@ -137,7 +137,7 @@ const CalendarEnhancements = {
     },
 
     hasTimeOverlap(start1, end1, start2, end2) {
-        return start1 < end2 && end1 > start2;
+        return start1 < end2 && end1> start2;
     },
 
     showConflictWarning(conflicts, newStart, newEnd) {

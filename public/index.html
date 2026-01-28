@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3a8a">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="image/icon-192.png">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -194,10 +194,34 @@
                     </div>
                 </div>
 
+                <!-- Proactive Alerts System -->
+                <div id="commission-alert-container"></div>
+
                 <div class="dashboard-body">
-                    <div class="actions-bar" style="margin-bottom: 1.5rem;">
-                        <h2 class="section-title">Dashboard</h2>
+                    <div class="actions-bar"
+                        style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <h2 class="section-title" style="margin: 0;">Dashboard</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-sm btn-outline" onclick="DashboardManager.toggleCommanderMode()"
+                                title="Vista de Comandante (TV)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                </svg>
+                                TV View
+                            </button>
+                            <button class="btn btn-sm btn-outline-purple" onclick="ValidationManager.open()"
+                                style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="shield-check" style="width: 16px;"></i> Validar Mi Comisión
+                            </button>
+                        </div>
                     </div>
+
+                    <button class="commander-exit-btn" onclick="DashboardManager.toggleCommanderMode()">
+                        ESC-Salir de TV View
+                    </button>
 
                     <div class="stats-grid" id="dashboard-stats-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
@@ -291,6 +315,23 @@
                                         <line x1="12" y1="1" x2="12" y2="23" />
                                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                                     </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mileage Tracking (NEW) -->
+                        <div class="stat-card"
+                            style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
+                            <div class="stat-content">
+                                <div>
+                                    <p class="stat-label" style="color: #94a3b8;">Deducción (Millas)</p>
+                                    <p class="stat-value" id="dash-mileage-deduction" style="color: #38bdf8;">$0.00</p>
+                                    <p style="font-size: 0.7rem; opacity: 0.7; margin-top: 4px;" id="dash-total-miles">0
+                                        total mi</p>
+                                </div>
+                                <div class="stat-icon-wrapper"
+                                    style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 12px; color: #38bdf8;">
+                                    <i data-lucide="map"></i>
                                 </div>
                             </div>
                         </div>
@@ -802,7 +843,7 @@
                 </div>
 
                 <div class="cases-kanban-container" id="cases-kanban-board"
-                    style="display: none; height: calc(100vh - 250px); overflow-x: auto; padding-bottom: 2rem;">
+                    style="display: none; height: calc(100vh-250px); overflow-x: auto; padding-bottom: 2rem;">
                     <!-- Kanban columns injected by JS -->
                 </div>
 
@@ -1225,10 +1266,24 @@
 
                 <!-- Audit Logs Tab (admin) -->
                 <div class="tab-content" id="audit-tab">
-                    <div class="actions-bar">
-                        <h2 class="section-title">Registros de Auditoría</h2>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" id="refresh-logs-btn">Actualizar</button>
+                    <div class="actions-bar"
+                        style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                        <div>
+                            <h2 class="section-title" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                                <i data-lucide="shield-check" style="color: #6366f1;"></i> Registros de Auditoría
+                            </h2>
+                            <p style="margin: 4px 0 0; font-size: 0.85rem; color: #64748b;">Seguimiento completo para
+                                cumplimiento legal y seguridad</p>
+                        </div>
+                        <div class="header-actions" style="display: flex; gap: 12px;">
+                            <button class="btn btn-outline-purple" id="export-logs-btn"
+                                style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="download" style="width: 16px;"></i> Exportar CSV
+                            </button>
+                            <button class="btn btn-primary" id="refresh-logs-btn"
+                                style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="refresh-cw" style="width: 16px;"></i> Actualizar
+                            </button>
                         </div>
                     </div>
                     <div class="card">
@@ -1499,21 +1554,34 @@
                             </select>
                         </div>
                         <div class="form-group flex-1">
-                            <label class="form-label">Número de ID</label>
+                            <label class="form-label"
+                                style="display: flex; justify-content: space-between; align-items: center;">
+                                Número de ID
+                                <button type="button" class="btn btn-sm" id="scan-id-btn"
+                                    style="padding: 2px 6px; font-size: 0.7rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="scan" style="width: 12px; height: 12px;"></i> Escanear (PDF417)
+                                </button>
+                            </label>
                             <input type="text" class="form-input" name="idNumber" placeholder="Number">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Ocupación</label>
-                        <select class="form-input" name="occupation">
-                            <option value="Empleado">Empleado</option>
-                            <option value="Empresario">Empresario / Dueño de Negocio</option>
-                            <option value="Profesional Independiente">Profesional Independiente</option>
-                            <option value="Estudiante">Estudiante</option>
-                            <option value="Jubilado">Jubilado</option>
-                            <option value="Ama de Casa">Ama de Casa</option>
-                            <option value="Otro">Otro</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Vencimiento ID</label>
+                            <input type="date" class="form-input" name="idExpiry" id="client-id-expiry">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Ocupación</label>
+                            <select class="form-input" name="occupation">
+                                <option value="Empleado">Empleado</option>
+                                <option value="Empresario">Empresario / Dueño de Negocio</option>
+                                <option value="Profesional Independiente">Profesional Independiente</option>
+                                <option value="Estudiante">Estudiante</option>
+                                <option value="Jubilado">Jubilado</option>
+                                <option value="Ama de Casa">Ama de Casa</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="client-custom-fields-container"
                         style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;"></div>
@@ -1594,6 +1662,32 @@
                             <option value="Loan Signing">Firma de Préstamos</option>
                             <option value="Acknowledgment">Reconocimiento de Firma</option>
                             <option value="Wedding">Boda Notarial</option>
+                            <option value="Consular">Trámite Consular / Legalización</option>
+                            <option value="Immigration">Documentos de Inmigración</option>
+                            <option value="Massive Document">Documentos Masivos / Separación de Firmas</option>
+                            <option value="Protest">Protesto de Letra / Mercantil</option>
+                            <option value="Translation">Traducción Jurada</option>
+                            <option value="Property Management">Arrendamientos / Traspasos (Propiedades)</option>
+                            <option value="Escrow">Depósito en Garantía (Escrow)</option>
+                            <option value="Registry">Notario de Registro / Custodia Permanente</option>
+                            <option value="Batch Signing">Firma de Lotes / Masiva (Batch)</option>
+                            <option value="Family Tree">Árbol Genealógico / Herencia</option>
+                            <option value="Interpreter">Servicio de Intérprete (Traducción Oral)</option>
+                            <option value="Apostille Control">Control de Sellos de Apostilla</option>
+                            <option value="Shipping Cost">Calculadora de Envío (UPS/FedEx/DHL)</option>
+                            <option value="Subpoena">Módulo de Citaciones / Depocisiones</option>
+                            <option value="Digital Archive">Archivo Muerto Digital / Larga Duración</option>
+                            <option value="Restricted Location">Firma en Hospitales / Cárceles</option>
+                            <option value="Legal Referral">Comisiones de Referidos Legales</option>
+                            <option value="Blank Space Check">Detección de Firmas en Blanco</option>
+                            <option value="EO Insurance">Seguro de Errores y Omisiones (E&O)</option>
+                            <option value="Pro-Bono">Servicio Pro-Bono (Gratuito)</option>
+                            <option value="Invalidated Stamp">Control de Sellos Invalidados (Robo/Extravío)</option>
+                            <option value="Holographic Seal">Gestión de Sellos Holográficos de Seguridad</option>
+                            <option value="Signing Analytics">Analíticas de Tiempo de Firma</option>
+                            <option value="Kinship Control">Control de Parentesco / Conflictos</option>
+                            <option value="Secure Courier">Gestión de Encomiendas (Envío Seguro)</option>
+                            <option value="State Requirements">Alertas de Requisitos Estatales (Leyes)</option>
                             <option value="Other">Otro Servicio</option>
                         </select>
                     </div>
@@ -1608,8 +1702,16 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group flex-1">
-                        <label class="form-label">Notary Fee ($)</label>
-                        <input type="text" class="form-input mask-currency" name="amount" placeholder="0.00" required>
+                        <label class="form-label" style="display: flex; justify-content: space-between;">
+                            Notary Fee ($)
+                            <a href="#" onclick="FeeCalculatorManager.open()"
+                                style="font-size: 0.75rem; color: var(--color-primary); text-decoration: none;">
+                                <i data-lucide="calculator"
+                                    style="width: 12px; height: 12px; vertical-align: middle;"></i> Calcular Honorarios
+                            </a>
+                        </label>
+                        <input type="text" class="form-input mask-currency" name="amount" id="case-amount-input"
+                            placeholder="0.00" required>
                     </div>
                     <div class="form-group flex-1">
                         <label class="form-label">Payment Status</label>
@@ -1641,11 +1743,948 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label class="form-label">Description / Internal Notes</label>
                     <textarea class="form-input" name="description" rows="2" placeholder="Case details..."
                         required></textarea>
                 </div>
+
+                <!-- specialized-apostille -->
+                <div id="specialized-apostille"
+                    style="display:none; padding: 1.25rem; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #1e40af; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="globe" style="width: 16px;"></i> Apostille Tracking Data
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">País de Destino</label>
+                            <input type="text" class="form-input" name="apostilleDestination"
+                                placeholder="Ej: México, España">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tracking Federal / State</label>
+                            <input type="text" class="form-input" name="apostilleTracking"
+                                placeholder="Ej: USPS-123456">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-lsa -->
+                <div id="specialized-lsa"
+                    style="display:none; padding: 1.25rem; background: #f0fdf4; border-radius: 12px; border: 1px solid #dcfce7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-check" style="width: 16px;"></i> Loan Signing (LSA) Checklist
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="lsa_closing_disclosure"> Closing Disclosure
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="lsa_the_note"> The Note
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="lsa_deed_of_trust"> Deed of Trust
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="lsa_pcor"> PCOR / Tax Forms
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="lsa_id_verified"> IDs Verificados
+                        </label>
+                    </div>
+                </div>
+
+                <!-- specialized-wedding -->
+                <div id="specialized-wedding"
+                    style="display:none; padding: 1.25rem; background: #fff1f2; border-radius: 12px; border: 1px solid #ffe4e6; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9f1239; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="heart" style="width: 16px;"></i> Wedding Details
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Spouse 1</label>
+                            <input type="text" class="form-input" name="weddingSpouse1" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Spouse 2</label>
+                            <input type="text" class="form-input" name="weddingSpouse2" placeholder="Nombre completo">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 1rem;">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Licencia #</label>
+                            <input type="text" class="form-input" name="weddingLicense">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Vencimiento Licencia</label>
+                            <input type="date" class="form-input" name="weddingLicenseExpiry">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-consular -->
+                <div id="specialized-consular"
+                    style="display:none; padding: 1.25rem; background: #faf5ff; border-radius: 12px; border: 1px solid #f3e8ff; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #7e22ce; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="landmark" style="width: 16px;"></i> Trámite Consular / Legalización
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Embajada / Consulado</label>
+                            <input type="text" class="form-input" name="consularEmbassy"
+                                placeholder="Ej: Consulado de México">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">País</label>
+                            <input type="text" class="form-input" name="consularCountry" placeholder="País">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-wills -->
+                <div id="specialized-wills"
+                    style="display:none; padding: 1.25rem; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9a3412; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="scroll" style="width: 16px;"></i> Testamentos y Fideicomisos
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Albacea / Executor</label>
+                            <input type="text" class="form-input" name="willExecutor" placeholder="Nombre completo">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Beneficiarios Principales</label>
+                        <textarea class="form-input" name="willBeneficiaries" rows="2"
+                            placeholder="Nombres de beneficiarios..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Testigo 1 (Documento)</label>
+                            <input type="text" class="form-input" name="willWitness1" placeholder="Nombre">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Testigo 2 (Documento)</label>
+                            <input type="text" class="form-input" name="willWitness2" placeholder="Nombre">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-poa -->
+                <div id="specialized-poa"
+                    style="display:none; padding: 1.25rem; background: #f0fdf4; border-radius: 12px; border: 1px solid #dcfce7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shield-check" style="width: 16px;"></i> Gestión de Poderes (POA)
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_general"> Poder General
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_special"> Poder Especial / Limitado
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_financial"> Facultades Financieras
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_medical"> Decisiones Médicas
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_durable"> Poder Duradero (Durable)
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="poa_real_estate"> Asuntos Inmobiliarios
+                        </label>
+                    </div>
+                    <div
+                        style="margin-top: 1rem; padding: 0.75rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; font-size: 0.75rem; color: #166534;">
+                        <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: middle;"></i> Asegure
+                        que las facultades coincidan exactamente con el texto del documento.
+                    </div>
+                </div>
+
+                <!-- specialized-immigration -->
+                <div id="specialized-immigration"
+                    style="display:none; padding: 1.25rem; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #1d4ed8; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-text" style="width: 16px;"></i> Gestión de Documentos de Inmigración
+                        (USCIS)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tipo de Formulario / Trámite</label>
+                            <select class="form-input" name="immigFormType">
+                                <option value="I-9">I-9 (Employment Eligibility)</option>
+                                <option value="I-130">I-130 (Petition for Alien Relative)</option>
+                                <option value="I-485">I-485 (Adjustment of Status)</option>
+                                <option value="Affidavit of Support">Affidavit of Support (I-864)</option>
+                                <option value="Carta de Invitación">Carta de Invitación</option>
+                                <option value="Other">Otro trámite migratorio</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Idioma del Documento</label>
+                            <input type="text" class="form-input" name="immigLanguage"
+                                placeholder="Ej: Inglés / Español">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; font-size: 0.85rem;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="immigHasTranslator"> ¿Requiere Traductor?
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="immigVerifiedIdentity"> Identidad Verificada (USCIS Standards)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- specialized-signature-tracking -->
+                <div id="specialized-signature-tracking"
+                    style="display:none; padding: 1.25rem; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #475569; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="users" style="width: 16px;"></i> Separación de Firmas (Documentos Masivos)
+                    </h4>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">Registre qué persona debe firmar
+                        en qué páginas específicas del documento.</p>
+                    <div class="form-group">
+                        <label class="form-label">Plan de Firmas (Persona-Páginas)</label>
+                        <textarea class="form-input" name="signatureMap" rows="3"
+                            placeholder="Ej: Juan Perez-Págs 5, 12, 45&#10;Maria Garcia-Págs 8, 22"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Total de Firmantes</label>
+                            <input type="number" class="form-input" name="signerCount" value="1" min="1">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Total de Páginas Notarizadas</label>
+                            <input type="number" class="form-input" name="notarizedPageCount" value="1" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-protest -->
+                <div id="specialized-protest"
+                    style="display:none; padding: 1.25rem; background: #fff1f2; border-radius: 12px; border: 1px solid #ffe4e6; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9f1239; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="gavel" style="width: 16px;"></i> Protesto de Letra / Instrumento Mercantil
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tipo de Instrumento</label>
+                            <input type="text" class="form-input" name="protestInstrument"
+                                placeholder="Ej: Letra de Cambio, Cheque, Pagaré">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Monto del Instrumento</label>
+                            <input type="number" class="form-input" name="protestAmount" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Motivo del Protesto</label>
+                            <select class="form-input" name="protestReason">
+                                <option value="Falta de Pago">Falta de Pago</option>
+                                <option value="Falta de Aceptación">Falta de Aceptación</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Protesto</label>
+                            <input type="date" class="form-input" name="protestDate">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-translation -->
+                <div id="specialized-translation"
+                    style="display:none; padding: 1.25rem; background: #fdf4ff; border-radius: 12px; border: 1px solid #fae8ff; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #86198f; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="languages" style="width: 16px;"></i> Gestión de Traducción Jurada
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Idioma Origen</label>
+                            <input type="text" class="form-input" name="transSourceLang" placeholder="Ej: Inglés">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Idioma Destino</label>
+                            <input type="text" class="form-input" name="transTargetLang" placeholder="Ej: Español">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Traductor / Intérprete</label>
+                            <input type="text" class="form-input" name="transName" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">ID / Licencia de Traductor</label>
+                            <input type="text" class="form-input" name="transLicense" placeholder="ID Certificación">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Conteo de Palabras / Folios</label>
+                            <input type="text" class="form-input" name="transCount"
+                                placeholder="Ej: 500 palabras / 3 folios">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-property-mgmt -->
+                <div id="specialized-property-mgmt"
+                    style="display:none; padding: 1.25rem; background: #ecfdf5; border-radius: 12px; border: 1px solid #d1fae5; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #065f46; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="home" style="width: 16px;"></i> Adm. de Propiedades / Inmobiliario
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tipo de Contrato / Trámite</label>
+                            <select class="form-input" name="propDocType">
+                                <option value="Lease">Contrato de Arrendamiento</option>
+                                <option value="Transfer">Traspaso / Cesión</option>
+                                <option value="Selling Auth">Autorización de Venta</option>
+                                <option value="Property Mgmt">Contrato de Administración</option>
+                                <option value="Other">Otro relacionado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dirección de la Propiedad</label>
+                        <input type="text" class="form-input" name="propAddress"
+                            placeholder="Dirección completa del inmueble">
+                    </div>
+                </div>
+
+                <!-- specialized-id-checklist -->
+                <div id="specialized-id-checklist"
+                    style="display:none; padding: 1.25rem; background: #fffbeb; border-radius: 12px; border: 1px solid #fef3c7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #92400e; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="check-square" style="width: 16px;"></i> Checklist de Verificación de ID
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="id_check_photo"> La foto coincide con la persona
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="id_check_tamper"> Sin signos de alteración / falsificación
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="id_check_expiry"> Documento vigente (No vencido)
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="id_check_present"> El firmante está físicamente presente
+                        </label>
+                    </div>
+                </div>
+
+                <!-- specialized-escrow -->
+                <div id="specialized-escrow"
+                    style="display:none; padding: 1.25rem; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9a3412; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="landmark" style="width: 16px;"></i> Gestión de Escrow / Depósito en Garantía
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Monto en Escrow</label>
+                            <input type="number" class="form-input" name="escrowAmount" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Depósito</label>
+                            <input type="date" class="form-input" name="escrowDepositDate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Condiciones de Liberación</label>
+                        <textarea class="form-input" name="escrowConditions" rows="2"
+                            placeholder="Ej: Contra entrega de llaves y firma de escritura"></textarea>
+                    </div>
+                </div>
+
+                <!-- specialized-registry -->
+                <div id="specialized-registry"
+                    style="display:none; padding: 1.25rem; background: #f1f5f9; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="archive" style="width: 16px;"></i> Notario de Registro (Custodia Permanente)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Código de Archivo / Caja</label>
+                            <input type="text" class="form-input" name="registryBoxCode"
+                                placeholder="Ej: ARCH-2024-001">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Número de Folio / Tomo</label>
+                            <input type="text" class="form-input" name="registryFolio"
+                                placeholder="Ej: Tomo III, Folio 45">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descripción del Documento Custodiado</label>
+                        <input type="text" class="form-input" name="registryDocDesc"
+                            placeholder="Ej: Protocolo de Testamento Original">
+                    </div>
+                </div>
+
+                <!-- specialized-batch-signing -->
+                <div id="specialized-batch-signing"
+                    style="display:none; padding: 1.25rem; background: #fdf2f8; border-radius: 12px; border: 1px solid #fce7f3; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9d174d; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="layers" style="width: 16px;"></i> Firma de Lotes / Procesamiento Masivo
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Total de Documentos en el Lote</label>
+                            <input type="number" class="form-input" name="batchDocCount" value="1" min="1">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Plantilla Utilizada</label>
+                            <input type="text" class="form-input" name="batchTemplateUsed"
+                                placeholder="Nombre de la plantilla">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instrucciones de Lote</label>
+                        <textarea class="form-input" name="batchDescription" rows="2"
+                            placeholder="Ej: Firmar solo páginas pares / Incluir sello de copia fiel"></textarea>
+                    </div>
+                </div>
+
+                <!-- specialized-family-tree -->
+                <div id="specialized-family-tree"
+                    style="display:none; padding: 1.25rem; background: #f0fdf4; border-radius: 12px; border: 1px solid #dcfce7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="git-branch" style="width: 16px;"></i> Árbol Genealógico / Sucesiones
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Testador Principal / De Cujus</label>
+                            <input type="text" class="form-input" name="familyMainTestator"
+                                placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Número de Herederos</label>
+                            <input type="number" class="form-input" name="familyHeirCount" value="1" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mapeo de Herederos (Parentesco-Nombre)</label>
+                        <textarea class="form-input" name="familyTreeData" rows="3"
+                            placeholder="Ej: Esposa-Maria Garcia&#10;Hijo 1-Carlos Perez&#10;Hija 2-Laura Perez"></textarea>
+                    </div>
+                </div>
+
+                <!-- specialized-interpreter -->
+                <div id="specialized-interpreter"
+                    style="display:none; padding: 1.25rem; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #1e40af; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="mic" style="width: 16px;"></i> Registro de Intérprete / Traducción Oral
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Nombre del Intérprete</label>
+                            <input type="text" class="form-input" name="interpName" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">ID / Licencia de Intérprete</label>
+                            <input type="text" class="form-input" name="interpLicense" placeholder="N° Certificación">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Idioma Origen</label>
+                            <input type="text" class="form-input" name="interpSourceLang" placeholder="Ej: Inglés">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Idioma Interpretado</label>
+                            <input type="text" class="form-input" name="interpTargetLang" placeholder="Ej: Español">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-apostille-control -->
+                <div id="specialized-apostille-control"
+                    style="display:none; padding: 1.25rem; background: #fdf4ff; border-radius: 12px; border: 1px solid #fae8ff; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #86198f; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="stamp" style="width: 16px;"></i> Control de Sellos / Apostillas Físicas
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Certificado de Apostilla</label>
+                            <input type="text" class="form-input" name="apostilleCertNum" placeholder="Ej: A-12345678">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Estado / Entidad Emisora</label>
+                            <input type="text" class="form-input" name="apostilleState" placeholder="Ej: Florida, USA">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sello Físico / ID de Rastreo del Estado</label>
+                        <input type="text" class="form-input" name="apostilleStampId"
+                            placeholder="ID de seguridad del sello">
+                    </div>
+                </div>
+
+                <!-- specialized-shipping-cost -->
+                <div id="specialized-shipping-cost"
+                    style="display:none; padding: 1.25rem; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #475569; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="truck" style="width: 16px;"></i> Calculadora de Costos de Envío
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Carrier / Transportadora</label>
+                            <select class="form-input" name="shipCarrier">
+                                <option value="UPS">UPS</option>
+                                <option value="FedEx">FedEx</option>
+                                <option value="DHL">DHL</option>
+                                <option value="USPS">USPS</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Costo Estimado ($)</label>
+                            <input type="number" class="form-input" name="shipCost" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Número de Tracking</label>
+                        <input type="text" class="form-input" name="shipTrackingNum" placeholder="N° de seguimiento">
+                    </div>
+                </div>
+
+                <!-- specialized-subpoena -->
+                <div id="specialized-subpoena"
+                    style="display:none; padding: 1.25rem; background: #fff1f2; border-radius: 12px; border: 1px solid #ffe4e6; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #be123c; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="gavel" style="width: 16px;"></i> Módulo de Citaciones (Subpoena)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Número de Caso Judicial</label>
+                            <input type="text" class="form-input" name="subpoenaCaseNum" placeholder="Ej: CV-2024-99">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Corte / Jurisdicción</label>
+                            <input type="text" class="form-input" name="subpoenaCourt"
+                                placeholder="Ej: Miami Dade County">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Comparecencia / Deposición</label>
+                        <input type="datetime-local" class="form-input" name="subpoenaDate">
+                    </div>
+                </div>
+
+                <!-- specialized-digital-archive -->
+                <div id="specialized-digital-archive"
+                    style="display:none; padding: 1.25rem; background: #fdfaf1; border-radius: 12px; border: 1px solid #fef3c7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #92400e; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="database" style="width: 16px;"></i> Archivo Muerto Digital (Larga Duración)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Periodo de Retención (Años)</label>
+                            <input type="number" class="form-input" name="archiveDuration" value="10" min="1">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Expiración de Custodia</label>
+                            <input type="date" class="form-input" name="archiveRetentionExp">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Identificador de Caja / Almacén Físico</label>
+                        <input type="text" class="form-input" name="archiveBoxId" placeholder="Ej: CAJA-DIG-2024-88">
+                    </div>
+                </div>
+
+                <!-- specialized-restricted-location -->
+                <div id="specialized-restricted-location"
+                    style="display:none; padding: 1.25rem; background: #f0f9ff; border-radius: 12px; border: 1px solid #e0f2fe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #075985; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="building-2" style="width: 16px;"></i> Firma en Sitios Restringidos
+                        (Hospitales/Cárceles)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tipo de Instalación</label>
+                            <select class="form-input" name="restrictedFacilityType">
+                                <option value="Hospital">Hospital / Centro Médico</option>
+                                <option value="Jail">Cárcel / Centro de Detención</option>
+                                <option value="Nursing Home">Asilo / Residencia de Ancianos</option>
+                                <option value="Other">Otro Sitio Restringido</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Persona de Contacto / Trabajador Social</label>
+                            <input type="text" class="form-input" name="restrictedContactPerson"
+                                placeholder="Nombre y cargo">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Permiso / Ticket de Entrada</label>
+                            <input type="text" class="form-input" name="restrictedEntryPermit"
+                                placeholder="Ej: PERM-4500">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Horario de Visita Programado</label>
+                            <input type="datetime-local" class="form-input" name="restrictedVisitationTime">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-legal-referral -->
+                <div id="specialized-legal-referral"
+                    style="display:none; padding: 1.25rem; background: #fdf2f8; border-radius: 12px; border: 1px solid #fce7f3; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9d174d; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="award" style="width: 16px;"></i> Gestión de Referidos Legales / Comisiones
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Abogado / Bufete Referente</label>
+                            <input type="text" class="form-input" name="referralAttorney"
+                                placeholder="Nombre del abogado">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Comisión Pactada (%)</label>
+                            <input type="number" class="form-input" name="referralCommissionRate" value="10" min="0"
+                                max="100">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado de Pago de Comisión</label>
+                        <select class="form-input" name="referralPaymentStatus">
+                            <option value="Pending">Pendiente</option>
+                            <option value="Paid">Pagado</option>
+                            <option value="N/A">No Aplica</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- specialized-blank-space-check -->
+                <div id="specialized-blank-space-check"
+                    style="display:none; padding: 1.25rem; background: #f0fdfa; border-radius: 12px; border: 1px solid #ccfbf1; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #115e59; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shield-check" style="width: 16px;"></i> Módulo de Detección de Firmas en Blanco
+                    </h4>
+                    <p style="font-size: 0.8rem; color: #0d9488; margin-bottom: 1rem;">
+                        Cumplimiento legal: El notario ha verificado que no existen espacios vacíos que puedan ser
+                        alterados posteriormente.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label"
+                                style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="blankSpaceVerified" value="true">
+                                Verificación de Espacios Vacíos Realizada
+                            </label>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label"
+                                style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="blankLineCrossed" value="true">
+                                Líneas de Seguridad Cruzadas (N/A)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notas de Integridad del Documento</label>
+                        <textarea class="form-input" name="blankSpaceNotes" rows="2"
+                            placeholder="Ej: Se cruzaron 3 líneas vacías en la página 4"></textarea>
+                    </div>
+                </div>
+
+                <!-- specialized-eo-insurance -->
+                <div id="specialized-eo-insurance"
+                    style="display:none; padding: 1.25rem; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #1e40af; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shield" style="width: 16px;"></i> Registro de Seguro E&O (Errores y Omisiones)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Compañía Aseguradora</label>
+                            <input type="text" class="form-input" name="eoCompany"
+                                placeholder="Ej: NNA, Merchants Bond, etc.">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Monto de Cobertura ($)</label>
+                            <input type="number" class="form-input" name="eoCoverageAmount" placeholder="Ej: 25000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Póliza</label>
+                            <input type="text" class="form-input" name="eoPolicyNum" placeholder="Número de póliza">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Vencimiento de Póliza</label>
+                            <input type="date" class="form-input" name="eoExpiration">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-pro-bono -->
+                <div id="specialized-pro-bono"
+                    style="display:none; padding: 1.25rem; background: #f0fdf4; border-radius: 12px; border: 1px solid #dcfce7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="heart" style="width: 16px;"></i> Módulo de Notario Pro-Bono (Servicio Gratuito)
+                    </h4>
+                    <p style="font-size: 0.8rem; color: #16a34a; margin-bottom: 1rem;">
+                        Este registro se utiliza para fines de responsabilidad social y deducciones fiscales si aplica.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Razón del Servicio Pro-Bono</label>
+                            <select class="form-input" name="proBonoReason">
+                                <option value="Hardship">Dificultad Económica</option>
+                                <option value="Non-Profit">Organización Sin Fines de Lucro</option>
+                                <option value="Military/Senior">Militar / Adulto Mayor</option>
+                                <option value="Community">Servicio Comunitario</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Valor del Servicio Donado ($)</label>
+                            <input type="number" class="form-input" name="proBonoWaivedAmount"
+                                placeholder="Monto que se dejó de cobrar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-invalidated-stamp -->
+                <div id="specialized-invalidated-stamp"
+                    style="display:none; padding: 1.25rem; background: #fff1f2; border-radius: 12px; border: 1px solid #ffe4e6; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #9f1239; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="octagon-alert" style="width: 16px;"></i> Reporte de Sello Invalidado
+                        (Robo/Extravío)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Motivo de Invalidez</label>
+                            <select class="form-input" name="invalidStampReason">
+                                <option value="Lost">Extravío</option>
+                                <option value="Stolen">Robo</option>
+                                <option value="Damaged">Daño Reparable / Desgaste</option>
+                                <option value="Misuse">Reporte de Uso No Autorizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Sello Afectado</label>
+                            <input type="text" class="form-input" name="invalidStampId" placeholder="ID del sello">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha de Reporte al Estado</label>
+                            <input type="date" class="form-input" name="invalidStampReportDate">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Caso Policial (Si aplica)</label>
+                            <input type="text" class="form-input" name="invalidStampPoliceReport" placeholder="Case #">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-holographic-seal -->
+                <div id="specialized-holographic-seal"
+                    style="display:none; padding: 1.25rem; background: #f5f3ff; border-radius: 12px; border: 1px solid #ede9fe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #5b21b6; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="sparkles" style="width: 16px;"></i> Gestión de Sellos Holográficos de Seguridad
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">N° de Serie Holográfico</label>
+                            <input type="text" class="form-input" name="holographicSerial"
+                                placeholder="Ej: HOLO-8899-X">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Tipo de Adhesivo</label>
+                            <select class="form-input" name="holographicType">
+                                <option value="Tamper Evident">Evidencia de Manipulación</option>
+                                <option value="Voiding">Destrucción al Despegar (Void)</option>
+                                <option value="Standard">Estándar de Seguridad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="holographicApplied" value="true">
+                            Confirmo que el sello ha sido aplicado correctamente sobre la firma/sello notarial
+                        </label>
+                    </div>
+                </div>
+
+                <!-- specialized-signing-analytics -->
+                <div id="specialized-signing-analytics"
+                    style="display:none; padding: 1.25rem; background: #fafaf9; border-radius: 12px; border: 1px solid #e7e5e4; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #44403c; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="timer" style="width: 16px;"></i> Analíticas de Tiempo de Firma
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Hora de Inicio Real</label>
+                            <input type="time" class="form-input" name="signingStartTime">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Hora de Finalización Real</label>
+                            <input type="time" class="form-input" name="signingEndTime">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Incidentes o Retrasos (Minutos)</label>
+                        <input type="number" class="form-input" name="signingDelayMins" placeholder="0">
+                    </div>
+                </div>
+
+                <!-- specialized-kinship-control -->
+                <div id="specialized-kinship-control"
+                    style="display:none; padding: 1.25rem; background: #fef2f2; border-radius: 12px; border: 1px solid #fee2e2; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #991b1b; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="users" style="width: 16px;"></i> Control de Parentesco y Conflicto de Interés
+                    </h4>
+                    <p style="font-size: 0.8rem; color: #b91c1c; margin-bottom: 1rem;">
+                        Certificación de independencia: El notario declara no tener vínculos prohibidos con los
+                        comparecientes.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Grado de Parentesco (Si existe)</label>
+                            <select class="form-input" name="kinshipDegree">
+                                <option value="None">Ninguno (Independiente)</option>
+                                <option value="1st Degree">1er Grado (Padres/Hijos)</option>
+                                <option value="2nd Degree">2do Grado (Abuelos/Nietos/Hermanos)</option>
+                                <option value="3rd Degree">3er Grado (Tíos/Sobrinos)</option>
+                                <option value="Affinity">Afinidad (Cónyuge/Políticos)</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Interés Económico Directo</label>
+                            <select class="form-input" name="economicInterest">
+                                <option value="No">No (Sin conflicto)</option>
+                                <option value="Yes">Sí (Conflicto detectado)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="kinshipVerified" value="true">
+                            Declaro bajo juramento que no existe impedimento legal para actuar en este instrumento.
+                        </label>
+                    </div>
+                </div>
+
+                <!-- specialized-secure-courier -->
+                <div id="specialized-secure-courier"
+                    style="display:none; padding: 1.25rem; background: #fffbeb; border-radius: 12px; border: 1px solid #fef3c7; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #92400e; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="package" style="width: 16px;"></i> Gestión de Encomiendas (Entrega Segura)
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Persona que Retira</label>
+                            <input type="text" class="form-input" name="courierPerson" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">ID de Bolsa de Seguridad</label>
+                            <input type="text" class="form-input" name="courierBagId" placeholder="N° de Precinto">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Identificación Verificada</label>
+                            <select class="form-input" name="courierIdVerified">
+                                <option value="Yes">Sí (Identidad confirmada)</option>
+                                <option value="No">No (Pendiente)</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Fecha/Hora de Despacho</label>
+                            <input type="datetime-local" class="form-input" name="courierDispatchTime">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- specialized-state-requirements -->
+                <div id="specialized-state-requirements"
+                    style="display:none; padding: 1.25rem; background: #f0f9ff; border-radius: 12px; border: 1px solid #e0f2fe; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.9rem; font-weight: 700; color: #075985; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="book-open-check" style="width: 16px;"></i> Cumplimiento de Requisitos Estatales
+                    </h4>
+                    <p style="font-size: 0.8rem; color: #0369a1; margin-bottom: 1rem;">
+                        Asegúrese de cumplir con las últimas regulaciones de su jurisdicción para este tipo de acto.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label class="form-label">Estado / Jurisdicción</label>
+                            <input type="text" class="form-input" name="stateJurisdiction"
+                                placeholder="Ej: Florida, New York...">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="form-label">Requisito Específico Aplicado</label>
+                            <select class="form-input" name="stateAppliedReq">
+                                <option value="Stamp Placement">Ubicación de Sello Obligatoria</option>
+                                <option value="Verbal Oath">Juramento Verbal Obligatorio</option>
+                                <option value="Journal Entry">Entrada de Diario Detallada</option>
+                                <option value="Witness Req">Requisitos de Testigos Específicos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="stateLawsChecked" value="true">
+                            He verificado la guía de leyes vigentes para este trámite hoy.
+                        </label>
+                    </div>
+                </div>
+
                 <div id="case-custom-fields-container"
                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;"></div>
 
@@ -1676,6 +2715,11 @@
                         <a href="https://www.hcch.net/en/instruments/conventions/status-table/?cid=41" target="_blank"
                             style="color: var(--color-primary);">Ver tabla de estados</a>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-purple btn-block"
+                        style="margin-top: 1rem; justify-content: center; gap: 8px;"
+                        onclick="NotaryCRM.openModal('hague-convention-modal')">
+                        <i data-lucide="search" style="width: 14px;"></i> Verificar Miembro (Haya)
+                    </button>
                 </div>
 
                 <!-- Specialized Section: Loan Signing (LSA) -->
@@ -1709,11 +2753,20 @@
                         Testigos Requeridos
                     </label>
                     <div id="witness-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: start;">
                             <input type="text" class="form-input" name="witness1" placeholder="Nombre Testigo 1"
                                 style="flex: 2;">
                             <input type="text" class="form-input" name="witness1_id" placeholder="ID/Licencia"
                                 style="flex: 1;">
+                            <button type="button" class="btn btn-outline-purple" style="padding: 0 10px; height: 38px;"
+                                onclick="NotaryCRM.openModal('witness-directory-modal');"
+                                title="Buscar Testigo Profesional">
+                                <i data-lucide="book-user" style="width: 18px;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" style="padding: 0 10px; height: 38px;"
+                                onclick="witnessManager.checkConflict()" title="Verificar Conflicto de Interés">
+                                <i data-lucide="shield-alert" style="width: 18px;"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2324,8 +3377,8 @@
                                 <h4 style="font-size: 0.9rem; color: #64748b; margin-bottom: 0.5rem;">Horario de
                                     Atención</h4>
                                 <div style="font-size: 0.9rem; color: #334155;">
-                                    <strong>Lun - Vie:</strong> 9:00 AM - 6:00 PM<br>
-                                    <strong>Sáb:</strong> 10:00 AM - 2:00 PM<br>
+                                    <strong>Lun-Vie:</strong> 9:00 AM-6:00 PM<br>
+                                    <strong>Sáb:</strong> 10:00 AM-2:00 PM<br>
                                     <strong>Dom:</strong> Cerrado
                                 </div>
                             </div>
@@ -3194,13 +4247,309 @@
                         id="paper-stock-count">0</div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Rango de Folios (Inicio - Fin)</label>
+                    <label class="form-label">Rango de Folios (Inicio-Fin)</label>
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="number" class="form-input" id="paper-start" placeholder="0001">
                         <input type="number" class="form-input" id="paper-end" placeholder="0100">
                     </div>
                 </div>
                 <button class="btn btn-primary btn-block" onclick="NotaryCRM.addPaperStock()">Cargar Inventario</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Witness Directory Modal -->
+    <div class="modal" id="witness-directory-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('witness-directory-modal')"></div>
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Directorio de Testigos Profesionales</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('witness-directory-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="text" class="form-input" id="witness-search" placeholder="Buscar por nombre o ID..."
+                        oninput="witnessManager.render()">
+                    <button class="btn btn-primary" onclick="NotaryCRM.openModal('add-witness-modal')">
+                        <i data-lucide="plus" style="width: 18px;"></i> Nuevo Testigo
+                    </button>
+                </div>
+                <div id="witness-list-container" style="max-height: 400px; overflow-y: auto;">
+                    <!-- List items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Witness Modal -->
+    <div class="modal" id="add-witness-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('add-witness-modal')"></div>
+        <div class="modal-content" style="max-width: 500px; z-index: 1001;">
+            <div class="modal-header">
+                <h3 class="modal-title">Registrar Testigo Profesional</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('add-witness-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form class="modal-body" id="add-witness-form"
+                onsubmit="event.preventDefault(); witnessManager.save(this);">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-input" name="name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label class="form-label">Tipo de ID</label>
+                        <select class="form-input" name="idType">
+                            <option value="Licencia">Licencia Conducir</option>
+                            <option value="Pasaporte">Pasaporte</option>
+                            <option value="ID Estatal">ID Estatal</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label">Número de ID</label>
+                        <input type="text" class="form-input" name="idNumber" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label">Teléfono / Contacto</label>
+                    <input type="text" class="form-input" name="phone">
+                </div>
+                <button class="btn btn-primary btn-block" style="margin-top: 1.5rem;">Guardar Testigo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Biometric Capture Modal -->
+    <div class="modal" id="biometric-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('biometric-modal')"></div>
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header" style="border-bottom: none;">
+                <h3 class="modal-title" style="text-align: center; width: 100%;">Captura de Huella Biométrica</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('biometric-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding-bottom: 2rem;">
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 2rem;">Coloque el dedo del cliente sobre el
+                    lector USB conectado.</p>
+
+                <div id="fingerprint-scanner-vfx"
+                    style="width: 150px; height: 200px; margin: 0 auto; background: #f1f5f9; border-radius: 20px; border: 4px solid #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                    <i data-lucide="fingerprint" id="fingerprint-icon"
+                        style="width: 80px; height: 80px; color: #cbd5e1; transition: all 0.5s;"></i>
+                    <div id="scanner-laser"
+                        style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 15px #3b82f6; animation: scanLaser 2s infinite linear;">
+                    </div>
+                </div>
+
+                <div id="biometric-status" style="margin-top: 1.5rem; font-weight: 700; color: #64748b;">DISPOSITIVO
+                    LISTO</div>
+
+                <div id="biometric-data-preview"
+                    style="display: none; margin-top: 1.5rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; font-size: 0.85rem;">
+                    <i data-lucide="check-circle" style="width: 16px; margin-right: 4px;"></i> Huella capturada y
+                    encriptada correctamente.
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button class="btn btn-outline" style="flex: 1;"
+                        onclick="biometricManager.reset()">Reiniciar</button>
+                    <button class="btn btn-primary" id="btn-start-scan" style="flex: 1;"
+                        onclick="biometricManager.startScan()">Iniciar Escaneo</button>
+                    <button class="btn btn-success" id="btn-save-biometric" style="display: none; flex: 1;"
+                        onclick="biometricManager.save()">Guardar Registro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes scanLaser {
+            0% {
+                top: 0;
+            }
+
+            50% {
+                top: 100%;
+            }
+
+            100% {
+                top: 0;
+            }
+        }
+
+        .scanning {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+
+    <!-- Mileage Log Modal -->
+    <div class="modal" id="mileage-log-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('mileage-log-modal')"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Log de Kilometraje Notarial</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('mileage-log-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Deducción Fiscal Estimada
+                        </div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #0f172a;" id="mileage-total-deduction">
+                            $0.00</div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Basado en tarifa IRS 2024
+                            ($0.67/mi)</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.85rem; color: #64748b;">Millas Totales</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;" id="mileage-total-miles">0.0
+                        </div>
+                    </div>
+                </div>
+                <div id="mileage-list-container" style="max-height: 350px; overflow-y: auto;">
+                    <!-- Mileage entries from cases -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credential Validator Modal -->
+    <div class="modal" id="credential-validator-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('credential-validator-modal')"></div>
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Validador de Credenciales Notariales</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('credential-validator-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="credential-status-card"
+                    style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 2rem;">
+                    <div
+                        style="background: #3b82f6; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                        <i data-lucide="shield-check" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">Estado de la Comisión</h4>
+                    <div id="commission-info-display" style="font-weight: 700; font-size: 1.1rem; color: #0c4a6e;">No
+                        configurada</div>
+                </div>
+
+                <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; color: #475569;">Verificación
+                    Externa (Secretary of State)</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <button class="btn btn-sm btn-outline" style="justify-content: space-between;"
+                        onclick="window.open('https://notaries.dos.state.fl.us/not001.html', '_blank')">Florida <i
+                            data-lucide="external-link" style="width: 14px;"></i></button>
+                    <button class="btn btn-sm btn-outline" style="justify-content: space-between;"
+                        onclick="window.open('https://search.txsos.gov/cp.aspx', '_blank')">Texas <i
+                            data-lucide="external-link" style="width: 14px;"></i></button>
+                    <button class="btn btn-sm btn-outline" style="justify-content: space-between;"
+                        onclick="window.open('https://newsos.ca.gov/notary/search', '_blank')">California <i
+                            data-lucide="external-link" style="width: 14px;"></i></button>
+                    <button class="btn btn-sm btn-outline" style="justify-content: space-between;"
+                        onclick="window.open('https://direct.sos.state.ga.us/notary/search/NotarySearch.asp', '_blank')">Georgia
+                        <i data-lucide="external-link" style="width: 14px;"></i></button>
+                </div>
+
+                <div
+                    style="margin-top: 2rem; padding: 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; font-size: 0.8rem;">
+                    <i data-lucide="info"
+                        style="width: 16px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+                    La validación oficial debe realizarse directamente en el portal del Secretary of State
+                    correspondiente a su jurisdicción.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fee Calculator Modal -->
+    <div class="modal" id="fee-calculator-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('fee-calculator-modal')"></div>
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Calculadora de Honorarios Legales</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('fee-calculator-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Tarifa por Acto (Estado)</label>
+                    <select class="form-input" id="fee-state-rate" onchange="FeeCalculatorManager.calculate()">
+                        <option value="10">Florida ($10.00)</option>
+                        <option value="6">Texas ($6.00)</option>
+                        <option value="15">California ($15.00)</option>
+                        <option value="5">Georgia ($5.00)</option>
+                        <option value="custom">Otro (Manual)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="custom-rate-group" style="display:none;">
+                    <label class="form-label">Tarifa Manual ($)</label>
+                    <input type="number" class="form-input" id="fee-custom-rate" value="10"
+                        oninput="FeeCalculatorManager.calculate()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Número de Actos / Firmas</label>
+                    <input type="number" class="form-input" id="fee-count" value="1" min="1"
+                        oninput="FeeCalculatorManager.calculate()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cargos Adicionales (Viaje, etc. $)</label>
+                    <input type="number" class="form-input" id="fee-extra" value="0"
+                        oninput="FeeCalculatorManager.calculate()">
+                </div>
+
+                <div
+                    style="background: #f1f5f9; padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center;">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Honorarios Totales Estimados
+                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary);"
+                        id="fee-total-display">$0.00</div>
+                </div>
+
+                <button class="btn btn-primary btn-block" style="margin-top: 1.5rem;"
+                    onclick="FeeCalculatorManager.apply()">Aplicar al Expediente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hague Convention Modal -->
+    <div class="modal" id="hague-convention-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('hague-convention-modal')"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Verificador de Convención de la Haya</h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('hague-convention-modal')"
+                    style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Buscar País</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" class="form-input" id="hague-search-input"
+                            placeholder="Ej: Argentina, USA, España..." oninput="HagueManager.search(this.value)">
+                    </div>
+                </div>
+
+                <div id="hague-result-container"
+                    style="min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 2rem; background: #f8fafc;">
+                    <i data-lucide="globe" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;"></i>
+                    <p style="color: #64748b;">Ingrese el nombre de un país para verificar si es miembro de la
+                        Convención.</p>
+                </div>
+
+                <div style="margin-top: 1.5rem; font-size: 0.8rem; color: #64748b; line-height: 1.4;">
+                    <p><strong>¿Qué significa?</strong></p>
+                    <ul style="padding-left: 1.2rem; margin-top: 4px;">
+                        <li><strong>Miembro:</strong> Solo requiere una <strong>Apostilla</strong> estatal o federal.
+                        </li>
+                        <li><strong>No Miembro:</strong> Requiere <strong>Legalización Consular</strong> (proceso más
+                            largo).</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

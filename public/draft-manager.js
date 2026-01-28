@@ -126,7 +126,7 @@ const DraftManager = {
         Object.keys(drafts).forEach(key => {
             const draft = drafts[key];
             const draftDate = new Date(draft.timestamp);
-            if (now - draftDate > SEVEN_DAYS) {
+            if (now - draftDate> SEVEN_DAYS) {
                 delete drafts[key];
             }
         });

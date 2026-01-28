@@ -6,7 +6,7 @@ const FAQ_DATABASE = {
         { q: "¿Mis datos están respaldados?", a: "Sí, realizamos copias de seguridad automáticas diarias en servidores encriptados de Google Cloud." },
         { q: "¿Cómo cambio el idioma?", a: "Actualmente el sistema está predeterminado en español, pero soporta detección automática de locale para ciertas funciones como fechas." },
         { q: "¿Puedo tener múltiples usuarios?", a: "El plan actual es de usuario único (Propietario). Para funciones multi-usuario, contacte a soporte para un plan Enterprise." },
-        { q: "¿Cómo actualizo mi perfil?", a: "Vaya a 'Configuración' > 'Perfil' para actualizar su nombre, foto y detalles de contacto profesional." },
+        { q: "¿Cómo actualizo mi perfil?", a: "Vaya a 'Configuración'> 'Perfil' para actualizar su nombre, foto y detalles de contacto profesional." },
         { q: "¿El sistema funciona sin internet?", a: "Notary CRM requiere una conexión activa a internet para sincronizar datos en tiempo real, aunque tiene capacidades limitadas de caché offline." },
         { q: "¿Cómo reporto un error?", a: "Use la pestaña 'Soporte Técnico' en este mismo modal para enviar un ticket directo a nuestro equipo de desarrollo." },
         { q: "¿Puedo exportar todos mis datos?", a: "Sí, los administradores pueden solicitar una exportación completa de la base de datos en formato JSON o CSV desde el panel de control." },
@@ -68,7 +68,7 @@ const FAQ_DATABASE = {
     technical: [
         { q: "¿Cómo contacto a soporte?", a: "Use el formulario en la pestaña 'Soporte' de este modal o escriba a support@notaryomni.com." },
         { q: "¿Qué hago si la pantalla se congela?", a: "Intente recargar la página (F5 o Ctrl+R). Si persiste, borre la caché de su navegador." },
-        { q: "¿Cómo borro la caché?", a: "En Chrome: Ctrl+Shift+Supr > Imágenes y archivos en caché > Borrar datos." },
+        { q: "¿Cómo borro la caché?", a: "En Chrome: Ctrl+Shift+Supr> Imágenes y archivos en caché > Borrar datos." },
         { q: "¿El sistema es lento, qué hago?", a: "Verifique su conexión a internet. El sistema optimiza la carga, pero una red inestable puede afectar el rendimiento." },
         { q: "¿Funciona en Safari de Mac?", a: "Sí, es totalmente compatible con Safari versión 14 en adelante." },
         { q: "¿Puedo usarlo en una tablet?", a: "Sí, la interfaz se adapta perfectamente a iPads y tablets Android en orientación horizontal." },

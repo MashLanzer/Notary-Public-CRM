@@ -252,7 +252,7 @@ const ImageOptimizer = {
                     let height = img.height;
 
                     // Calculate new dimensions
-                    if (width > maxWidth || height > maxHeight) {
+                    if (width> maxWidth || height> maxHeight) {
                         const ratio = Math.min(maxWidth / width, maxHeight / height);
                         width *= ratio;
                         height *= ratio;

@@ -58,6 +58,18 @@ service cloud.firestore {
       allow read, update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
+    // Settings (Custom Fields, etc.)
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn(); // Allow initialization by first user, ideally restricted to admin in production
+    }
+
+    // Professional Witnesses Directory
+    match /witnesses/{witnessId} {
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+
     // Audit Logs
     match /audit_logs/{logId} {
       allow create: if isSignedIn();

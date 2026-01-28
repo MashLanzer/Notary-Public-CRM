@@ -41,7 +41,7 @@ const AdvancedFeatures = {
         const collaborators = this.collaborators.get(caseId) || [];
 
         let indicator = card.querySelector('.collaborators-indicator');
-        if (!indicator && collaborators.length > 0) {
+        if (!indicator && collaborators.length> 0) {
             indicator = document.createElement('div');
             indicator.className = 'collaborators-indicator';
             indicator.style.cssText = `
@@ -336,7 +336,7 @@ const AdvancedFeatures = {
         points.unshift(point);
 
         // Keep only last 10 recovery points
-        if (points.length > 10) {
+        if (points.length> 10) {
             points.splice(10);
         }
 

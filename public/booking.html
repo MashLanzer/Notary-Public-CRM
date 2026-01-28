@@ -318,7 +318,7 @@
             });
 
             // Empty slots before first day
-            for (let i = 0; i < firstDay.getDay(); i++) {
+            for (let i = 0; i <firstDay.getDay(); i++) {
                 grid.appendChild(document.createElement('div'));
             }
 
@@ -337,7 +337,7 @@
 
                 const isBlocked = blockedDates.includes(dateStr);
 
-                if (checkDate < today || checkDate.getDay() === 0 || checkDate.getDay() === 6 || isBlocked) {
+                if (checkDate <today || checkDate.getDay() === 0 || checkDate.getDay() === 6 || isBlocked) {
                     dayDiv.classList.add('disabled');
                     if (isBlocked) {
                         dayDiv.style.backgroundColor = '#fee2e2';
@@ -351,7 +351,7 @@
 
                 // Check if fully booked
                 const daysAppts = appointments.filter(a => a.date === dateStr);
-                if (daysAppts.length >= 8) dayDiv.classList.add('disabled');
+                if (daysAppts.length>= 8) dayDiv.classList.add('disabled');
 
                 grid.appendChild(dayDiv);
             }
@@ -447,7 +447,7 @@
                     const lastBooking = localStorage.getItem('active_booking');
                     if (lastBooking) {
                         const booking = JSON.parse(lastBooking);
-                        if (new Date(booking.date) >= new Date().setHours(0, 0, 0, 0) && booking.status !== 'cancelled') {
+                        if (new Date(booking.date)>= new Date().setHours(0, 0, 0, 0) && booking.status !== 'cancelled') {
                             alert('Ya tienes una cita pendiente. No puedes agendar otra hasta completarla.');
                             btn.disabled = false;
                             btn.textContent = 'Confirmar Cita';
@@ -461,7 +461,7 @@
                     const snapshot = await getDocs(q);
                     const hasActive = snapshot.docs.some(doc => {
                         const data = doc.data();
-                        return data.date >= todayStr && data.status !== 'cancelled';
+                        return data.date>= todayStr && data.status !== 'cancelled';
                     });
 
                     if (hasActive) {
@@ -585,7 +585,7 @@
 
         // Navigation listeners
         document.getElementById('prev-month').onclick = () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+            currentDate.setMonth(currentDate.getMonth()-1);
             renderCalendar();
         };
         document.getElementById('next-month').onclick = () => {
