@@ -154,8 +154,46 @@ const CalendarEnhancements = {
                         }
                     },
                     eventClick: (info) => {
-                        const appt = info.event.extendedProps;
-                        if (appt && appt.id) NotaryCRM.openEditModal(appt.id);
+                        const appt = info.event.extendedProps || {};
+                        // Open quick-edit modal and populate fields
+                        const modalId = 'event-quick-edit-modal';
+                        NotaryCRM.openModal(modalId);
+                        const hid = document.getElementById('quick-edit-id');
+                        const statusSel = document.getElementById('quick-edit-status');
+                        const prioSel = document.getElementById('quick-edit-priority');
+                        const noteInput = document.getElementById('quick-edit-note');
+                        if (hid) hid.value = appt.id || info.event.id || '';
+                        if (statusSel) statusSel.value = (appt.status || 'pending').toString();
+                        if (prioSel) prioSel.value = (appt.priority || 'Low').toString();
+                        if (noteInput) noteInput.value = appt.note || '';
+
+                        const saveBtn = document.getElementById('quick-edit-save');
+                        if (saveBtn) {
+                            saveBtn.onclick = () => {
+                                const id = document.getElementById('quick-edit-id').value;
+                                const status = document.getElementById('quick-edit-status').value;
+                                const priority = document.getElementById('quick-edit-priority').value;
+                                const note = document.getElementById('quick-edit-note').value;
+
+                                const appts = window.NotaryCRM.state.appointments || [];
+                                const idx = appts.findIndex(a => (a.id || a._id || '') === (id || info.event.id));
+                                if (idx > -1) {
+                                    appts[idx].status = status;
+                                    appts[idx].priority = priority;
+                                    appts[idx].note = note;
+                                } else {
+                                    // fallback: update extendedProps if in-memory only
+                                    info.event.setExtendedProp('status', status);
+                                    info.event.setExtendedProp('priority', priority);
+                                    info.event.setExtendedProp('note', note);
+                                }
+
+                                // Close modal and refresh calendar view
+                                NotaryCRM.closeModal(modalId);
+                                if (window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+                                Toast.success('Actualizado', 'Cita actualizada correctamente');
+                            };
+                        }
                     },
                     eventDrop: (info) => {
                         const ev = info.event;

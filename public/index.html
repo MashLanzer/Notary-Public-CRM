@@ -3179,6 +3179,50 @@
         </div>
     </div>
 
+    <!-- Event Quick Edit Modal -->
+    <div class="modal" id="event-quick-edit-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('event-quick-edit-modal')"></div>
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Rápido de Cita</h3>
+                <button class="modal-close" data-modal="event-quick-edit-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="quick-edit-id">
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select id="quick-edit-status" class="form-input">
+                        <option value="confirmed">Confirmada</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="cancelled">Cancelada</option>
+                        <option value="no-show">No-show</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prioridad</label>
+                    <select id="quick-edit-priority" class="form-input">
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nota rápida</label>
+                    <input id="quick-edit-note" class="form-input" placeholder="Nota breve...">
+                </div>
+                <div style="display:flex; gap:8px; margin-top:1rem;">
+                    <button class="btn btn-primary" id="quick-edit-save">Guardar</button>
+                    <button class="btn" onclick="NotaryCRM.closeModal('event-quick-edit-modal')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Client Details Modal -->
     <div class="modal" id="client-details-modal">
         <div class="modal-backdrop" onclick="NotaryCRM.closeModal('client-details-modal')"></div>
