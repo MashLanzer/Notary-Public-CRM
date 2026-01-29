@@ -65,6 +65,8 @@
                 </div>
             </div>
         </div>
+                <!-- Advanced Case Details Modal (Tabbed) -->
+                <!-- (moved to end of body to avoid stacking context issues) -->
     </div>
 
     <!-- Header -->
@@ -319,22 +321,6 @@
                             </div>
                         </div>
 
-                        <!-- Mileage Tracking (NEW) -->
-                        <div class="stat-card"
-                            style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
-                            <div class="stat-content">
-                                <div>
-                                    <p class="stat-label" style="color: #94a3b8;">Deducción (Millas)</p>
-                                    <p class="stat-value" id="dash-mileage-deduction" style="color: #38bdf8;">$0.00</p>
-                                    <p style="font-size: 0.7rem; opacity: 0.7; margin-top: 4px;" id="dash-total-miles">0
-                                        total mi</p>
-                                </div>
-                                <div class="stat-icon-wrapper"
-                                    style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 12px; color: #38bdf8;">
-                                    <i data-lucide="map"></i>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Revenue -->
                         <div class="stat-card" data-widget-id="total-revenue">
@@ -390,6 +376,72 @@
                                         <path d="M6 20v-4" />
                                     </svg>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary KPIs Row (Mileage & Business Health) -->
+                <div class="stats-grid" id="dashboard-secondary-stats"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+
+                    <!-- Mileage Deduction -->
+                    <div class="stat-card" data-widget-id="mileage-tracking">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Deducción (Millas)</p>
+                                <div style="display: flex; align-items: baseline; gap: 8px;">
+                                    <p class="stat-value" id="dash-mileage-deduction" style="color: #0ea5e9;">$0.00</p>
+                                    <p style="font-size: 0.75rem; color: #64748b; font-weight: 500;"
+                                        id="dash-total-miles">0 total mi</p>
+                                </div>
+                            </div>
+                            <div class="stat-icon-wrapper"
+                                style="background: #f0f9ff; padding: 10px; border-radius: 12px; color: #0ea5e9;">
+                                <i data-lucide="map"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Net Income (Estimated) -->
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Ganancia Neta (Est.)</p>
+                                <p class="stat-value" id="dash-net-income" style="color: #10b981;">$0.00</p>
+                            </div>
+                            <div class="stat-icon-wrapper"
+                                style="background: #f0fdf4; padding: 10px; border-radius: 12px; color: #10b981;">
+                                <i data-lucide="banknote"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Service -->
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Servicio Principal</p>
+                                <p class="stat-value" id="dash-top-service"
+                                    style="font-size: 1.1rem; font-weight: 700;">-</p>
+                            </div>
+                            <div class="stat-icon-wrapper"
+                                style="background: #eef2ff; padding: 10px; border-radius: 12px; color: #6366f1;">
+                                <i data-lucide="award"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Signed (Formerly hidden element) -->
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div>
+                                <p class="stat-label">Total Firmados</p>
+                                <p class="stat-value" id="dash-signed-count">0</p>
+                            </div>
+                            <div class="stat-icon-wrapper"
+                                style="background: #fdf2f8; padding: 10px; border-radius: 12px; color: #ec4899;">
+                                <i data-lucide="pen-tool"></i>
                             </div>
                         </div>
                     </div>
@@ -784,7 +836,8 @@
                                         <th>Tipo de Acto</th>
                                         <th>Firmante</th>
                                         <th>Identificación</th>
-                                        <th>Testigos</th>
+                                        <th>Firma</th>
+                                        <th>Huella</th>
                                         <th>Honorarios</th>
                                         <th style="text-align:right;">Ref.</th>
                                     </tr>
@@ -1747,6 +1800,25 @@
                     <label class="form-label">Description / Internal Notes</label>
                     <textarea class="form-input" name="description" rows="2" placeholder="Case details..."
                         required></textarea>
+                </div>
+
+                <!-- Official Records (Signature & Fingerprint) -->
+                <div
+                    style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <h4
+                        style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="shield-check" style="width: 16px;"></i> Registros Oficiales (Diario)
+                    </h4>
+                    <div style="display: flex; gap: 2rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="hasDigitalSignature"> Firma Capturada
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" name="hasFingerprint"> Huella Dactilar
+                        </label>
+                    </div>
                 </div>
 
                 <!-- specialized-apostille -->
@@ -3054,7 +3126,12 @@
                         <option value="Apostille">Apostilla</option>
                         <option value="Power of Attorney">Poder Notarial</option>
                         <option value="Affidavit">Declaración Jurada</option>
+                        <option value="Real Estate Deed">Escritura Inmobiliaria</option>
+                        <option value="Wills / Trusts">Testamentos / Fideicomisos</option>
+                        <option value="Certified Copies">Copias Certificadas</option>
+                        <option value="Oath / Affirmation">Juramento / Afirmación</option>
                         <option value="Loan Signing">Firma de Préstamos</option>
+                        <option value="Acknowledgment">Reconocimiento</option>
                         <option value="Other">Otro</option>
                     </select>
                 </div>
@@ -3751,6 +3828,16 @@
                         </div>
                         <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
                     </button>
+                    <button class="btn" onclick="NotaryCRM.openModal('calendar-sync-modal')"
+                        style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
+                        <i data-lucide="calendar" style="color: #6366f1;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">Sincronización de Calendarios</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Google Calendar, Outlook y más</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="margin-left: auto; width: 16px; height: 16px;"></i>
+                    </button>
+
                     <button class="btn" onclick="NotaryCRM.openModal('privacy-data-modal')"
                         style="display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem; background: white; border: 1px solid #e2e8f0; text-align: left;">
                         <i data-lucide="shield" style="color: #0ea5e9;"></i>
@@ -3922,6 +4009,72 @@
                         </div>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Sync Modal -->
+    <div class="modal" id="calendar-sync-modal" style="z-index: 5000;">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('calendar-sync-modal')"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 2rem;">
+                <h3 class="modal-title"
+                    style="color: white; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="calendar" style="width: 28px; height: 28px;"></i>
+                    Sincronización de Calendarios
+                </h3>
+                <button class="modal-close" onclick="NotaryCRM.closeModal('calendar-sync-modal')"
+                    style="color: white; opacity: 0.9;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <p style="color: #64748b; margin-bottom: 2rem; line-height: 1.6;">
+                    Conecta tu CRM con tus calendarios externos para que tus citas se sincronicen automáticamente en tu
+                    móvil y otros dispositivos.
+                </p>
+
+                <form id="calendar-sync-form" onsubmit="event.preventDefault(); NotaryCRM.saveCalendarSync(this);">
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label class="form-label" style="font-weight: 700; color: #1e293b;">Correo Electrónico para
+                            Sincronización</label>
+                        <div style="position: relative;">
+                            <i data-lucide="mail"
+                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #94a3b8;"></i>
+                            <input type="email" name="syncEmail" class="form-input" placeholder="ejemplo@google.com"
+                                required style="padding-left: 3rem; width: 100%;">
+                        </div>
+                        <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                            Las citas creadas en el CRM se enviarán a este calendario.
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <div
+                            style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"
+                                style="width: 24px;">
+                            <span style="font-weight: 600; color: #1e293b;">Google</span>
+                        </div>
+                        <div
+                            style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg"
+                                style="width: 24px;">
+                            <span style="font-weight: 600; color: #1e293b;">Outlook</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-outline"
+                            onclick="NotaryCRM.closeModal('calendar-sync-modal')" style="flex: 1;">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1; background: #4f46e5;">Guardar y
+                            Sincronizar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -4555,6 +4708,21 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Advanced Case Details Modal (Tabbed) -->
+    <div class="modal" id="case-advanced-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 900px; max-height: 92vh; overflow-y: auto;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <h3 class="modal-title">Detalle Completo del Expediente</h3>
+                </div>
+                <button class="modal-close" data-modal="case-advanced-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="case-advanced-container" style="padding:1.25rem;">
+                <!-- Tabbed content injected here -->
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <!-- FullCalendar -->
@@ -4587,4 +4755,26 @@
     <script type="module" src="app.js"></script>
 </body>
 
+    <!-- New Advanced Case Details Modal -->
+    <div class="modal" id="new-case-details-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+                <div style="display: flex; flex-direction: column;">
+                    <h3 class="modal-title" style="color: white;" id="new-detail-case-number">Expediente #---</h3>
+                    <span id="new-detail-case-status" class="badge" style="margin-top: 5px;">Status</span>
+                </div>
+                <button class="modal-close" data-modal="new-case-details-modal" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div id="new-case-details-content">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" style="flex: 1;" id="new-detail-edit-btn">Editar Expediente</button>
+                    <button class="btn btn-outline" style="flex: 1;" onclick="NotaryCRM.closeModal('new-case-details-modal')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </html>

@@ -3589,6 +3589,25 @@ body:not(.authenticated) {
     z-index: 11000 !important;
 }
 
+/* Modales secundarios (acciones rápidas) deben estar por encima del modal principal */
+#send-email-modal,
+#email-modal,
+#biometric-modal,
+#case-attachments-modal,
+#signature-modal,
+#payment-modal {
+    z-index: 12000 !important;
+}
+
+#send-email-modal .modal-content,
+#email-modal .modal-content,
+#biometric-modal .modal-content,
+#case-attachments-modal .modal-content,
+#signature-modal .modal-content,
+#payment-modal .modal-content {
+    z-index: 12001 !important;
+}
+
 /* ============================================
    COMMANDER MODE (TV VIEW)
    ============================================ */

@@ -381,6 +381,74 @@ const AdvancedCalendarFeatures = {
         link.download = filename;
         link.click();
         URL.revokeObjectURL(link.href);
+    },
+
+    syncToExternalCalendar(appointment) {
+        // Try to open a pre-filled Google Calendar event or download an .ics file
+        const syncCfg = window.NotaryCRM?.state?.calendarSync || {};
+        const syncEmail = syncCfg.email;
+
+        if (!appointment || !appointment.date || !appointment.time) return;
+
+        // Helper: build ISO dates and ICS-friendly strings
+        const buildDateTimes = (dateStr, timeStr, durationMinutes = 60) => {
+            // dateStr: YYYY-MM-DD, timeStr: HH:MM
+            const parts = timeStr.split(':');
+            const dt = new Date(dateStr + 'T' + (parts[0] || '00') + ':' + (parts[1] || '00') + ':00');
+            const end = new Date(dt.getTime() + durationMinutes * 60000);
+
+            const toICS = (d) => {
+                const pad = (n) => n.toString().padStart(2, '0');
+                return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'Z';
+            };
+
+            const toGCal = (d) => {
+                const pad = (n) => n.toString().padStart(2, '0');
+                return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00Z';
+            };
+
+            return { startDate: dt, endDate: end, icsStart: toICS(dt), icsEnd: toICS(end), gcalStart: toGCal(dt), gcalEnd: toGCal(end) };
+        };
+
+        const dt = buildDateTimes(appointment.date, appointment.time, appointment.durationMinutes || 60);
+
+        // If user has a calendar email configured and prefers quick-add to Google, open GCal template
+        if (syncCfg.method === 'google' || syncEmail) {
+            const title = encodeURIComponent(`Cita Notarial: ${appointment.clientName || ''}`);
+            const details = encodeURIComponent(`Servicio: ${appointment.type || ''}\nCliente: ${appointment.clientName || ''}`);
+            const dates = `${dt.gcalStart}/${dt.gcalEnd}`;
+            const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}` + (syncEmail ? `&add=${encodeURIComponent(syncEmail)}` : '');
+            window.open(gcalUrl, '_blank');
+            Toast.info('Sincronización', 'Se abrió Google Calendar para añadir la cita.');
+            return;
+        }
+
+        // Fallback: generate .ics and download it for manual import
+        const icsParts = [];
+        icsParts.push('BEGIN:VCALENDAR');
+        icsParts.push('VERSION:2.0');
+        icsParts.push('PRODID:-//Notary CRM//Calendar Export//EN');
+        icsParts.push('BEGIN:VEVENT');
+        icsParts.push(`UID:${appointment.id || Math.random().toString(36).slice(2)}@notarycrm`);
+        icsParts.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
+        icsParts.push(`DTSTART:${dt.icsStart}`);
+        icsParts.push(`DTEND:${dt.icsEnd}`);
+        icsParts.push(`SUMMARY:${(appointment.title || `Cita: ${appointment.clientName || ''}`).replace(/\n/g, ' ')}`);
+        if (appointment.type) icsParts.push(`DESCRIPTION:Servicio: ${appointment.type}`);
+        if (appointment.location) icsParts.push(`LOCATION:${appointment.location}`);
+        icsParts.push('STATUS:CONFIRMED');
+        icsParts.push('END:VEVENT');
+        icsParts.push('END:VCALENDAR');
+
+        const blob = new Blob([icsParts.join('\n')], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `appointment-${appointment.id || 'export'}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        Toast.info('Sincronización', 'Archivo .ics descargado para importar en tu calendario.');
     }
 };
 

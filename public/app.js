@@ -69,7 +69,7 @@ const Toast = {
         setTimeout(() => toast.classList.add('toast-show'), 10);
 
         // Auto dismiss
-        if (duration> 0) {
+        if (duration > 0) {
             const progressBar = toast.querySelector('.toast-progress');
             if (progressBar) {
                 progressBar.style.animationDuration = `${duration}ms`;
@@ -219,7 +219,7 @@ const FormValidator = {
 
         minLength: (min) => (value) => {
             if (!value) return { valid: true, message: '' };
-            const isValid = value.length>= min;
+            const isValid = value.length >= min;
             return {
                 valid: isValid,
                 message: isValid ? '' : `Mínimo ${min} caracteres`
@@ -247,7 +247,7 @@ const FormValidator = {
         min: (minValue) => (value) => {
             if (!value) return { valid: true, message: '' };
             const numValue = parseFloat(value);
-            const isValid = !isNaN(numValue) && numValue>= minValue;
+            const isValid = !isNaN(numValue) && numValue >= minValue;
             return {
                 valid: isValid,
                 message: isValid ? '' : `Valor mínimo: ${minValue}`
@@ -279,7 +279,7 @@ const FormValidator = {
             const date = new Date(value);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const isValid = date>= today;
+            const isValid = date >= today;
             return {
                 valid: isValid,
                 message: isValid ? '' : 'La fecha debe ser hoy o posterior'
@@ -463,8 +463,8 @@ const FormMasks = {
             if (input.dataset.maskApplied) return;
             input.addEventListener('input', (e) => {
                 let value = e.target.value.replace(/[^0-9.]/g, '');
-                const dots = value.split('.').length-1;
-                if (dots> 1) value = value.substring(0, value.lastIndexOf('.'));
+                const dots = value.split('.').length - 1;
+                if (dots > 1) value = value.substring(0, value.lastIndexOf('.'));
                 e.target.value = value;
             });
             input.addEventListener('blur', (e) => {
@@ -547,7 +547,7 @@ const DashboardManager = {
 
     applyConfig() {
         // Sort items by order
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
 
         const grid = document.getElementById('dashboard-stats-grid');
 
@@ -576,12 +576,12 @@ const DashboardManager = {
         if (!container) return;
 
         // Sort for display in modal
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
 
         container.innerHTML = sortedIds.map((id, index) => {
             const widget = this.config[id];
             const isFirst = index === 0;
-            const isLast = index === sortedIds.length-1;
+            const isLast = index === sortedIds.length - 1;
 
             return `
                 <div class="widget-toggle" data-id="${id}" style="display:flex; align-items:center; gap:1rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:0.5rem; margin-bottom:0.5rem;">
@@ -612,12 +612,12 @@ const DashboardManager = {
     },
 
     moveWidget(id, direction) {
-        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order-this.config[b].order);
+        const sortedIds = Object.keys(this.config).sort((a, b) => this.config[a].order - this.config[b].order);
         const currentIndex = sortedIds.indexOf(id);
         if (currentIndex === -1) return;
 
         const newIndex = currentIndex + direction;
-        if (newIndex < 0 || newIndex>= sortedIds.length) return;
+        if (newIndex < 0 || newIndex >= sortedIds.length) return;
 
         const swapId = sortedIds[newIndex];
 
@@ -1224,7 +1224,7 @@ const TimelineManager = {
         });
 
         // Sort by date desc
-        return events.sort((a, b) => new Date(b.date)-new Date(a.date));
+        return events.sort((a, b) => new Date(b.date) - new Date(a.date));
     },
 
     renderTimeline(events) {
@@ -1781,7 +1781,7 @@ const MileageManager = {
 
     openLog() {
         const container = document.getElementById('mileage-list-container');
-        const cases = (NotaryCRM.state.cases || []).filter(c => (parseFloat(c.mileage) || 0)> 0);
+        const cases = (NotaryCRM.state.cases || []).filter(c => (parseFloat(c.mileage) || 0) > 0);
 
         const totalMiles = cases.reduce((acc, c) => acc + (parseFloat(c.mileage) || 0), 0);
         const totalDeduction = totalMiles * this.IRS_RATE;
@@ -1827,7 +1827,7 @@ const ValidationManager = {
             const data = JSON.parse(dataStr);
             const expiry = new Date(data.expiry);
             const today = new Date();
-            const isValid = expiry> today;
+            const isValid = expiry > today;
 
             if (infoDisplay) {
                 infoDisplay.innerHTML = `
@@ -1887,7 +1887,7 @@ const HagueManager = {
                     <h4 style="margin: 0; font-size: 1.25rem;">${found} es MIEMBRO</h4>
                     <p style="font-size: 0.9rem; margin-top: 8px;">Este país acepta <strong>Apostillas</strong> para documentos extranjeros.</p>
                 </div>`;
-        } else if (matches.length> 0) {
+        } else if (matches.length > 0) {
             container.innerHTML = `
                 <div style="text-align: left; width: 100%;">
                     <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Sugerencias:</p>
@@ -2212,6 +2212,9 @@ window.NotaryCRM = {
             clients: [],
             cases: []
         },
+        calendarSync: {
+            email: ''
+        },
         witnesses: []
     },
     currentUser: null,
@@ -2422,6 +2425,11 @@ window.NotaryCRM = {
                     clients: data.clients || [],
                     cases: data.cases || []
                 };
+                this.state.calendarSync = data.calendarSync || { email: '' };
+
+                // Populate input in modal if it exists
+                const syncInput = document.querySelector('#calendar-sync-modal [name="syncEmail"]');
+                if (syncInput) syncInput.value = this.state.calendarSync.email || '';
             } else {
                 // Initialize default empty
                 await setDoc(settingsRef, this.state.customFields);
@@ -2430,6 +2438,45 @@ window.NotaryCRM = {
             this.renderCustomFieldsConfig('case');
         } catch (e) {
             console.error('Error loading settings', e);
+        }
+    },
+
+    async saveCalendarSync(form) {
+        if (!this.useFirestore) {
+            Toast.error('Error', 'Debe estar en modo Cloud para guardar configuraciones.');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const email = formData.get('syncEmail');
+
+        const { doc, updateDoc, setDoc, getDoc } = window.dbFuncs;
+        const db = window.firebaseDB;
+        const settingsRef = doc(db, 'settings', 'fields');
+
+        try {
+            const snap = await getDoc(settingsRef);
+            if (snap.exists()) {
+                await updateDoc(settingsRef, {
+                    'calendarSync.email': email
+                });
+            } else {
+                await setDoc(settingsRef, {
+                    calendarSync: { email: email }
+                }, { merge: true });
+            }
+
+            this.state.calendarSync.email = email;
+            Toast.success('Sincronización Configurada', `Calendario vinculado a ${email}`);
+            this.closeModal('calendar-sync-modal');
+
+            // Log action if AuditManager exists
+            if (window.AuditManager) {
+                AuditManager.logAction('Configuración', 'Sincronización Calendario', `Email: ${email}`);
+            }
+        } catch (e) {
+            console.error('Error saving calendar sync', e);
+            Toast.error('Error', 'No se pudo guardar la configuración.');
         }
     },
 
@@ -2791,68 +2838,6 @@ window.NotaryCRM = {
         }
     },
 
-    // Render Cases List
-    renderCases() {
-        if (this.state.caseView === 'kanban') {
-            this.renderCasesKanban();
-            return;
-        }
-
-        const listContainer = document.getElementById('cases-list');
-        const kanbanContainer = document.getElementById('cases-kanban-board');
-        if (listContainer) listContainer.style.display = 'flex';
-        if (kanbanContainer) kanbanContainer.style.display = 'none';
-
-        if (!listContainer) return;
-
-        let cases = this.state.cases.filter(c =>
-            c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
-            c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
-        );
-
-        // Sorting (by date desc)
-        cases.sort((a, b) => new Date(b.dueDate)-new Date(a.dueDate));
-
-        // Pagination
-        const start = (this.state.casesPage-1) * this.state.casesPageSize;
-        const pagedCases = cases.slice(start, start + this.state.casesPageSize);
-
-        document.getElementById('cases-page-indicator').textContent = `Page ${this.state.casesPage} `;
-
-        if (pagedCases.length === 0) {
-            listContainer.innerHTML = '<p class="empty-state">No cases found.</p>';
-            return;
-        }
-
-        listContainer.innerHTML = pagedCases.map(c => `
-    <div class="case-card">
-                <div class="case-header">
-                    <div class="case-title-row">
-                        <span class="case-number">${c.caseNumber}</span>
-                        <span class="status-badge status-${c.status}">${c.status.replace('-', ' ')}</span>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn-icon" onclick="toggleDropdown('case-${c.id}')">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                        </button>
-                        <div class="dropdown-menu" id="dropdown-case-${c.id}">
-                            <a href="#" onclick="NotaryCRM.showCaseDetails('${c.id}')">Detalles</a>
-                            <a href="#" onclick="NotaryCRM.openEditCaseModal('${c.id}')">Editar</a>
-                            <a href="#" onclick="NotaryCRM.deleteCase('${c.id}')" style="color:var(--color-danger)">Eliminar</a>
-                        </div>
-                    </div>
-                </div>
-                <div onclick="NotaryCRM.showCaseDetails('${c.id}')" style="cursor:pointer;">
-                    <h3 style="margin:0 0 .5rem 0; font-size:1rem; color:var(--text-primary)">${c.clientName}</h3>
-                    <p style="color:var(--text-secondary); font-size:0.875rem;">${c.type}</p>
-                    <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center; font-size:0.875rem;">
-                        <span style="font-weight:600;">$${parseFloat(c.amount).toFixed(2)}</span>
-                        <span>Due: ${c.dueDate}</span>
-                    </div>
-                </div>
-            </div>
-    `).join('');
-    },
 
     toggleCaseView(view) {
         this.state.caseView = view; // 'list' or 'kanban'
@@ -2885,16 +2870,17 @@ window.NotaryCRM = {
         const container = document.getElementById('cases-kanban-board');
         if (!container) return;
 
+        const searchQuery = (this.state.searchCaseQuery || '').toLowerCase();
         let cases = this.state.cases.filter(c =>
-            c.caseNumber.toLowerCase().includes(this.state.searchCaseQuery) ||
-            c.clientName.toLowerCase().includes(this.state.searchCaseQuery)
+            (c.caseNumber || '').toLowerCase().includes(searchQuery) ||
+            (c.clientName || '').toLowerCase().includes(searchQuery)
         );
 
         const columns = {
-            'pending': { title: 'Pendiente', items: [] },
-            'in-progress': { title: 'En Proceso', items: [] },
-            'signed': { title: 'Firmado', items: [] },
-            'completed': { title: 'Completado', items: [] }
+            'pending': { title: 'Pendiente', id: 'pending', items: [] },
+            'in-progress': { title: 'En Proceso', id: 'in-progress', items: [] },
+            'signed': { title: 'Firmado', id: 'signed', items: [] },
+            'completed': { title: 'Completado', id: 'completed', items: [] }
         };
 
         // Distribute items
@@ -2903,33 +2889,59 @@ window.NotaryCRM = {
             if (columns[status]) {
                 columns[status].items.push(c);
             } else {
-                columns['pending'].items.push(c); // Fallback
+                columns['pending'].items.push(c);
             }
         });
 
-        // Generate HTML
+        // Generate HTML with Drag & Drop attributes
         container.innerHTML = Object.keys(columns).map(status => `
-    <div class="kanban-column">
+            <div class="kanban-column" 
+                 ondragover="NotaryCRM.handleDragOver(event)" 
+                 ondrop="NotaryCRM.handleDrop(event, '${status}')">
                 <div class="kanban-header">
                     <span>${columns[status].title}</span>
                     <span class="badge" style="background:var(--color-gray-200); color:var(--text-secondary); font-size:0.75rem;">${columns[status].items.length}</span>
                 </div>
                 <div class="kanban-cards">
                     ${columns[status].items.map(c => `
-                        <div class="kanban-card" onclick="NotaryCRM.openEditCaseModal('${c.id}')">
+                        <div class="kanban-card" 
+                             draggable="true" 
+                             ondragstart="NotaryCRM.handleDragStart(event, '${c.id}')"
+                             onclick="NotaryCRM.openEditCaseModal('${c.id}')">
                             <span class="status-badge status-${status} kanban-tag" style="margin-bottom:0.5rem; display:inline-block; font-size:0.7rem; padding:2px 6px;">${c.caseNumber}</span>
                             <h4>${c.clientName}</h4>
                             <p style="font-size:0.8rem; color:#64748b; margin-bottom:0.5rem;">${c.type}</p>
                             <div class="kanban-meta">
-                                <span>${new Date(c.dueDate).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
-                                <span style="font-weight:600;">$${c.amount}</span>
+                                <span>${c.dueDate ? new Date(c.dueDate).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }) : '---'}</span>
+                                <span style="font-weight:600;">$${parseFloat(c.amount || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     `).join('')}
                     ${columns[status].items.length === 0 ? '<div style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin trámites</div>' : ''}
                 </div>
             </div>
-    `).join('');
+        `).join('');
+    },
+
+    // Drag and Drop Handlers
+    handleDragStart(e, id) {
+        e.dataTransfer.setData('text/plain', id);
+        e.currentTarget.style.opacity = '0.5';
+    },
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    },
+
+    handleDrop(e, newStatus) {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        this.updateCaseStatus(id, newStatus);
+
+        // Visual feedback
+        const cards = document.querySelectorAll('.kanban-card');
+        cards.forEach(c => c.style.opacity = '1');
     },
 
     // Render users list for admin
@@ -3010,7 +3022,7 @@ window.NotaryCRM = {
                 if (!pass) { wrapper.style.display = 'none'; return; }
                 wrapper.style.display = 'block';
                 let strength = 0;
-                if (pass.length> 6) strength += 25;
+                if (pass.length > 6) strength += 25;
                 if (pass.match(/[A-Z]/)) strength += 25;
                 if (pass.match(/[0-9]/)) strength += 25;
                 if (pass.match(/[^A-Za-z0-9]/)) strength += 25;
@@ -3024,12 +3036,12 @@ window.NotaryCRM = {
 
         // Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); this.openModal('case-modal'); }
+            if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); this.newCasePrompt(); }
             if (e.altKey && e.key.toLowerCase() === 'c') { e.preventDefault(); this.openModal('client-modal'); }
             if (e.ctrlKey && e.key === '/') { e.preventDefault(); (document.getElementById('search-clients') || document.getElementById('search-cases'))?.focus(); }
-            if (e.ctrlKey && e.key>= '1' && e.key <= '6') {
+            if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
                 const tabs = ['dashboard', 'clients', 'cases', 'reminders', 'calendar', 'reports'];
-                if (tabs[e.key-1]) { e.preventDefault(); this.switchTab(tabs[e.key-1]); }
+                if (tabs[e.key - 1]) { e.preventDefault(); this.switchTab(tabs[e.key - 1]); }
             }
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal.active').forEach(m => this.closeModal(m.id));
@@ -3042,10 +3054,10 @@ window.NotaryCRM = {
 
         // Pagination controls
         const addL = (id, ev, fn) => document.getElementById(id)?.addEventListener(ev, fn);
-        addL('clients-prev', 'click', () => { if (this.state.clientsPage> 1) { this.state.clientsPage--; this.renderClients(); } });
+        addL('clients-prev', 'click', () => { if (this.state.clientsPage > 1) { this.state.clientsPage--; this.renderClients(); } });
         addL('clients-next', 'click', () => { this.state.clientsPage++; this.renderClients(); });
         addL('clients-page-size', 'change', (e) => { this.state.clientsPageSize = parseInt(e.target.value, 10); this.state.clientsPage = 1; this.renderClients(); });
-        addL('cases-prev', 'click', () => { if (this.state.casesPage> 1) { this.state.casesPage--; this.renderCases(); } });
+        addL('cases-prev', 'click', () => { if (this.state.casesPage > 1) { this.state.casesPage--; this.renderCases(); } });
         addL('cases-next', 'click', () => { this.state.casesPage++; this.renderCases(); });
         addL('cases-page-size', 'change', (e) => { this.state.casesPageSize = parseInt(e.target.value, 10); this.state.casesPage = 1; this.renderCases(); });
 
@@ -3065,7 +3077,7 @@ window.NotaryCRM = {
         addL('client-form', 'submit', (e) => { e.preventDefault(); this.addClient(e.target); });
         addL('case-form', 'submit', (e) => { e.preventDefault(); this.addCase(e.target); });
         addL('add-client-btn', 'click', () => this.openModal('client-modal'));
-        addL('add-case-btn', 'click', () => this.openModal('case-modal'));
+        addL('add-case-btn', 'click', () => this.newCasePrompt());
         addL('open-reminders-panel', 'click', () => this.switchTab('reminders'));
         addL('scan-id-btn', 'click', () => IDScannerManager.simulateScan());
 
@@ -3074,7 +3086,7 @@ window.NotaryCRM = {
             if (this.state.currentClientStep < 3) this.setClientStep(this.state.currentClientStep + 1);
         });
         addL('prev-client-step', 'click', () => {
-            if (this.state.currentClientStep> 1) this.setClientStep(this.state.currentClientStep-1);
+            if (this.state.currentClientStep > 1) this.setClientStep(this.state.currentClientStep - 1);
         });
 
         document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
@@ -3095,7 +3107,7 @@ window.NotaryCRM = {
         if (globalSearch && searchResults) {
             globalSearch.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
-                searchResults.style.display = query.length> 0 ? 'block' : 'none';
+                searchResults.style.display = query.length > 0 ? 'block' : 'none';
 
                 if (query.length === 0) return;
 
@@ -3105,7 +3117,7 @@ window.NotaryCRM = {
                     { type: 'nav', label: 'Go to Cases', action: () => this.switchTab('cases') },
                     { type: 'nav', label: 'Go to Calendar', action: () => this.switchTab('calendar') },
                     { type: 'action', label: 'Create New Client', action: () => this.openModal('client-modal') },
-                    { type: 'action', label: 'Create New Case', action: () => this.openModal('case-modal') }
+                    { type: 'action', label: 'Create New Case', action: () => this.newCasePrompt() }
                 ];
 
                 const filteredCmds = commands.filter(c => c.label.toLowerCase().includes(query));
@@ -3120,7 +3132,7 @@ window.NotaryCRM = {
 
                 let html = '';
 
-                if (filteredCmds.length> 0) {
+                if (filteredCmds.length > 0) {
                     html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> COMMANDS</div> `;
                     html += filteredCmds.map(cmd => `
     <div class="search-result-item" style = "padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; hover: background: #f1f5f9;" onclick = "window.NotaryCRM.execGlobalCommand(${commands.indexOf(cmd)})">
@@ -3129,7 +3141,7 @@ window.NotaryCRM = {
     `).join('');
                 }
 
-                if (filteredClients.length> 0) {
+                if (filteredClients.length > 0) {
                     html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> CLIENTS</div> `;
                     html += filteredClients.map(c => `
     <div class="search-result-item" style = "padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick = "window.NotaryCRM.openEditModal('${c.id}')">
@@ -3139,7 +3151,7 @@ window.NotaryCRM = {
     `).join('');
                 }
 
-                if (filteredCases.length> 0) {
+                if (filteredCases.length > 0) {
                     html += `<div style = "padding: 8px 12px; font-weight: 600; font-size: 0.75rem; color: #64748b; background: #f8fafc;"> CASES</div> `;
                     html += filteredCases.map(c => `
     <div class="search-result-item" style = "padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;" onclick = "window.NotaryCRM.switchTab('cases'); window.NotaryCRM.state.searchCaseQuery='${c.caseNumber}'; window.NotaryCRM.renderCases();">
@@ -3492,30 +3504,35 @@ window.NotaryCRM = {
     },
 
     renderJournal() {
-        const completedCases = this.state.cases.filter(c => c.status === 'completed');
+        const completedCases = this.state.cases.filter(c => c.status === 'completed' || c.status === 'Completado');
         const container = document.getElementById('journal-table-body');
         if (!container) return;
 
         if (completedCases.length === 0) {
-            container.innerHTML = '<tr><td colspan="7" class="empty-state">No se han registrado actos notariales oficiales aún.</td></tr>';
+            container.innerHTML = '<tr><td colspan="9" class="empty-state">No se han registrado actos notariales oficiales aún.</td></tr>';
             return;
         }
 
         container.innerHTML = completedCases.map(c => `
-    <tr>
-                <td style="font-size: 0.8rem;">${c.dueDate || 'N/A'}</td>
-                <td><span class="badge" style="background:#fef3c7; color:#92400e; font-size: 0.75rem;">${c.type}</span></td>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="font-size: 0.8rem; font-weight: 500;">${this.formatDate(c.createdAt || c.dueDate)}</td>
+                <td><span class="badge" style="background:#eff6ff; color:#1e40af; font-size: 0.75rem;">${c.type}</span></td>
                 <td><strong>${c.clientName}</strong></td>
-                <td style="font-size: 0.8rem; color: #64748b;">${c.witness1_id || 'ID Escaneado'}</td>
-                <td style="font-size: 0.8rem;">${c.witness1 || '---'}</td>
-                <td style="font-weight: 600;">$${c.amount.toFixed(2)}</td>
+                <td style="font-size: 0.8rem; color: #64748b;">${c.idType ? c.idType + ': ' : ''}${c.idNumber || '-'}</td>
+                <td style="text-align: center;">
+                    ${c.hasDigitalSignature ? '<span style="color:#10b981;">✅ Firmado</span>' : '<span style="color:#94a3b8;">---</span>'}
+                </td>
+                <td style="text-align: center;">
+                    ${c.hasFingerprint ? '<span style="color:#10b981;">✅ Capturada</span>' : '<span style="color:#94a3b8;">---</span>'}
+                </td>
+                <td style="font-weight: 700; color: #059669;">${this.formatCurrency(c.amount)}</td>
                 <td style="text-align:right;">
                     <button class="btn-icon" title="Ver Expediente" onclick="window.NotaryCRM.showCaseDetails('${c.id}')">
                         <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
                     </button>
                 </td>
             </tr>
-    `).join('');
+        `).join('');
 
         if (window.lucide) window.lucide.createIcons();
     },
@@ -3554,14 +3571,14 @@ window.NotaryCRM = {
             doc.text(`Notario: ${this.currentUser?.displayName || 'Profesional'} `, 14, 32);
 
             // Table Data
-            const tableHeaders = [['Fecha', 'Caso #', 'Cliente', 'Tipo de Acto', 'Identificación', 'Testigos', 'Monto']];
+            const tableHeaders = [['Fecha', 'Caso #', 'Cliente', 'Tipo de Acto', 'Firma', 'Huella', 'Monto']];
             const tableRows = completedCases.map(c => [
-                this.formatDate(c.createdAt),
+                this.formatDate(c.createdAt || c.dueDate),
                 c.caseNumber || 'N/A',
                 c.clientName || 'N/A',
                 c.type || 'N/A',
-                c.idType ? `${c.idType}: ${c.idNumber || '-'} ` : 'N/A',
-                c.witness1 ? `${c.witness1}${c.witness2 ? ', ' + c.witness2 : ''} ` : 'N/A',
+                c.hasDigitalSignature ? 'SÍ' : 'NO',
+                c.hasFingerprint ? 'SÍ' : 'NO',
                 this.formatCurrency(c.amount)
             ]);
 
@@ -3593,7 +3610,7 @@ window.NotaryCRM = {
                 tableRows.forEach(row => {
                     row.forEach((cell, i) => doc.text(String(cell), 14 + (i * 35), y));
                     y += 7;
-                    if (y> 180) { doc.addPage(); y = 20; }
+                    if (y > 180) { doc.addPage(); y = 20; }
                 });
             }
 
@@ -3687,11 +3704,11 @@ window.NotaryCRM = {
     addPaperStock() {
         const start = parseInt(document.getElementById('paper-start').value);
         const end = parseInt(document.getElementById('paper-end').value);
-        if (isNaN(start) || isNaN(end) || end <start) {
+        if (isNaN(start) || isNaN(end) || end < start) {
             Toast.error('Error', 'Rango de folios inválido');
             return;
         }
-        const count = end-start + 1;
+        const count = end - start + 1;
         const current = parseInt(localStorage.getItem('notary_paper_stock') || '0');
         const total = current + count;
         localStorage.setItem('notary_paper_stock', total);
@@ -3741,7 +3758,7 @@ window.NotaryCRM = {
         const data = JSON.parse(dataStr);
         const expiry = new Date(data.expiry);
         const today = new Date();
-        const diffDays = Math.ceil((expiry-today) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
         if (container) {
             if (diffDays <= 90) {
@@ -3764,7 +3781,7 @@ window.NotaryCRM = {
             }
         }
 
-        if (diffDays> 0 && diffDays <= 90) {
+        if (diffDays > 0 && diffDays <= 90) {
             Toast.warning('Vencimiento de Comisión', `Tu comisión notarial vence en ${diffDays} días.`);
         } else if (diffDays <= 0) {
             Toast.error('Comisión Vencida', 'Tu comisión notarial ha expirado.');
@@ -3904,7 +3921,7 @@ window.NotaryCRM = {
         document.querySelectorAll('#client-step-indicator .step').forEach(el => {
             const s = parseInt(el.getAttribute('data-step'));
             el.classList.toggle('active', s === step);
-            el.classList.toggle('completed', s <step);
+            el.classList.toggle('completed', s < step);
         });
 
         // Update Buttons
@@ -3992,7 +4009,7 @@ window.NotaryCRM = {
                             // Use phone number as password (cleaned of non-digits)
                             const cleanPass = client.phone.replace(/\D/g, '');
 
-                            if (cleanPass.length>= 6) {
+                            if (cleanPass.length >= 6) {
                                 // Create user in background using secondary auth (prevents admin logout)
                                 const userCredential = await createUserWithEmailAndPassword(window.secondaryAuth, client.email, cleanPass);
 
@@ -4125,6 +4142,8 @@ window.NotaryCRM = {
             mileage: parseFloat(formData.get('mileage')) || 0,
             description: formData.get('description'),
             status: formData.get('status') || 'pending',
+            hasDigitalSignature: formData.get('hasDigitalSignature') === 'on',
+            hasFingerprint: formData.get('hasFingerprint') === 'on',
             customFields: customFields,
             // Specialized Notary Fields
             witness1: formData.get('witness1'),
@@ -4457,25 +4476,84 @@ window.NotaryCRM = {
         })();
     },
 
-    // Open case modal populated for editing
-    editCasePrompt(id) {
-        const caseItem = this.state.cases.find(c => c.id === id) || {};
+    // Open case modal for a new case
+    newCasePrompt() {
         const form = document.getElementById('case-form');
         if (!form) return;
 
-        // Render custom fields
+        form.reset();
+        form.querySelector('input[name="id"]').value = '';
+        form.querySelector('input[name="caseNumber"]').value = ''; // Will be auto-generated
+
+        // Reset custom fields container
         this.renderCustomFieldsInForm('case');
 
-        form.querySelector('input[name="id"]').value = id || '';
-        form.querySelector('input[name="caseNumber"]').value = caseItem.caseNumber || '';
-        form.querySelector('select[name="clientId"]').value = caseItem.clientId || '';
-        form.querySelector('select[name="type"]').value = caseItem.type || 'General';
-        form.querySelector('select[name="location"]').value = caseItem.location || 'Oficina';
-        form.querySelector('input[name="amount"]').value = caseItem.amount || 0;
-        form.querySelector('select[name="paymentStatus"]').value = caseItem.paymentStatus || 'pending';
-        form.querySelector('input[name="dueDate"]').value = caseItem.dueDate || '';
-        form.querySelector('textarea[name="description"]').value = caseItem.description || '';
-        form.querySelector('select[name="status"]').value = caseItem.status || 'pending';
+        // Set Modal Title
+        const titleEl = document.querySelector('#case-modal .modal-title');
+        if (titleEl) titleEl.textContent = 'Añadir Nuevo Expediente';
+
+        // Set Submit Button Text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Guardar Expediente';
+
+        this.openModal('case-modal');
+    },
+
+    // Open case modal populated for editing
+    editCasePrompt(id) {
+        console.log('[DEBUG] editCasePrompt:', id);
+        const caseItem = (this.state.cases || []).find(c => String(c.id) == String(id));
+
+        if (!caseItem) {
+            console.error('Case not found for editing:', id);
+            Toast.error('Error', 'No se encontró el expediente solicitado.');
+            return;
+        }
+
+        const form = document.getElementById('case-form');
+        if (!form) return;
+
+        // Open the modal first so that `openModal` renders custom fields and does any internal resets.
+        // We'll populate the fields afterwards to avoid being wiped by `openModal`.
+        this.openModal('case-modal');
+
+        // Set Modal Title
+        const titleEl = document.querySelector('#case-modal .modal-title');
+        if (titleEl) titleEl.textContent = 'Editar Expediente';
+
+        // Set Submit Button Text
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Actualizar Expediente';
+
+        // Populate Main Fields
+        const setVal = (name, val) => {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (el) {
+                if (el.type === 'checkbox') el.checked = !!val;
+                else el.value = (val !== undefined && val !== null) ? val : '';
+            }
+        };
+
+        setVal('id', caseItem.id);
+        setVal('caseNumber', caseItem.caseNumber);
+
+        const clientSelect = form.querySelector('select[name="clientId"]');
+        if (clientSelect && clientSelect.options.length <= 1) {
+            clientSelect.innerHTML = '<option value="">Seleccione un cliente</option>' +
+                (this.state.clients || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+        if (clientSelect) clientSelect.value = caseItem.clientId || '';
+
+        setVal('type', caseItem.type);
+        setVal('location', caseItem.location);
+        setVal('amount', caseItem.amount);
+        setVal('paymentStatus', caseItem.paymentStatus);
+        setVal('dueDate', caseItem.dueDate);
+        setVal('description', caseItem.description);
+        setVal('status', caseItem.status);
+        setVal('mileage', caseItem.mileage);
+        setVal('hasDigitalSignature', caseItem.hasDigitalSignature);
+        setVal('hasFingerprint', caseItem.hasFingerprint);
 
         // Populate Custom Fields
         if (caseItem.customFields) {
@@ -4486,90 +4564,83 @@ window.NotaryCRM = {
         }
 
         // Populate Specialized Notary Fields
-        if (form.querySelector('input[name="mileage"]')) form.querySelector('input[name="mileage"]').value = caseItem.mileage || 0;
-        if (form.querySelector('input[name="apostilleDestination"]')) form.querySelector('input[name="apostilleDestination"]').value = caseItem.apostilleDestination || '';
-        if (form.querySelector('input[name="apostilleTracking"]')) form.querySelector('input[name="apostilleTracking"]').value = caseItem.apostilleTracking || '';
+        setVal('witness1', caseItem.witness1);
+        setVal('witness1_id', caseItem.witness1_id);
+        setVal('apostilleDestination', caseItem.apostilleDestination);
+        setVal('apostilleTracking', caseItem.apostilleTracking);
+        setVal('lsa_closing_disclosure', caseItem.lsa_closing_disclosure);
+        setVal('lsa_the_note', caseItem.lsa_the_note);
+        setVal('lsa_deed_of_trust', caseItem.lsa_deed_of_trust);
+        setVal('lsa_pcor', caseItem.lsa_pcor);
+        setVal('lsa_id_verified', caseItem.lsa_id_verified);
 
-        if (form.querySelector('input[name="lsa_closing_disclosure"]')) form.querySelector('input[name="lsa_closing_disclosure"]').checked = !!caseItem.lsa_closing_disclosure;
-        if (form.querySelector('input[name="lsa_the_note"]')) form.querySelector('input[name="lsa_the_note"]').checked = !!caseItem.lsa_the_note;
-        if (form.querySelector('input[name="lsa_deed_of_trust"]')) form.querySelector('input[name="lsa_deed_of_trust"]').checked = !!caseItem.lsa_deed_of_trust;
-        if (form.querySelector('input[name="lsa_pcor"]')) form.querySelector('input[name="lsa_pcor"]').checked = !!caseItem.lsa_pcor;
+        setVal('weddingSpouse1', caseItem.weddingSpouse1);
+        setVal('weddingSpouse2', caseItem.weddingSpouse2);
+        setVal('weddingLicense', caseItem.weddingLicense);
+        setVal('weddingLicenseExpiry', caseItem.weddingLicenseExpiry);
+        setVal('weddingCounty', caseItem.weddingCounty);
 
-        if (form.querySelector('input[name="weddingSpouse1"]')) form.querySelector('input[name="weddingSpouse1"]').value = caseItem.weddingSpouse1 || '';
-        if (form.querySelector('input[name="weddingSpouse2"]')) form.querySelector('input[name="weddingSpouse2"]').value = caseItem.weddingSpouse2 || '';
-        if (form.querySelector('input[name="weddingLicense"]')) form.querySelector('input[name="weddingLicense"]').value = caseItem.weddingLicense || '';
-        if (form.querySelector('input[name="weddingCounty"]')) form.querySelector('input[name="weddingCounty"]').value = caseItem.weddingCounty || '';
+        setVal('consularEmbassy', caseItem.consularEmbassy);
+        setVal('consularCountry', caseItem.consularCountry);
+        setVal('willExecutor', caseItem.willExecutor);
+        setVal('willWitness1', caseItem.willWitness1);
+        setVal('willWitness2', caseItem.willWitness2);
 
-        if (form.querySelector('input[name="witness1"]')) form.querySelector('input[name="witness1"]').value = caseItem.witness1 || '';
-        if (form.querySelector('input[name="witness1_id"]')) form.querySelector('input[name="witness1_id"]').value = caseItem.witness1_id || '';
-
-        // New specialized fields
-        if (form.querySelector('input[name="weddingLicenseExpiry"]')) form.querySelector('input[name="weddingLicenseExpiry"]').value = caseItem.weddingLicenseExpiry || '';
-        if (form.querySelector('input[name="lsa_id_verified"]')) form.querySelector('input[name="lsa_id_verified"]').checked = !!caseItem.lsa_id_verified;
-
-        if (form.querySelector('input[name="consularEmbassy"]')) form.querySelector('input[name="consularEmbassy"]').value = caseItem.consularEmbassy || '';
-        if (form.querySelector('input[name="consularCountry"]')) form.querySelector('input[name="consularCountry"]').value = caseItem.consularCountry || '';
-
-        if (form.querySelector('input[name="willExecutor"]')) form.querySelector('input[name="willExecutor"]').value = caseItem.willExecutor || '';
-        if (form.querySelector('textarea[name="willBeneficiaries"]')) form.querySelector('textarea[name="willBeneficiaries"]').value = caseItem.willBeneficiaries || '';
-        if (form.querySelector('input[name="willWitness1"]')) form.querySelector('input[name="willWitness1"]').value = caseItem.willWitness1 || '';
-        if (form.querySelector('input[name="willWitness2"]')) form.querySelector('input[name="willWitness2"]').value = caseItem.willWitness2 || '';
-
-        if (form.querySelector('input[name="poa_general"]')) form.querySelector('input[name="poa_general"]').checked = !!caseItem.poa_general;
-        if (form.querySelector('input[name="poa_special"]')) form.querySelector('input[name="poa_special"]').checked = !!caseItem.poa_special;
-        if (form.querySelector('input[name="poa_financial"]')) form.querySelector('input[name="poa_financial"]').checked = !!caseItem.poa_financial;
-        if (form.querySelector('input[name="poa_medical"]')) form.querySelector('input[name="poa_medical"]').checked = !!caseItem.poa_medical;
-        if (form.querySelector('input[name="poa_durable"]')) form.querySelector('input[name="poa_durable"]').checked = !!caseItem.poa_durable;
-        if (form.querySelector('input[name="poa_real_estate"]')) form.querySelector('input[name="poa_real_estate"]').checked = !!caseItem.poa_real_estate;
+        setVal('poa_general', caseItem.poa_general);
+        setVal('poa_special', caseItem.poa_special);
+        setVal('poa_financial', caseItem.poa_financial);
+        setVal('poa_medical', caseItem.poa_medical);
+        setVal('poa_durable', caseItem.poa_durable);
+        setVal('poa_real_estate', caseItem.poa_real_estate);
 
         // Immigration
-        if (form.querySelector('select[name="immigFormType"]')) form.querySelector('select[name="immigFormType"]').value = caseItem.immigFormType || 'I-9';
-        if (form.querySelector('input[name="immigLanguage"]')) form.querySelector('input[name="immigLanguage"]').value = caseItem.immigLanguage || '';
-        if (form.querySelector('input[name="immigHasTranslator"]')) form.querySelector('input[name="immigHasTranslator"]').checked = !!caseItem.immigHasTranslator;
-        if (form.querySelector('input[name="immigVerifiedIdentity"]')) form.querySelector('input[name="immigVerifiedIdentity"]').checked = !!caseItem.immigVerifiedIdentity;
+        setVal('immigFormType', caseItem.immigFormType);
+        setVal('immigLanguage', caseItem.immigLanguage);
+        setVal('immigHasTranslator', caseItem.immigHasTranslator);
+        setVal('immigVerifiedIdentity', caseItem.immigVerifiedIdentity);
 
         // Signature Tracking
-        if (form.querySelector('textarea[name="signatureMap"]')) form.querySelector('textarea[name="signatureMap"]').value = caseItem.signatureMap || '';
-        if (form.querySelector('input[name="signerCount"]')) form.querySelector('input[name="signerCount"]').value = caseItem.signerCount || 1;
-        if (form.querySelector('input[name="notarizedPageCount"]')) form.querySelector('input[name="notarizedPageCount"]').value = caseItem.notarizedPageCount || 1;
+        setVal('signatureMap', caseItem.signatureMap);
+        setVal('signerCount', caseItem.signerCount);
+        setVal('notarizedPageCount', caseItem.notarizedPageCount);
 
         // Protest
-        if (form.querySelector('input[name="protestInstrument"]')) form.querySelector('input[name="protestInstrument"]').value = caseItem.protestInstrument || '';
-        if (form.querySelector('input[name="protestAmount"]')) form.querySelector('input[name="protestAmount"]').value = caseItem.protestAmount || 0;
-        if (form.querySelector('select[name="protestReason"]')) form.querySelector('select[name="protestReason"]').value = caseItem.protestReason || 'Falta de Pago';
-        if (form.querySelector('input[name="protestDate"]')) form.querySelector('input[name="protestDate"]').value = caseItem.protestDate || '';
+        setVal('protestInstrument', caseItem.protestInstrument);
+        setVal('protestAmount', caseItem.protestAmount);
+        setVal('protestReason', caseItem.protestReason);
+        setVal('protestDate', caseItem.protestDate);
 
         // Translation
-        if (form.querySelector('input[name="transSourceLang"]')) form.querySelector('input[name="transSourceLang"]').value = caseItem.transSourceLang || '';
-        if (form.querySelector('input[name="transTargetLang"]')) form.querySelector('input[name="transTargetLang"]').value = caseItem.transTargetLang || '';
-        if (form.querySelector('input[name="transName"]')) form.querySelector('input[name="transName"]').value = caseItem.transName || '';
-        if (form.querySelector('input[name="transLicense"]')) form.querySelector('input[name="transLicense"]').value = caseItem.transLicense || '';
-        if (form.querySelector('input[name="transCount"]')) form.querySelector('input[name="transCount"]').value = caseItem.transCount || '';
+        setVal('transSourceLang', caseItem.transSourceLang);
+        setVal('transTargetLang', caseItem.transTargetLang);
+        setVal('transName', caseItem.transName);
+        setVal('transLicense', caseItem.transLicense);
+        setVal('transCount', caseItem.transCount);
 
         // Property Management
-        if (form.querySelector('select[name="propDocType"]')) form.querySelector('select[name="propDocType"]').value = caseItem.propDocType || 'Lease';
-        if (form.querySelector('input[name="propAddress"]')) form.querySelector('input[name="propAddress"]').value = caseItem.propAddress || '';
+        setVal('propDocType', caseItem.propDocType);
+        setVal('propAddress', caseItem.propAddress);
 
         // ID Checklist
-        if (form.querySelector('input[name="id_check_photo"]')) form.querySelector('input[name="id_check_photo"]').checked = !!caseItem.id_check_photo;
-        if (form.querySelector('input[name="id_check_tamper"]')) form.querySelector('input[name="id_check_tamper"]').checked = !!caseItem.id_check_tamper;
-        if (form.querySelector('input[name="id_check_expiry"]')) form.querySelector('input[name="id_check_expiry"]').checked = !!caseItem.id_check_expiry;
-        if (form.querySelector('input[name="id_check_present"]')) form.querySelector('input[name="id_check_present"]').checked = !!caseItem.id_check_present;
+        setVal('id_check_photo', caseItem.id_check_photo);
+        setVal('id_check_tamper', caseItem.id_check_tamper);
+        setVal('id_check_expiry', caseItem.id_check_expiry);
+        setVal('id_check_present', caseItem.id_check_present);
 
         // Escrow
-        if (form.querySelector('input[name="escrowAmount"]')) form.querySelector('input[name="escrowAmount"]').value = caseItem.escrowAmount || 0;
-        if (form.querySelector('input[name="escrowDepositDate"]')) form.querySelector('input[name="escrowDepositDate"]').value = caseItem.escrowDepositDate || '';
-        if (form.querySelector('textarea[name="escrowConditions"]')) form.querySelector('textarea[name="escrowConditions"]').value = caseItem.escrowConditions || '';
+        setVal('escrowAmount', caseItem.escrowAmount);
+        setVal('escrowDepositDate', caseItem.escrowDepositDate);
+        setVal('escrowConditions', caseItem.escrowConditions);
 
         // Registry
-        if (form.querySelector('input[name="registryBoxCode"]')) form.querySelector('input[name="registryBoxCode"]').value = caseItem.registryBoxCode || '';
-        if (form.querySelector('input[name="registryFolio"]')) form.querySelector('input[name="registryFolio"]').value = caseItem.registryFolio || '';
-        if (form.querySelector('input[name="registryDocDesc"]')) form.querySelector('input[name="registryDocDesc"]').value = caseItem.registryDocDesc || '';
+        setVal('registryBoxCode', caseItem.registryBoxCode);
+        setVal('registryFolio', caseItem.registryFolio);
+        setVal('registryDocDesc', caseItem.registryDocDesc);
 
         // Batch Signing
-        if (form.querySelector('input[name="batchDocCount"]')) form.querySelector('input[name="batchDocCount"]').value = caseItem.batchDocCount || 1;
-        if (form.querySelector('input[name="batchTemplateUsed"]')) form.querySelector('input[name="batchTemplateUsed"]').value = caseItem.batchTemplateUsed || '';
-        if (form.querySelector('textarea[name="batchDescription"]')) form.querySelector('textarea[name="batchDescription"]').value = caseItem.batchDescription || '';
+        setVal('batchDocCount', caseItem.batchDocCount);
+        setVal('batchTemplateUsed', caseItem.batchTemplateUsed);
+        setVal('batchDescription', caseItem.batchDescription);
 
         // Family Tree
         if (form.querySelector('input[name="familyMainTestator"]')) form.querySelector('input[name="familyMainTestator"]').value = caseItem.familyMainTestator || '';
@@ -4717,6 +4788,10 @@ window.NotaryCRM = {
     openEditModal(id) { this.editClientPrompt(id); },
     // Consolidated showClientDetails below
     showCaseDetails(id) {
+        // Redirect to the new case details modal
+        return this.showNewCaseDetails(id);
+        
+        // Old implementation below (kept for reference, but not executed)
         console.log('Attempting to show details for case ID:', id);
         // Use loose equality to handle string/number mismatches
         const caseItem = this.state.cases.find(c => c.id == id);
@@ -4802,7 +4877,7 @@ window.NotaryCRM = {
                 }
 
                 let customFieldsHtml = '';
-                if (caseItem.customFields && Object.keys(caseItem.customFields).length> 0) {
+                if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
                     let fieldsList = Object.entries(caseItem.customFields).map(([key, value]) => `
     <div style = "background: white; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;">
                     <span style="color: #64748b; display: block; font-size: 0.75rem; text-transform: uppercase;">${key}</span>
@@ -4866,11 +4941,8 @@ window.NotaryCRM = {
                     }
 `;
 
-                // Wrapper if we want standard grid
-                container.style.display = 'grid';
-                container.style.gridTemplateColumns = '1fr 300px';
-                container.style.gap = '2rem';
-                container.style.alignItems = 'start';
+                // Build tabbed layout: Summary (main content), Trámites (type-specific), Acciones (sidebar)
+                container.style.display = 'block';
 
                 const mainContentHtml = `
     <div class="case-details-main-content">
@@ -4881,9 +4953,9 @@ window.NotaryCRM = {
                     </div>
     `;
 
-                container.innerHTML = mainContentHtml + sidebarHtml;
+                // Collect specialized content into a separate variable to place inside the "Trámites" tab
+                let specializedHtml = '';
 
-                // -- Section: Specialized Type-Specific --
                 const APOSTILLE_STATUSES = [
                     { id: 'pending', label: 'Pendiente / Recibido', color: '#64748b' },
                     { id: 'docs_received', label: 'Documentos Recibidos', color: '#3b82f6' },
@@ -4894,7 +4966,7 @@ window.NotaryCRM = {
 
                 if (caseItem.type === 'Apostille') {
                     const currentStatus = caseItem.apostilleStatus || 'pending';
-                    container.innerHTML += `
+                    specializedHtml += `
     <div style = "background: #eff6ff; padding: 1.5rem; border-radius: 8px; border: 1px solid #dbeafe; margin-top: 1.5rem;">
                         <h5 style="margin: 0 0 1rem 0; color: #1e40af; display: flex; align-items: center; gap: 8px;">
                             <i data-lucide="globe" style="width: 18px; height: 18px;"></i> Gestión de Apostilla (Tracking)
@@ -4933,7 +5005,7 @@ window.NotaryCRM = {
                     const lsa_check4 = caseItem.lsa_pcor;
                     const lsa_check5 = caseItem.lsa_id_verified;
 
-                    container.innerHTML += `
+                    specializedHtml += `
     <div style = "background: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #dcfce7; margin-top: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.25rem;">
                              <h5 style="margin: 0; color: #166534; display: flex; align-items: center; gap: 8px;">
@@ -4972,7 +5044,7 @@ window.NotaryCRM = {
                     const w_check2 = caseItem.wedding_ceremony_done;
                     const w_check3 = caseItem.wedding_signed_mailed;
 
-                    container.innerHTML += `
+                    specializedHtml += `
     <div style = "background: #fff1f2; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe4e6; margin-top: 1.5rem;">
                         <h5 style="margin: 0 0 1.25rem 0; color: #9f1239; display: flex; align-items: center; gap: 8px;">
                             <i data-lucide="heart" style="width: 18px; height: 18px;"></i> Servicio de Boda Finalizado
@@ -5007,6 +5079,32 @@ window.NotaryCRM = {
                     </div>
     `;
                 }
+
+                // Render tabs: Cliente, Servicio, Fechas, Notas, Registros, Especializados, Personalizados, Acciones
+                const tabsHeaderHtml = `
+                    <div id="detail-tabs" style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;">
+                        <button class="detail-tab active btn btn-sm" data-tab="tab-cliente" style="padding:6px 10px; border-radius:8px; background:#fff; border:1px solid #e6eef8;">Cliente</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-servicio" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Servicio</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-fechas" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Fechas</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-notas" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Notas</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-registros" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Registros</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-especializados" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Especializados</button>
+                        <button class="detail-tab btn btn-sm" data-tab="tab-personalizados" style="padding:6px 10px; border-radius:8px; background:transparent; border:1px solid transparent;">Personalizados</button>
+                    </div>
+                `;
+
+                const panelsHtml = `
+                    <div class="detail-tab-panels" style="display:block;">
+                        <div id="tab-cliente" class="detail-tab-panel"> </div>
+                        <div id="tab-servicio" class="detail-tab-panel" style="display:none;"></div>
+                        <div id="tab-fechas" class="detail-tab-panel" style="display:none;"></div>
+                        <div id="tab-notas" class="detail-tab-panel" style="display:none;"></div>
+                        <div id="tab-registros" class="detail-tab-panel" style="display:none;"></div>
+                        <div id="tab-especializados" class="detail-tab-panel" style="display:none;"></div>
+                        <div id="tab-personalizados" class="detail-tab-panel" style="display:none;"></div>
+                        <!-- Acciones se mantienen en el modal principal, no en el modal avanzado -->
+                    </div>
+                `;
 
                 // Witnesses
                 const witnessSection = document.getElementById('detail-witness-section');
@@ -5043,6 +5141,578 @@ window.NotaryCRM = {
                     };
                 }
 
+                // --- Categorized, editable details section ---
+                    const makeFieldBlock = (key, label, value, type = 'text', options = null) => {
+                        // Determine display value
+                        let displayVal = (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) ? '-' : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+                        if (type === 'select' && Array.isArray(options)) {
+                            const found = options.find(o => String(o.value) === String(value));
+                            if (found) displayVal = found.label;
+                        }
+
+                        const inputHtml = (() => {
+                            if (type === 'select' && Array.isArray(options)) {
+                                return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value)===String(value)? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
+                            }
+                            if (type === 'checkbox') {
+                                return `<input type="checkbox" class="inline-input" style="display:none;" data-field="${key}" ${value ? 'checked' : ''} />`;
+                            }
+                            if (type === 'number') return `<input type="number" step="0.01" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                            if (type === 'date') return `<input type="date" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                            if (type === 'textarea') return `<textarea class="inline-input" style="display:none; width:100%; padding:6px; min-height:80px;" data-field="${key}">${value || ''}</textarea>`;
+                            return `<input type="text" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                        })();
+
+                        return `
+            <div class="case-detail-item" style="background:white; padding:0.75rem; border:1px solid #e2e8f0; border-radius:6px;">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; margin-bottom:6px;">${label}</div>
+                <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+                    <div style="flex:1;">
+                        <div class="inline-value" data-field="${key}" style="font-weight:600; color:#334155; word-break:break-word;">${displayVal}</div>
+                        ${inputHtml}
+                    </div>
+                    <div style="min-width:90px; display:flex; gap:6px; justify-content:flex-end;">
+                        <button class="inline-edit-btn btn btn-sm" data-field="${key}">Editar</button>
+                        <button class="inline-save-btn btn btn-sm btn-primary" data-field="${key}" style="display:none;">Guardar</button>
+                        <button class="inline-cancel-btn btn btn-sm" data-field="${key}" style="display:none;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+`;
+                    };
+
+                    let categorizedHtml = `
+        <div style="margin-top:1.25rem; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+            <div>
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Cliente</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                    ${makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
+                    ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients||[]).map(c=>({value:c.id,label:c.name})))}
+                    ${makeFieldBlock('clientName_display', 'Nombre (no editable)', caseItem.clientName)}
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Servicio & Estado</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                    ${makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
+                        {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
+                    ])}
+                    ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
+                    ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Fechas & Pagos</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                    ${makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
+                    ${makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
+                    ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                    ${makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Registro & Notas</h4>
+                <div style="display:grid; grid-template-columns: 1fr; gap:0.75rem;">
+                    ${makeFieldBlock('description', 'Descripción / Notas', caseItem.description, 'textarea')}
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Registros Notariales</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                    ${makeFieldBlock('hasDigitalSignature', 'Firma Capturada', caseItem.hasDigitalSignature, 'checkbox')}
+                    ${makeFieldBlock('hasFingerprint', 'Huella Dactilar', caseItem.hasFingerprint, 'checkbox')}
+                    ${makeFieldBlock('biometricHash', 'Biometric Hash', caseItem.biometricHash)}
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Campos Especializados</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                    ${makeFieldBlock('apostilleDestination', 'País de Apostilla', caseItem.apostilleDestination)}
+                    ${makeFieldBlock('apostilleTracking', 'Tracking Apostilla', caseItem.apostilleTracking)}
+                    ${makeFieldBlock('loanType', 'Tipo de Préstamo', caseItem.loanType)}
+                    ${makeFieldBlock('lsa_closing_disclosure', 'LSA: Closing Disclosure', caseItem.lsa_closing_disclosure, 'checkbox')}
+                    ${makeFieldBlock('lsa_the_note', 'LSA: The Note', caseItem.lsa_the_note, 'checkbox')}
+                </div>
+
+                <!-- Campos Personalizados removed from main modal; shown only in advanced 'Información Completa' -->
+            </div>
+            <div id="detail-actions-panel">
+                <div style="background:#f8fafc; padding:1rem; border-radius:12px; border:1px solid #e2e8f0;">
+                    <h4 style="font-size:0.85rem; font-weight:700; color:#64748b; text-transform:uppercase;">Acciones Rápidas</h4>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem;">
+                        <button class="btn btn-primary btn-block" onclick="NotaryCRM.generateInvoice('${caseItem.id}')" style="justify-content:center; gap:10px;"><i data-lucide="receipt" style="width:18px;"></i> Recibo PDF</button>
+                        <button class="btn btn-outline-purple btn-block" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" style="justify-content:center; gap:10px;"><i data-lucide="pen-tool" style="width:18px;"></i> Solicitar Firma</button>
+                        <button class="btn btn-block" style="background:#25d366; color:white; justify-content:center; gap:10px;" onclick="NotaryCRM.sendReminder('${caseItem.id}','whatsapp')"><i data-lucide="message-circle" style="width:18px;"></i> WhatsApp</button>
+                        <button class="btn btn-outline-purple btn-block" onclick="biometricManager.open('${caseItem.id}')" style="justify-content:center; gap:10px;">
+                            <i data-lucide="fingerprint" style="width:18px;"></i> ${caseItem.biometricCaptured ? 'Actualizar Huella' : 'Capturar Huella'}
+                        </button>
+                    </div>
+                    <hr style="margin:0.75rem 0;">
+                    <div style="font-size:0.85rem; color:#64748b;">Creado: ${this.formatDate(caseItem.createdAt)}</div>
+                    <div style="font-size:0.85rem; color:#64748b; margin-top:0.5rem;">ID: ${caseItem.id}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+                    // categorizedHtml was previously inserted here, but is now handled by the new advanced modal
+
+                    // (tabs insertion deferred to later after we prepare split panels)
+
+                    // Split categorizedHtml into tab-specific sections and insert into panels
+                    const clientHtml = `
+                        <div style="margin-bottom:1rem;">
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Cliente</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                                ${makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
+                                ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients||[]).map(c=>({value:c.id,label:c.name})))}
+                                ${makeFieldBlock('clientName_display', 'Nombre (no editable)', caseItem.clientName)}
+                            </div>
+                        </div>
+                    `;
+
+                    const servicioHtml = `
+                        <div>
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Servicio & Estado</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                                ${makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
+                                    {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
+                                ])}
+                                ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
+                                ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                            </div>
+                        </div>
+                    `;
+
+                    const fechasHtml = `
+                        <div>
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Fechas & Pagos</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                                ${makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
+                                ${makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
+                                ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                                ${makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
+                            </div>
+                        </div>
+                    `;
+
+                    const notasHtml = `
+                        <div>
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Registro & Notas</h4>
+                            <div style="display:grid; grid-template-columns: 1fr; gap:0.75rem;">
+                                ${makeFieldBlock('description', 'Descripción / Notas', caseItem.description, 'textarea')}
+                            </div>
+                        </div>
+                    `;
+
+                    const registrosHtml = `
+                        <div>
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Registros Notariales</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                                ${makeFieldBlock('hasDigitalSignature', 'Firma Capturada', caseItem.hasDigitalSignature, 'checkbox')}
+                                ${makeFieldBlock('hasFingerprint', 'Huella Dactilar', caseItem.hasFingerprint, 'checkbox')}
+                                ${makeFieldBlock('biometricHash', 'Biometric Hash', caseItem.biometricHash)}
+                            </div>
+                        </div>
+                    `;
+
+                    const especializadosHtml = `
+                        <div>
+                            <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Campos Especializados</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
+                                ${makeFieldBlock('apostilleDestination', 'País de Apostilla', caseItem.apostilleDestination)}
+                                ${makeFieldBlock('apostilleTracking', 'Tracking Apostilla', caseItem.apostilleTracking)}
+                                ${makeFieldBlock('loanType', 'Tipo de Préstamo', caseItem.loanType)}
+                                ${makeFieldBlock('lsa_closing_disclosure', 'LSA: Closing Disclosure', caseItem.lsa_closing_disclosure, 'checkbox')}
+                                ${makeFieldBlock('lsa_the_note', 'LSA: The Note', caseItem.lsa_the_note, 'checkbox')}
+                            </div>
+                        </div>
+                    `;
+
+                    // Insert a single button after the witness section that opens the advanced details modal
+                    const witnessSectionEl = document.getElementById('detail-witness-section');
+                    const advancedButtonHtml = `<div style="margin-top:1rem;"><button id="open-advanced-details-btn" class="btn btn-outline" style="width:100%;">Ver Información Completa</button></div>`;
+                    // Remove any existing advanced button to avoid duplicates
+                    const existingBtn = document.getElementById('open-advanced-details-btn');
+                    if (existingBtn && existingBtn.parentNode) existingBtn.parentNode.removeChild(existingBtn);
+
+                    if (witnessSectionEl) {
+                        witnessSectionEl.insertAdjacentHTML('afterend', advancedButtonHtml);
+                        console.log('Advanced details button inserted after witness section for case', caseItem.id);
+                    } else {
+                        container.insertAdjacentHTML('beforeend', advancedButtonHtml);
+                        console.log('Advanced details button inserted at end of container for case', caseItem.id);
+                    }
+
+                    // Attach click handler robustly (use small defer and guard to avoid duplicate bindings)
+                    setTimeout(() => {
+                        let openAdvBtn = document.getElementById('open-advanced-details-btn');
+                        if (!openAdvBtn) {
+                            // fallback: try querySelector
+                            openAdvBtn = document.querySelector('#open-advanced-details-btn');
+                        }
+
+                        if (!openAdvBtn) {
+                            console.warn('Advanced details button not found to attach handler for case', caseItem.id);
+                            return;
+                        }
+
+                        if (openAdvBtn.dataset.advBound) {
+                            // already bound
+                            return;
+                        }
+
+                        openAdvBtn.dataset.advBound = '1';
+                        openAdvBtn.addEventListener('click', (ev) => {
+                            console.log('Advanced details button clicked for case', caseItem.id);
+                            // Ensure advanced modal container exists
+                            const advContainer = document.getElementById('case-advanced-container');
+                            if (!advContainer) {
+                                console.warn('Advanced details modal container not found');
+                                return;
+                            }
+
+                            // Inject tabs and panels into advanced modal
+                            advContainer.innerHTML = tabsHeaderHtml + panelsHtml;
+
+                            // Populate panels content
+                            const panelCliente = document.getElementById('tab-cliente');
+                            const panelServicio = document.getElementById('tab-servicio');
+                            const panelFechas = document.getElementById('tab-fechas');
+                            const panelNotas = document.getElementById('tab-notas');
+                            const panelRegistros = document.getElementById('tab-registros');
+                            const panelEspecializados = document.getElementById('tab-especializados');
+                            const panelPersonalizados = document.getElementById('tab-personalizados');
+
+                            if (panelCliente) panelCliente.innerHTML = clientHtml;
+                            if (panelServicio) panelServicio.innerHTML = servicioHtml;
+                            if (panelFechas) panelFechas.innerHTML = fechasHtml;
+                            if (panelNotas) panelNotas.innerHTML = notasHtml;
+                            if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
+                            if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
+
+                            // Custom fields into 'Personalizados' tab
+                            const customPanel = document.getElementById('tab-personalizados');
+                            if (customPanel) {
+                                if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                                    Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                                        const html = makeFieldBlock(k, k, v);
+                                        customPanel.insertAdjacentHTML('beforeend', html);
+                                    });
+                                } else {
+                                    customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                                }
+                            }
+
+                            // Wire tab click handlers inside advanced modal
+                            const tabsContainerEl = document.getElementById('detail-tabs');
+                            if (tabsContainerEl) {
+                                const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
+                                const activate = (btn) => {
+                                    tabButtons.forEach(b=>{
+                                        b.classList.remove('active');
+                                        b.style.background = 'transparent';
+                                        b.style.borderColor = 'transparent';
+                                        b.style.boxShadow = 'none';
+                                        b.style.color = '';
+                                    });
+                                    btn.classList.add('active');
+                                    btn.style.background = '#fff';
+                                    btn.style.borderColor = '#e6eef8';
+                                    btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
+                                };
+
+                                tabButtons.forEach(btn => {
+                                    btn.addEventListener('click', (ev) => {
+                                        const target = btn.getAttribute('data-tab');
+                                        activate(btn);
+                                        document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
+                                        const panel = document.getElementById(target);
+                                        if (panel) panel.style.display = 'block';
+                                    });
+                                });
+
+                                if (tabButtons[0]) activate(tabButtons[0]);
+                            }
+
+                            // Attach inline edit handlers inside advanced modal
+                            const advPanels = advContainer.querySelector('.detail-tab-panels') || advContainer;
+                            advPanels.querySelectorAll('.inline-edit-btn').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    const field = btn.getAttribute('data-field');
+                                    const root = btn.closest('.case-detail-item');
+                                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                                    if (!input || !valueEl) return;
+                                    valueEl.style.display = 'none';
+                                    input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
+                                    editBtn.style.display = 'none';
+                                    saveBtn.style.display = 'inline-block';
+                                    cancelBtn.style.display = 'inline-block';
+                                });
+                            });
+
+                            advPanels.querySelectorAll('.inline-cancel-btn').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    const field = btn.getAttribute('data-field');
+                                    const root = btn.closest('.case-detail-item');
+                                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                                    if (!input || !valueEl) return;
+                                    input.style.display = 'none';
+                                    valueEl.style.display = 'block';
+                                    editBtn.style.display = 'inline-block';
+                                    saveBtn.style.display = 'none';
+                                    cancelBtn.style.display = 'none';
+                                });
+                            });
+
+                            advPanels.querySelectorAll('.inline-save-btn').forEach(btn => {
+                                btn.addEventListener('click', async (e) => {
+                                    const field = btn.getAttribute('data-field');
+                                    const root = btn.closest('.case-detail-item');
+                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                    if (!input) return;
+                                    let newVal = input.type === 'checkbox' ? input.checked : input.value;
+                                    btn.textContent = 'Guardando...';
+                                    try {
+                                        await this.updateCaseAttribute(caseItem.id, field, newVal);
+                                        if (field === 'clientId') {
+                                            const client = (this.state.clients || []).find(c => String(c.id) === String(newVal));
+                                            const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
+                                            if (nameEl) nameEl.textContent = client ? client.name : '-';
+                                        }
+                                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                        if (valueEl) valueEl.textContent = (input.tagName === 'SELECT') ? input.options[input.selectedIndex].text : (input.type==='checkbox' ? (newVal ? 'Sí' : 'No') : newVal);
+                                        btn.textContent = 'Guardar';
+                                        Toast.success('Actualizado', 'Campo actualizado correctamente');
+                                    } catch (err) {
+                                        console.error('Inline update failed', err);
+                                        btn.textContent = 'Guardar';
+                                        Toast.error('Error', 'No se pudo actualizar el campo');
+                                    }
+                                });
+                            });
+
+                            // Open the advanced modal (use global reference to avoid `this` issues)
+                            console.log('Opening advanced details modal for case', caseItem.id, ' — attempting NotaryCRM.openModal');
+                            try {
+                                if (window.NotaryCRM && typeof window.NotaryCRM.openModal === 'function') {
+                                    window.NotaryCRM.openModal('case-advanced-modal');
+                                } else if (typeof this.openModal === 'function') {
+                                    this.openModal('case-advanced-modal');
+                                } else {
+                                    console.warn('openModal not available on NotaryCRM or this; will try direct DOM fallback');
+                                }
+                            } catch (err) {
+                                console.error('Error calling NotaryCRM.openModal:', err);
+                            }
+
+                            // Verify modal visible; if not, force the `.active` class as a fallback so we can rule out openModal issues
+                            const modalEl = document.getElementById('case-advanced-modal');
+                            if (modalEl) {
+                                const isActive = modalEl.classList && modalEl.classList.contains('active');
+                                console.log('case-advanced-modal exists; active=', isActive);
+                                if (!isActive) {
+                                    console.log('Applying fallback: adding .active to case-advanced-modal');
+                                    modalEl.classList.add('active');
+                                }
+                            } else {
+                                console.warn('case-advanced-modal element not found in DOM');
+                            }
+                            if (window.lucide) window.lucide.createIcons();
+                        });
+                    }, 40);
+
+                    // Insert content into respective panels
+                    const panelCliente = document.getElementById('tab-cliente');
+                    const panelServicio = document.getElementById('tab-servicio');
+                    const panelFechas = document.getElementById('tab-fechas');
+                    const panelNotas = document.getElementById('tab-notas');
+                    const panelRegistros = document.getElementById('tab-registros');
+                    const panelEspecializados = document.getElementById('tab-especializados');
+                    const panelPersonalizados = document.getElementById('tab-personalizados');
+
+                    if (panelCliente) panelCliente.innerHTML = clientHtml;
+                    if (panelServicio) panelServicio.innerHTML = servicioHtml;
+                    if (panelFechas) panelFechas.innerHTML = fechasHtml;
+                    if (panelNotas) panelNotas.innerHTML = notasHtml;
+                    if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
+                    if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
+
+                    // Custom fields into 'Personalizados' tab
+                    const customPanel = document.getElementById('tab-personalizados');
+                    if (customPanel) {
+                        if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                            Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                                const html = makeFieldBlock(k, k, v);
+                                customPanel.insertAdjacentHTML('beforeend', html);
+                            });
+                        } else {
+                            customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                        }
+                    }
+
+                    // Wire tab click handlers now that tabs exist, and set active/inactive styles dynamically
+                    const tabsContainerEl = document.getElementById('detail-tabs');
+                    if (tabsContainerEl) {
+                        const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
+                        const activate = (btn) => {
+                            tabButtons.forEach(b=>{
+                                b.classList.remove('active');
+                                b.style.background = 'transparent';
+                                b.style.borderColor = 'transparent';
+                                b.style.boxShadow = 'none';
+                                b.style.color = '';
+                            });
+                            btn.classList.add('active');
+                            btn.style.background = '#fff';
+                            btn.style.borderColor = '#e6eef8';
+                            btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
+                        };
+
+                        tabButtons.forEach(btn => {
+                            btn.addEventListener('click', (ev) => {
+                                const target = btn.getAttribute('data-tab');
+                                activate(btn);
+                                document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
+                                const panel = document.getElementById(target);
+                                if (panel) panel.style.display = 'block';
+                            });
+                        });
+
+                        // activate first button visually
+                        if (tabButtons[0]) activate(tabButtons[0]);
+                    }
+
+                    // Insert custom fields
+                    const customContainer = document.getElementById('detail-custom-fields');
+                    if (customContainer) {
+                        if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                            Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                                const html = makeFieldBlock(k, k, v);
+                                customContainer.insertAdjacentHTML('beforeend', html);
+                            });
+                        } else {
+                            customContainer.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                        }
+                    }
+
+                    // Ensure the main modal actions panel contains the quick action buttons
+                    try {
+                        const actionsPanelEl = document.getElementById('detail-actions-panel');
+                        if (actionsPanelEl) {
+                            actionsPanelEl.innerHTML = `
+                <div style="background:#f8fafc; padding:1rem; border-radius:12px; border:1px solid #e2e8f0;">
+                    <h4 style="font-size:0.85rem; font-weight:700; color:#64748b; text-transform:uppercase;">Acciones R E1pidas</h4>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem;">
+                        <button class="btn btn-primary btn-block" onclick="NotaryCRM.generateInvoice('${caseItem.id}')" style="justify-content:center; gap:10px;"><i data-lucide="receipt" style="width:18px;"></i> Recibo PDF</button>
+                        <button class="btn btn-outline-purple btn-block" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" style="justify-content:center; gap:10px;"><i data-lucide="pen-tool" style="width:18px;"></i> Solicitar Firma</button>
+                        <button class="btn btn-block" style="background:#25d366; color:white; justify-content:center; gap:10px;" onclick="NotaryCRM.sendReminder('${caseItem.id}','whatsapp')"><i data-lucide="message-circle" style="width:18px;"></i> WhatsApp</button>
+                    </div>
+                    <hr style="margin:0.75rem 0;">
+                    <div style="font-size:0.85rem; color:#64748b;">Creado: ${this.formatDate(caseItem.createdAt)}</div>
+                    <div style="font-size:0.85rem; color:#64748b; margin-top:0.5rem;">ID: ${caseItem.id}</div>
+                </div>
+                            `;
+                            if (window.lucide) window.lucide.createIcons();
+                        }
+                    } catch (err) {
+                        console.error('Failed to populate actions panel:', err);
+                    }
+
+                    // Attach inline edit handlers (target the whole tab panels container so edits in any tab work)
+                    const containerEl = document.querySelector('.detail-tab-panels') || container;
+                    const self = this;
+
+                    const toggleToEdit = (root, field) => {
+                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                        if (!input || !valueEl) return;
+                        valueEl.style.display = 'none';
+                        input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
+                        editBtn.style.display = 'none';
+                        saveBtn.style.display = 'inline-block';
+                        cancelBtn.style.display = 'inline-block';
+                    };
+
+                    const toggleToView = (root, field, newVal) => {
+                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                        if (!input || !valueEl) return;
+                        input.style.display = 'none';
+                        valueEl.style.display = 'block';
+                        editBtn.style.display = 'inline-block';
+                        saveBtn.style.display = 'none';
+                        cancelBtn.style.display = 'none';
+                        if (newVal !== undefined) {
+                            // If input is select, show selected option label
+                            if (input.tagName === 'SELECT') {
+                                const sel = input.options[input.selectedIndex];
+                                valueEl.textContent = sel ? sel.text : (newVal === null || newVal === '' ? '-' : String(newVal));
+                            } else if (input.type === 'checkbox') {
+                                valueEl.textContent = newVal ? 'Sí' : 'No';
+                            } else {
+                                valueEl.textContent = newVal === null || newVal === '' ? '-' : String(newVal);
+                            }
+                        }
+                    };
+
+                    containerEl.querySelectorAll('.inline-edit-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const field = btn.getAttribute('data-field');
+                            const root = btn.closest('.case-detail-item');
+                            toggleToEdit(root, field);
+                        });
+                    });
+
+                    containerEl.querySelectorAll('.inline-cancel-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const field = btn.getAttribute('data-field');
+                            const root = btn.closest('.case-detail-item');
+                            toggleToView(root, field);
+                        });
+                    });
+
+                    containerEl.querySelectorAll('.inline-save-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const field = btn.getAttribute('data-field');
+                            const root = btn.closest('.case-detail-item');
+                            const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                            if (!input) return;
+                            let newVal;
+                            if (input.type === 'checkbox') newVal = input.checked;
+                            else newVal = input.value;
+
+                            btn.textContent = 'Guardando...';
+                            try {
+                                await self.updateCaseAttribute(caseItem.id, field, newVal);
+                                // If clientId changed, also update displayed client name block
+                                if (field === 'clientId') {
+                                    const client = (self.state.clients || []).find(c => String(c.id) === String(newVal));
+                                    const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
+                                    if (nameEl) nameEl.textContent = client ? client.name : '-';
+                                }
+                                toggleToView(root, field, newVal);
+                                btn.textContent = 'Guardar';
+                                Toast.success('Actualizado', 'Campo actualizado correctamente');
+                            } catch (err) {
+                                console.error('Inline update failed', err);
+                                btn.textContent = 'Guardar';
+                                Toast.error('Error', 'No se pudo actualizar el campo');
+                            }
+                        });
+                    });
+
+                
+
                 this.openModal('case-details-modal');
                 if (window.lucide) window.lucide.createIcons();
             } // Close if(container)
@@ -5078,6 +5748,372 @@ window.NotaryCRM = {
         } catch (err) {
             console.error('Error updating case attribute:', err);
             Toast.error('Error', 'No se pudo actualizar el registro.');
+        }
+    },
+
+    toggleToEdit(root, field) {
+        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+        if (!input || !valueEl) return;
+        valueEl.style.display = 'none';
+        input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    },
+
+    toggleToView(root, field, newVal) {
+        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+        if (!input || !valueEl) return;
+        input.style.display = 'none';
+        valueEl.style.display = 'block';
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        if (newVal !== undefined) {
+            if (input.tagName === 'SELECT') {
+                const sel = input.options[input.selectedIndex];
+                valueEl.textContent = sel ? sel.text : (newVal === null || newVal === '' ? '-' : String(newVal));
+            } else if (input.type === 'checkbox') {
+                valueEl.textContent = newVal ? 'Sí' : 'No';
+            } else {
+                valueEl.textContent = newVal === null || newVal === '' ? '-' : String(newVal);
+            }
+        }
+    },
+
+    makeFieldBlock(key, label, value, type = 'text', options = null) {
+        let displayVal = (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) ? '-' : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+        if (type === 'select' && Array.isArray(options)) {
+            const found = options.find(o => String(o.value) === String(value));
+            if (found) displayVal = found.label;
+        }
+
+        const inputHtml = (() => {
+            if (type === 'select' && Array.isArray(options)) {
+                return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value)===String(value)? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
+            }
+            if (type === 'checkbox') {
+                return `<input type="checkbox" class="inline-input" style="display:none;" data-field="${key}" ${value ? 'checked' : ''} />`;
+            }
+            if (type === 'number') return `<input type="number" step="0.01" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+            if (type === 'date') return `<input type="date" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+            if (type === 'textarea') return `<textarea class="inline-input" style="display:none; width:100%; padding:6px; min-height:80px;" data-field="${key}">${value || ''}</textarea>`;
+            return `<input type="text" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+        })();
+
+        return `
+            <div class="case-detail-item" style="background:white; padding:0.75rem; border:1px solid #e2e8f0; border-radius:6px;">
+                <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; margin-bottom:6px;">${label}</div>
+                <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+                    <div style="flex:1;">
+                        <div class="inline-value" data-field="${key}" style="font-weight:600; color:#334155; word-break:break-word;">${displayVal}</div>
+                        ${inputHtml}
+                    </div>
+                    <div style="min-width:90px; display:flex; gap:6px; justify-content:flex-end;">
+                        <button class="inline-edit-btn btn btn-sm" data-field="${key}">Editar</button>
+                        <button class="inline-save-btn btn btn-sm btn-primary" data-field="${key}" style="display:none;">Guardar</button>
+                        <button class="inline-cancel-btn btn btn-sm" data-field="${key}" style="display:none;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    showNewCaseDetails(id) {
+        console.log('Showing new case details for ID:', id);
+        const caseItem = this.state.cases.find(c => c.id == id);
+
+        if (!caseItem) {
+            console.error('Case not found for ID:', id);
+            return;
+        }
+
+        try {
+            this.openModal('new-case-details-modal');
+
+            const setNewField = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+                else console.warn(`Element not found: ${id}`);
+            };
+
+            setNewField('new-detail-case-number', `Expediente #${caseItem.caseNumber}`);
+            const statusEl = document.getElementById('new-detail-case-status');
+            if (statusEl) {
+                statusEl.textContent = caseItem.status ? caseItem.status.toUpperCase() : 'UNKNOWN';
+                statusEl.className = `badge badge-${caseItem.status || 'pending'}`;
+            }
+
+            const client = this.state.clients.find(c => c.id === caseItem.clientId);
+
+            const newModalContentHtml = `
+                <!-- Información Principal del Caso y Cliente -->
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #cbd5e1;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <!-- Información del Cliente -->
+                        <div>
+                            <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="user" style="width: 16px;"></i> Cliente
+                            </h4>
+                            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <div style="margin-bottom: 0.75rem;">
+                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Nombre</span>
+                                    <span style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">${client ? client.name : 'N/A'}</span>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Email</span>
+                                    <span style="color: #334155;">${client ? client.email : 'N/A'}</span>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Teléfono</span>
+                                    <span style="color: #334155;">${client ? client.phone : 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Dirección</span>
+                                    <span style="color: #334155;">${client ? client.address : 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del Expediente -->
+                        <div>
+                            <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="file-text" style="width: 16px;"></i> Expediente
+                            </h4>
+                            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Número de Caso</span>
+                                        <span style="font-weight: 700; color: #1e293b;">${caseItem.caseNumber}</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Servicio</span>
+                                        <span style="color: #334155;">${caseItem.type}</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Estado</span>
+                                        <span style="display: inline-block; font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; text-transform: capitalize; background: ${caseItem.status === 'completed' ? '#dcfce7' : caseItem.status === 'in-progress' ? '#dbeafe' : '#fef3c7'}; color: ${caseItem.status === 'completed' ? '#166534' : caseItem.status === 'in-progress' ? '#1e40af' : '#92400e'};">
+                                            ${caseItem.status === 'pending' ? 'Pendiente' : caseItem.status === 'in-progress' ? 'En Proceso' : caseItem.status === 'completed' ? 'Completado' : 'Pendiente'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Estado de Pago</span>
+                                        <span style="display: inline-block; font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; text-transform: capitalize; background: ${caseItem.paymentStatus === 'paid' ? '#dcfce7' : caseItem.paymentStatus === 'partial' ? '#fef3c7' : '#fee2e2'}; color: ${caseItem.paymentStatus === 'paid' ? '#166534' : caseItem.paymentStatus === 'partial' ? '#92400e' : '#991b1b'};">
+                                            ${caseItem.paymentStatus === 'paid' ? 'Pagado' : caseItem.paymentStatus === 'partial' ? 'Pago Parcial' : 'Pendiente'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Fecha de Vencimiento</span>
+                                        <span style="color: #334155;">${caseItem.dueDate || 'Sin fecha'}</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Importe</span>
+                                        <span style="font-weight: 700; color: #16a34a; font-size: 1.1rem;">${this.formatCurrency(caseItem.amount)}</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Ubicación</span>
+                                        <span style="color: #334155;">${caseItem.location || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Kilometraje</span>
+                                        <span style="color: #334155;">${caseItem.mileage || 0} millas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    ${caseItem.description ? `
+                    <div style="margin-top: 1rem;">
+                        <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="file-text" style="width: 16px;"></i> Notas
+                        </h4>
+                        <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <p style="color: #334155; margin: 0; white-space: pre-wrap;">${caseItem.description}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <!-- Botones de Acciones Rápidas -->
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="zap" style="width: 16px;"></i> Acciones Rápidas
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                        <button class="btn btn-primary" onclick="NotaryCRM.generateInvoice('${caseItem.id}')" style="justify-content:center; gap:10px;">
+                            <i data-lucide="receipt" style="width:18px;"></i> Recibo PDF
+                        </button>
+                        <button class="btn btn-outline-purple" onclick="NotaryCRM.sendForSignature('${caseItem.id}')" style="justify-content:center; gap:10px;">
+                            <i data-lucide="pen-tool" style="width:18px;"></i> Solicitar Firma
+                        </button>
+                        <button class="btn" style="background:#25d366; color:white; justify-content:center; gap:10px;" onclick="NotaryCRM.sendReminder('${caseItem.id}','whatsapp')">
+                            <i data-lucide="message-circle" style="width:18px;"></i> WhatsApp
+                        </button>
+                        <button class="btn btn-outline-purple" onclick="biometricManager.open('${caseItem.id}')" style="justify-content:center; gap:10px;">
+                            <i data-lucide="fingerprint" style="width:18px;"></i> ${caseItem.biometricCaptured ? 'Actualizar Huella' : 'Capturar Huella'}
+                        </button>
+                        <button class="btn btn-outline" onclick="EmailManager.openSendModal('case', '${caseItem.id}')" style="justify-content:center; gap:10px;">
+                            <i data-lucide="mail" style="width:18px;"></i> Enviar Email
+                        </button>
+                        <button class="btn btn-outline" onclick="if(window.CaseAttachmentsManager) CaseAttachmentsManager.open('${caseItem.id}'); else alert('Gestor de archivos no disponible');" style="justify-content:center; gap:10px;">
+                            <i data-lucide="paperclip" style="width:18px;"></i> Adjuntar Archivos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botón para mostrar/ocultar sección de edición -->
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-outline" onclick="document.getElementById('inline-edit-section').style.display = document.getElementById('inline-edit-section').style.display === 'none' ? 'block' : 'none'; this.innerHTML = document.getElementById('inline-edit-section').style.display === 'none' ? '<i data-lucide=\\'edit\\' style=\\'width:18px;\\'></i> Mostrar Edición Avanzada' : '<i data-lucide=\\'eye-off\\' style=\\'width:18px;\\'></i> Ocultar Edición Avanzada'; if(window.lucide) window.lucide.createIcons();" style="width: 100%; justify-content: center; gap: 10px;">
+                        <i data-lucide="edit" style="width:18px;"></i> Mostrar Edición Avanzada
+                    </button>
+                </div>
+
+                <!-- Sección de Edición Inline (Oculta por defecto) -->
+                <div id="inline-edit-section" style="display: none;">
+                    <div style="background: #fffbeb; padding: 1rem; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 1rem;">
+                        <p style="margin: 0; color: #92400e; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="alert-triangle" style="width: 16px;"></i>
+                            <strong>Modo de Edición Avanzada:</strong> Puedes editar los campos directamente haciendo clic en "Editar".
+                        </p>
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Información del Cliente (Editable)</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem; margin-bottom: 1.5rem;">
+                        ${this.makeFieldBlock('clientName', 'Nombre del Cliente', client ? client.name : 'N/A')}
+                        ${this.makeFieldBlock('clientEmail', 'Email del Cliente', client ? client.email : 'N/A')}
+                        ${this.makeFieldBlock('clientPhone', 'Teléfono del Cliente', client ? client.phone : 'N/A')}
+                        ${this.makeFieldBlock('clientAddress', 'Dirección del Cliente', client ? client.address : 'N/A')}
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Detalles del Expediente (Editable)</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem; margin-bottom: 1.5rem;">
+                        ${this.makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
+                        ${this.makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
+                            {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
+                        ])}
+                        ${this.makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
+                        ${this.makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                        ${this.makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
+                        ${this.makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
+                        ${this.makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                        ${this.makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Notas (Editable)</h4>
+                    <div style="display:grid; grid-template-columns: 1fr; gap:0.75rem; margin-bottom: 1.5rem;">
+                        ${this.makeFieldBlock('description', 'Descripción / Notas', caseItem.description, 'textarea')}
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Registros Notariales</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem; margin-bottom: 1.5rem;">
+                        ${this.makeFieldBlock('hasDigitalSignature', 'Firma Capturada', caseItem.hasDigitalSignature, 'checkbox')}
+                        ${this.makeFieldBlock('hasFingerprint', 'Huella Dactilar', caseItem.hasFingerprint, 'checkbox')}
+                        ${this.makeFieldBlock('biometricHash', 'Biometric Hash', caseItem.biometricHash)}
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Campos Especializados</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem; margin-bottom: 1.5rem;">
+                        ${this.makeFieldBlock('apostilleDestination', 'País de Apostilla', caseItem.apostilleDestination)}
+                        ${this.makeFieldBlock('apostilleTracking', 'Tracking Apostilla', caseItem.apostilleTracking)}
+                        ${this.makeFieldBlock('loanType', 'Tipo de Préstamo', caseItem.loanType)}
+                        ${this.makeFieldBlock('lsa_closing_disclosure', 'LSA: Closing Disclosure', caseItem.lsa_closing_disclosure, 'checkbox')}
+                        ${this.makeFieldBlock('lsa_the_note', 'LSA: The Note', caseItem.lsa_the_note, 'checkbox')}
+                    </div>
+
+                    <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Campos Personalizados</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:0.75rem;" id="new-detail-custom-fields">
+                        <!-- custom fields inserted here -->
+                    </div>
+                </div>
+
+                <!-- Información adicional al final -->
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b;">
+                        <span>Creado: ${this.formatDate(caseItem.createdAt)}</span>
+                        <span>ID: ${caseItem.id}</span>
+                    </div>
+                </div>
+            `;
+
+            const newModalContentEl = document.getElementById('new-case-details-content');
+            if (newModalContentEl) {
+                newModalContentEl.innerHTML = newModalContentHtml;
+
+                const customFieldsContainer = document.getElementById('new-detail-custom-fields');
+                if (customFieldsContainer && caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                    Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                        const html = this.makeFieldBlock(k, k, v);
+                        customFieldsContainer.insertAdjacentHTML('beforeend', html);
+                    });
+                } else if (customFieldsContainer) {
+                    customFieldsContainer.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                }
+
+                const self = this;
+                const newModalEl = document.getElementById('new-case-details-modal');
+
+                newModalEl.querySelectorAll('.inline-edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        self.toggleToEdit(root, field);
+                    });
+                });
+
+                newModalEl.querySelectorAll('.inline-cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        self.toggleToView(root, field);
+                    });
+                });
+
+                newModalEl.querySelectorAll('.inline-save-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                        if (!input) return;
+                        let newVal;
+                        if (input.type === 'checkbox') newVal = input.checked;
+                        else newVal = input.value;
+
+                        btn.textContent = 'Guardando...';
+                        try {
+                            await self.updateCaseAttribute(caseItem.id, field, newVal);
+                            self.toggleToView(root, field, newVal);
+                            btn.textContent = 'Guardar';
+                            Toast.success('Actualizado', 'Campo actualizado correctamente');
+                        } catch (err) {
+                            console.error('Inline update failed', err);
+                            btn.textContent = 'Guardar';
+                            Toast.error('Error', 'No se pudo actualizar el campo');
+                        }
+                    });
+                });
+
+                const editBtn = document.getElementById('new-detail-edit-btn');
+                if (editBtn) {
+                    editBtn.onclick = () => {
+                        self.closeModal('new-case-details-modal');
+                        self.editCasePrompt(id);
+                    };
+                }
+
+                if (window.lucide) window.lucide.createIcons({ root: newModalContentEl });
+            }
+        } catch (e) {
+            console.error('Error in showNewCaseDetails:', e);
         }
     },
 
@@ -5185,8 +6221,8 @@ window.NotaryCRM = {
 
         // Advanced KPIs
         const totalPotential = totalRevenue + pendingPayments;
-        const avgTicket = totalCases> 0 ? (totalPotential / totalCases) : 0;
-        const successRate = totalCases> 0 ? (completedCases / totalCases) * 100 : 0;
+        const avgTicket = totalCases > 0 ? (totalPotential / totalCases) : 0;
+        const successRate = totalCases > 0 ? (completedCases / totalCases) * 100 : 0;
 
         const avgEl = document.getElementById('avg-ticket');
         if (avgEl) avgEl.textContent = this.formatCurrency(avgTicket);
@@ -5200,9 +6236,15 @@ window.NotaryCRM = {
         const year = nowLocal.getFullYear();
         const month = String(nowLocal.getMonth() + 1).padStart(2, '0');
         const day = String(nowLocal.getDate()).padStart(2, '0');
-        const todayStr = `${year} -${month} -${day} `;
+        const todayStr = `${year}-${month}-${day}`;
 
-        const todaysAppointments = this.state.appointments.filter(a => a.date === todayStr);
+        // Enhanced filtering to handle potential string/formatting issues
+        const todaysAppointments = (this.state.appointments || []).filter(a => {
+            if (!a.date) return false;
+            const appDateStr = String(a.date).trim();
+            // Match YYYY-MM-DD or YYYY-MM-DD HH:mm etc
+            return appDateStr === todayStr || appDateStr.startsWith(todayStr + ' ') || appDateStr.startsWith(todayStr + 'T');
+        });
 
         const todayAppsEl = document.getElementById('today-appointments-count');
         if (todayAppsEl) todayAppsEl.textContent = todaysAppointments.length;
@@ -5259,7 +6301,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
             else if (c.createdAt) d = new Date(c.createdAt);
             else return false;
-            return d>= firstDayOfMonth;
+            return d >= firstDayOfMonth;
         }).reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
 
         const newClientsThisMonth = (this.state.clients || []).filter(c => {
@@ -5267,7 +6309,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             if (c.createdAt && typeof c.createdAt.toDate === 'function') d = c.createdAt.toDate();
             else if (c.createdAt) d = new Date(c.createdAt);
             else return false;
-            return d>= firstDayOfMonth;
+            return d >= firstDayOfMonth;
         }).length;
 
         const dashActiveCountEl = document.getElementById('dash-active-count');
@@ -5303,6 +6345,37 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
 
         // Update Mileage Widget
         if (window.MileageManager) MileageManager.renderDashboardWidget();
+
+        // Secondary KPI Calculations (Mileage & Business Health)
+        const totalMiles = this.state.cases.reduce((acc, c) => acc + (parseFloat(c.mileage) || 0), 0);
+        const irsRate = window.MileageManager ? (MileageManager.IRS_RATE || 0.67) : 0.67;
+        const totalDeduction = totalMiles * irsRate;
+
+        // Use totalRevenue already calculated above (line 5139 approx)
+        const netIncome = totalRevenue - totalDeduction;
+
+        // Top Service Calculation
+        const serviceCounts = {};
+        this.state.cases.forEach(c => {
+            const type = c.type || 'General';
+            serviceCounts[type] = (serviceCounts[type] || 0) + 1;
+        });
+        const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+
+        // Update secondary DOM elements
+        const netIncomeEl = document.getElementById('dash-net-income');
+        if (netIncomeEl) netIncomeEl.textContent = this.formatCurrency(netIncome);
+
+        const topServiceEl = document.getElementById('dash-top-service');
+        if (topServiceEl) topServiceEl.textContent = topService;
+
+        const signedCountEl = document.getElementById('dash-signed-count');
+        if (signedCountEl) signedCountEl.textContent = signedCases;
+
+        // Ensure Lucide icons are initialized for the new cards
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
     },
 
     // Render clients
@@ -5348,9 +6421,9 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const pageSize = this.state.clientsPageSize || 6;
         const totalItems = filteredClients.length;
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-        if (this.state.clientsPage> totalPages) this.state.clientsPage = totalPages;
+        if (this.state.clientsPage > totalPages) this.state.clientsPage = totalPages;
         if (this.state.clientsPage < 1) this.state.clientsPage = 1;
-        const start = (this.state.clientsPage-1) * pageSize;
+        const start = (this.state.clientsPage - 1) * pageSize;
         const pageItems = filteredClients.slice(start, start + pageSize);
 
         container.innerHTML = pageItems.map(client => `
@@ -5411,16 +6484,25 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const prevBtn = document.getElementById('clients-prev');
         const nextBtn = document.getElementById('clients-next');
         if (prevBtn) prevBtn.disabled = this.state.clientsPage <= 1;
-        if (nextBtn) nextBtn.disabled = this.state.clientsPage>= totalPages;
+        if (nextBtn) nextBtn.disabled = this.state.clientsPage >= totalPages;
     },
 
     // Render cases
     renderCases() {
-        const container = document.getElementById('cases-list');
-        if (!container) return;
+        if (this.state.caseView === 'kanban') {
+            this.renderCasesKanban();
+            return;
+        }
+
+        const listContainer = document.getElementById('cases-list');
+        const kanbanContainer = document.getElementById('cases-kanban-board');
+        if (listContainer) listContainer.style.display = 'flex';
+        if (kanbanContainer) kanbanContainer.style.display = 'none';
+
+        if (!listContainer) return;
 
         if (this.state.isLoadingCases) {
-            container.innerHTML = this.renderSkeletons(4);
+            listContainer.innerHTML = this.renderSkeletons(4);
             return;
         }
 
@@ -5431,7 +6513,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         );
 
         if (filteredCases.length === 0) {
-            container.innerHTML = '<p class="empty-state">No cases found.</p>';
+            listContainer.innerHTML = '<p class="empty-state">No cases found.</p>';
             const indi = document.getElementById('cases-page-indicator'); if (indi) indi.textContent = 'Page 0';
             return;
         }
@@ -5439,12 +6521,12 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const pageSize = this.state.casesPageSize || 6;
         const totalItems = filteredCases.length;
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-        if (this.state.casesPage> totalPages) this.state.casesPage = totalPages;
+        if (this.state.casesPage > totalPages) this.state.casesPage = totalPages;
         if (this.state.casesPage < 1) this.state.casesPage = 1;
-        const start = (this.state.casesPage-1) * pageSize;
+        const start = (this.state.casesPage - 1) * pageSize;
         const pageItems = filteredCases.slice(start, start + pageSize);
 
-        container.innerHTML = pageItems.map(caseItem => `
+        listContainer.innerHTML = pageItems.map(caseItem => `
                 <div class="case-card premium-case-card">
                 <div class="case-header">
                     <div style="flex:1">
@@ -5521,7 +6603,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const prevBtn = document.getElementById('cases-prev');
         const nextBtn = document.getElementById('cases-next');
         if (prevBtn) prevBtn.disabled = this.state.casesPage <= 1;
-        if (nextBtn) nextBtn.disabled = this.state.casesPage>= totalPages;
+        if (nextBtn) nextBtn.disabled = this.state.casesPage >= totalPages;
     },
 
     // Render status badge
@@ -5551,7 +6633,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         if (dueDate && (status === 'pending' || status === 'in-progress')) {
             const due = new Date(dueDate);
             const now = new Date();
-            const diffDays = Math.ceil((due-now) / (1000 * 60 * 60 * 24));
+            const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
             if (diffDays <= 3) {
                 const color = diffDays < 0 ? '#b91c1c' : '#d97706';
                 slaWarning = `<svg class="icon" style="color:${color}; margin-left: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
@@ -5701,7 +6783,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
     // Render skeleton placeholders
     renderSkeletons(count) {
         let skeletons = '';
-        for (let i = 0; i <count; i++) {
+        for (let i = 0; i < count; i++) {
             skeletons += `
                 <div class="skeleton-card fade-in">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
@@ -5771,12 +6853,12 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             else return true;
 
             if (filterVal === 'week') {
-                const oneWeekAgo = new Date(now.getTime()-7 * 24 * 60 * 60 * 1000);
-                return d>= oneWeekAgo;
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return d >= oneWeekAgo;
             } else if (filterVal === 'month') {
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             } else if (filterVal === 'lastMonth') {
-                const lastM = new Date(now.getFullYear(), now.getMonth()-1, 1);
+                const lastM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 return d.getMonth() === lastM.getMonth() && d.getFullYear() === lastM.getFullYear();
             } else if (filterVal === 'year') {
                 return d.getFullYear() === now.getFullYear();
@@ -5806,7 +6888,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             const m = d.getMonth() + '-' + d.getFullYear();
             months[m] = (months[m] || 0) + (parseFloat(c.amount) || 0);
         });
-        const avgMonthly = Object.values(months).length> 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
+        const avgMonthly = Object.values(months).length > 0 ? (Object.values(months).reduce((a, b) => a + b, 0) / Object.values(months).length) : 0;
         const projectedEl = document.getElementById('report-projected-revenue');
         if (projectedEl) {
             projectedEl.innerHTML = `
@@ -5826,8 +6908,8 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         // 1. Revenue by Month-ONLY PAID-Line Chart
         const monthlyRevenue = {};
         // Initialize last 6 months with 0 to show nice trend
-        for (let i = 5; i>= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const key = d.toLocaleString('es-ES', { month: 'short', year: 'numeric' });
             monthlyRevenue[key] = 0;
         }
@@ -5895,9 +6977,9 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         filteredCases.forEach(c => { serviceCounts[c.type] = (serviceCounts[c.type] || 0) + 1; });
 
         // Pick top 5, group others
-        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1]-a[1]);
+        const sortedServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
         const topServices = sortedServices.slice(0, 5);
-        if (sortedServices.length> 5) {
+        if (sortedServices.length > 5) {
             topServices.push(['Otros', sortedServices.slice(5).reduce((sum, item) => sum + item[1], 0)]);
         }
 
@@ -6028,7 +7110,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             });
 
             // Sort by date desc
-            allPayments.sort((a, b) => new Date(b.date)-new Date(a.date));
+            allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (allPayments.length === 0) {
                 paymentsTable.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center; color: var(--text-light);">No hay pagos registrados aún</td></tr>';
@@ -6248,6 +7330,11 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         if (addBtn) {
             addBtn.onclick = () => {
                 this.closeModal('calendar-day-modal');
+                // Switch to calendar tab and go to the selected date so user sees the correct day
+                this.switchTab('calendar');
+                if (this.fullCalendar) {
+                    try { this.fullCalendar.gotoDate(dateStr); } catch (e) { console.warn('gotoDate failed', e); }
+                }
                 this.openModal('calendar-modal');
                 const dateInput = document.querySelector('#calendar-modal input[name="date"]');
                 if (dateInput) dateInput.value = dateStr;
@@ -6284,6 +7371,11 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         if (rec) rec.checked = false;
 
         this.closeModal('calendar-day-modal');
+        // Move calendar to appointment date so user has context
+        this.switchTab('calendar');
+        if (this.fullCalendar && app.date) {
+            try { this.fullCalendar.gotoDate(app.date); } catch (e) { console.warn('gotoDate failed', e); }
+        }
         this.openModal('calendar-modal');
     },
 
@@ -6510,7 +7602,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
                 const allLogs = [...new Set([...logs, ...resourceLogs])].sort((a, b) => {
                     const dateA = a.timestamp && a.timestamp.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
                     const dateB = b.timestamp && b.timestamp.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
-                    return dateB-dateA;
+                    return dateB - dateA;
                 });
 
                 return allLogs.length === 0 ? '<p class="empty-state">No hay registros de auditoría para este cliente.</p>' : allLogs.map(l => `
@@ -6641,18 +7733,24 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const isRecurring = formData.get('recurring') === 'on';
         const appointments = [];
 
-        let baseDate = new Date(formData.get('date') + 'T' + formData.get('time'));
+        const dateStr = formData.get('date');
+        const timeStr = formData.get('time');
 
         const count = isRecurring ? 4 : 1;
-        for (let i = 0; i <count; i++) {
-            const current = new Date(baseDate);
-            current.setDate(baseDate.getDate() + (i * 7));
+        for (let i = 0; i < count; i++) {
+            let appDateStr = dateStr;
+
+            if (i > 0) {
+                const dateObj = new Date(dateStr + 'T00:00:00');
+                dateObj.setDate(dateObj.getDate() + (i * 7));
+                appDateStr = dateObj.toISOString().split('T')[0];
+            }
 
             appointments.push({
                 clientId: clientId,
                 clientName: client ? client.name : 'Unknown',
-                date: current.toISOString().split('T')[0],
-                time: formData.get('time'),
+                date: appDateStr,
+                time: timeStr,
                 type: formData.get('type'),
                 ownerId: this.currentUser.uid,
                 createdAt: new Date().toISOString()
@@ -6676,6 +7774,21 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             form.reset();
             this.closeModal('calendar-modal');
             Toast.success('Cita(s) Agendada(s)', isRecurring ? 'Se han creado 4 citas semanales.' : 'La cita ha sido creada.');
+
+            // Trigger External Sync if configured
+            if (window.AdvancedCalendarFeatures) {
+                appointments.forEach(apt => AdvancedCalendarFeatures.syncToExternalCalendar(apt));
+            }
+            // Refresh calendar and navigate to the date of the first created appointment
+            try {
+                this.renderCalendar();
+                this.switchTab('calendar');
+                if (this.fullCalendar && appointments[0] && appointments[0].date) {
+                    this.fullCalendar.gotoDate(appointments[0].date);
+                }
+            } catch (e) {
+                console.warn('Could not navigate to appointment date', e);
+            }
         } catch (err) {
             console.error('Error adding appointment:', err);
             Toast.error('Error', 'No se pudo agendar la cita.');
@@ -6851,21 +7964,37 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
     // --- Helper: Generate Case Number ---
     generateCaseNumber(serviceType) {
         const initialsMap = {
-            'Apostille': 'AP',
-            'Power of Attorney': 'PA',
-            'Affidavit': 'AF',
-            'Real Estate Deed': 'RD',
-            'Wills / Trusts': 'WT',
-            'Certified Copies': 'CC',
-            'Oath / Affirmation': 'OA',
-            'Loan Signing': 'LS',
-            'Acknowledgment': 'AC',
-            'Other': 'OT'
+            'apostille': 'AP',
+            'power of attorney': 'PA',
+            'affidavit': 'AF',
+            'real estate deed': 'RD',
+            'wills / trusts': 'WT',
+            'certified copies': 'CC',
+            'oath / affirmation': 'OA',
+            'loan signing': 'LS',
+            'acknowledgment': 'AC',
+            'other': 'OT'
         };
-        const initials = initialsMap[serviceType] || 'NT';
+
+        const normalize = (s) => (s || '').toString().trim().toLowerCase();
+        const key = normalize(serviceType);
+        const initials = initialsMap[key] || 'NT';
+
         const date = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
-        const random = Math.floor(1000 + Math.random() * 9000); // 4 digits
-        return `${initials}${date}${random} `;
+
+        const makeRandom = () => Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
+
+        // Try to avoid collisions with existing case numbers in local state
+        let attempts = 0;
+        let candidate;
+        do {
+            const random = makeRandom();
+            candidate = `${initials}${date}${random}`;
+            attempts++;
+            if (attempts > 10) break;
+        } while ((this.state && Array.isArray(this.state.cases) && this.state.cases.find(c => c.caseNumber === candidate)));
+
+        return candidate;
     },
 
     // Digital Signature Integration
@@ -6920,7 +8049,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             if (lines.length < 2) return;
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
             let count = 0;
-            for (let i = 1; i <lines.length; i++) {
+            for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const vals = lines[i].split(',');
                 const data = {};
@@ -6981,7 +8110,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         doc.text('REPORTE FINANCIERO Y EJECUTIVO', margin, 32);
 
         doc.setFontSize(10);
-        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, pageWidth-margin, 32, { align: 'right' });
+        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, pageWidth - margin, 32, { align: 'right' });
 
         // --- Executive Summary Section ---
         let yPos = 55;
@@ -6995,7 +8124,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         const casesCount = this.state.cases.length;
         const paidCases = this.state.cases.filter(c => c.paymentStatus === 'paid');
         const totalRevenue = paidCases.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
-        const avgTicket = paidCases.length> 0 ? totalRevenue / paidCases.length : 0;
+        const avgTicket = paidCases.length > 0 ? totalRevenue / paidCases.length : 0;
 
         yPos += 15;
 
@@ -7014,15 +8143,15 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         let xOffset = margin;
         let cardY = yPos;
         stats.forEach((stat, i) => {
-            if (i> 0 && i % 2 === 0) {
+            if (i > 0 && i % 2 === 0) {
                 xOffset = margin;
                 cardY += 35;
-            } else if (i> 0) {
+            } else if (i > 0) {
                 xOffset = (pageWidth / 2) + 5;
             }
 
             // Card Shape
-            doc.roundedRect(xOffset, cardY, (pageWidth / 2)-margin-5, 25, 3, 3, 'FD');
+            doc.roundedRect(xOffset, cardY, (pageWidth / 2) - margin - 5, 25, 3, 3, 'FD');
 
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139); // Slate-500
@@ -7055,7 +8184,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             const canvas = document.getElementById(config.id);
             if (canvas) {
                 // Check page break
-                if (yPos + 90> doc.internal.pageSize.getHeight()) {
+                if (yPos + 90 > doc.internal.pageSize.getHeight()) {
                     doc.addPage();
                     yPos = 20;
                 }
@@ -7082,7 +8211,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Página ${i} de ${pageCount}-Confidencial-Notary CRM`, pageWidth / 2, doc.internal.pageSize.getHeight()-10, { align: 'center' });
+            doc.text(`Página ${i} de ${pageCount}-Confidencial-Notary CRM`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
         }
 
         doc.save(`NotaryOS_Report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -7092,8 +8221,8 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
     // --- Automations ---
     checkAutomations() {
         const now = new Date();
-        const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) <now);
-        if (overdue.length> 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
+        const overdue = this.state.cases.filter(c => (c.status === 'pending' || c.status === 'in-progress') && new Date(c.dueDate) < now);
+        if (overdue.length > 0) console.log(`[Automation] ${overdue.length} overdue cases found.`);
     },
 
     sendReminder(caseId, type = 'whatsapp') {
@@ -7139,7 +8268,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
 
         const duplicates = [];
         matches.forEach((list, key) => {
-            if (list.length> 1) {
+            if (list.length > 1) {
                 duplicates.push({ key, clients: list });
             }
         });
@@ -7196,7 +8325,7 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             // Priority 2: Oldest createdAt
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateA-dateB;
+            return dateA - dateB;
         });
 
         const mainClient = sorted[0];
@@ -7373,10 +8502,10 @@ const Reminders = {
             if (it.completed) return;
 
             const dueTime = new Date(it.when);
-            const diffInMinutes = (now-dueTime) / 60000;
+            const diffInMinutes = (now - dueTime) / 60000;
 
             // If due exactly now or within the last minute (and we haven't notified yet)
-            if (diffInMinutes>= 0 && diffInMinutes < 1.05 && !it.notified) {
+            if (diffInMinutes >= 0 && diffInMinutes < 1.05 && !it.notified) {
                 this.showDueNotification(it);
                 it.notified = true;
             }
@@ -7627,7 +8756,7 @@ const Reminders = {
             if (statusFilter === 'pending') filteredItems = filteredItems.filter(it => !it.completed);
         }
 
-        const sorted = filteredItems.sort((a, b) => new Date(a.when)-new Date(b.when));
+        const sorted = filteredItems.sort((a, b) => new Date(a.when) - new Date(b.when));
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
@@ -7701,7 +8830,7 @@ const Reminders = {
                     const d = new Date(it.when);
                     const isToday = d.toDateString() === now.toDateString();
                     const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === d.toDateString();
-                    const isPast = d <now && !isToday;
+                    const isPast = d < now && !isToday;
 
                     let key = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
                     if (isToday) key = '📅 Hoy';
@@ -7716,7 +8845,7 @@ const Reminders = {
                         groupList.push({ title: key, items: [] });
                         currentKey = key;
                     }
-                    groupList[groupList.length-1].items.push(it);
+                    groupList[groupList.length - 1].items.push(it);
                 });
 
                 timeline.innerHTML = groupList.map(group => `
@@ -12603,7 +13732,7 @@ const NoteGenerator = {
 
         let clients = [];
         // Prioritize Cases as they have client info
-        if (NotaryCRM.state && NotaryCRM.state.cases && NotaryCRM.state.cases.length> 0) {
+        if (NotaryCRM.state && NotaryCRM.state.cases && NotaryCRM.state.cases.length > 0) {
             const uniqueClients = new Map();
             NotaryCRM.state.cases.forEach(c => {
                 if (c.clientName && !uniqueClients.has(c.clientName)) {
@@ -12810,14 +13939,14 @@ const NoteGenerator = {
             let finalHeight = (canvas.height * finalWidth) / canvas.width;
 
             // Fit vertically ONLY if it exceeds the page height
-            if (finalHeight> pageHeight) {
+            if (finalHeight > pageHeight) {
                 const ratio = pageHeight / finalHeight;
                 finalHeight = pageHeight;
                 finalWidth = finalWidth * ratio;
             }
 
             // Center horizontally
-            const finalX = (pageWidth-finalWidth) / 2;
+            const finalX = (pageWidth - finalWidth) / 2;
             const finalY = 0; // Top-aligned
 
             pdf.addImage(imgData, 'JPEG', finalX, finalY, finalWidth, finalHeight, undefined, 'FAST');
