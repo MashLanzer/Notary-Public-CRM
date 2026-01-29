@@ -169,8 +169,8 @@ const CalendarEnhancements = {
 
                         const saveBtn = document.getElementById('quick-edit-save');
                         if (saveBtn) {
-                            saveBtn.onclick = () => {
-                                const id = document.getElementById('quick-edit-id').value;
+                            saveBtn.onclick = async () => {
+                                const id = document.getElementById('quick-edit-id').value || info.event.id;
                                 const status = document.getElementById('quick-edit-status').value;
                                 const priority = document.getElementById('quick-edit-priority').value;
                                 const note = document.getElementById('quick-edit-note').value;
@@ -182,10 +182,28 @@ const CalendarEnhancements = {
                                     appts[idx].priority = priority;
                                     appts[idx].note = note;
                                 } else {
-                                    // fallback: update extendedProps if in-memory only
                                     info.event.setExtendedProp('status', status);
                                     info.event.setExtendedProp('priority', priority);
                                     info.event.setExtendedProp('note', note);
+                                }
+
+                                // Persist to Firestore when available
+                                try {
+                                    if (window.NotaryCRM && window.NotaryCRM.useFirestore && window.NotaryCRM.currentUser) {
+                                        const { doc, updateDoc, serverTimestamp } = window.dbFuncs;
+                                        const ref = doc(window.firebaseDB, 'appointments', id);
+                                        await updateDoc(ref, {
+                                            status: status,
+                                            priority: priority,
+                                            note: note,
+                                            updatedAt: serverTimestamp()
+                                        });
+                                        // Audit
+                                        if (window.AuditManager) AuditManager.logAction('Update Appointment', id, `Status:${status} Priority:${priority}`);
+                                    }
+                                } catch (err) {
+                                    console.error('Persist quick-edit failed', err);
+                                    Toast.warning('Persistencia fallida', 'No se pudo guardar en servidor, cambios solo locales.');
                                 }
 
                                 // Close modal and refresh calendar view
