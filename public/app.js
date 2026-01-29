@@ -4135,6 +4135,62 @@ window.NotaryCRM = {
         }
     },
 
+    // Add appointment (from calendar modal)
+    async addAppointment(form) {
+        const formData = new FormData(form);
+        const clientId = formData.get('clientId') || '';
+        const client = this.state.clients.find(c => c.id === clientId) || {};
+        const appointment = {
+            clientId: clientId || null,
+            clientName: client.name || formData.get('clientName') || '',
+            date: formData.get('date'),
+            time: formData.get('time'),
+            type: formData.get('type') || 'Other',
+            title: formData.get('title') || (client.name ? `Cita con ${client.name}` : (formData.get('type') || 'Cita')),
+            status: formData.get('status') || 'pending',
+            priority: formData.get('priority') || 'Low',
+            ownerId: this.currentUser ? this.currentUser.uid : null,
+            createdAt: new Date().toISOString()
+        };
+
+        // If using Firestore, persist
+        if (this.useFirestore) {
+            if (!this.currentUser) {
+                Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para agendar citas.');
+                return;
+            }
+            try {
+                const { collection, addDoc, serverTimestamp } = window.dbFuncs;
+                const appointmentsCol = collection(window.firebaseDB, 'appointments');
+                const toInsert = Object.assign({}, appointment, {
+                    ownerId: this.currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                this.updateSyncStatus('syncing');
+                const docRef = await addDoc(appointmentsCol, toInsert);
+                this.updateSyncStatus('synced');
+                Toast.success('Cita Agendada', 'La cita ha sido creada correctamente.');
+                // close form and refresh
+                this.closeModal('calendar-modal');
+                if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+                // Audit
+                if (window.AuditManager) AuditManager.logAction('Crear Cita', appointment.title, `ID: ${docRef.id}`);
+            } catch (err) {
+                console.error('Add appointment failed', err);
+                this.updateSyncStatus('error');
+                Toast.error('Error', 'No se pudo crear la cita en el servidor.');
+            }
+        } else {
+            // Local fallback
+            appointment.id = Date.now().toString();
+            this.state.appointments.push(appointment);
+            this.saveData && this.saveData();
+            this.closeModal('calendar-modal');
+            Toast.success('Cita Agendada', 'La cita ha sido creada localmente.');
+            if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+        }
+    },
+
     // Delete client
     deleteClient(id) {
         const client = this.state.clients.find(c => c.id === id);
