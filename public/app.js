@@ -3678,6 +3678,68 @@ window.NotaryCRM = {
             ScreenReaderManager.announce(`${modalTitle} opened`);
         }
 
+        // Populate calendar modal with clients and templates when opened
+        if (modalId === 'calendar-modal') {
+            const form = document.getElementById('calendar-form');
+            if (form) {
+                // Populate clients select
+                const clientSel = form.querySelector('#cal-client-select') || form.querySelector('select[name="clientId"]');
+                if (clientSel) {
+                    clientSel.innerHTML = '<option value="">Selecciona un cliente</option>';
+                    const clients = (this.state && this.state.clients) ? this.state.clients : [];
+                    clients.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name || (c.firstName ? `${c.firstName} ${c.lastName||''}` : 'Cliente');
+                        clientSel.appendChild(opt);
+                    });
+                }
+
+                // Ensure appointment templates exist
+                if (!this.appointmentTemplates) {
+                    this.appointmentTemplates = [
+                        { id: 'tpl-quick-1', name: 'Consulta 30min', time: '09:00', duration: 30, type: 'Other', title: 'Consulta' },
+                        { id: 'tpl-quick-2', name: 'Firma 60min', time: '10:00', duration: 60, type: 'Acknowledgment', title: 'Firma Documento' }
+                    ];
+                }
+
+                // Inject template selector if missing
+                if (!document.getElementById('calendar-template-select')) {
+                    const tplGroup = document.createElement('div');
+                    tplGroup.className = 'form-group';
+                    tplGroup.innerHTML = `
+                        <label class="form-label">Plantilla</label>
+                        <select id="calendar-template-select" class="form-input">
+                            <option value="">Seleccionar plantilla</option>
+                        </select>
+                    `;
+                    form.insertBefore(tplGroup, form.firstChild);
+                }
+
+                const tplSelect = document.getElementById('calendar-template-select');
+                if (tplSelect) {
+                    tplSelect.innerHTML = '<option value="">Seleccionar plantilla</option>' + (this.appointmentTemplates || []).map(t =>
+                        `<option value="${t.id}" data-time="${t.time||''}" data-duration="${t.duration||60}" data-type="${t.type||''}" data-title="${(t.title||'').replace(/\"/g,'')}">${t.name}</option>`
+                    ).join('');
+
+                    tplSelect.onchange = (e) => {
+                        const opt = tplSelect.selectedOptions[0];
+                        if (!opt) return;
+                        const time = opt.getAttribute('data-time');
+                        const type = opt.getAttribute('data-type');
+                        const title = opt.getAttribute('data-title');
+                        const timeInput = form.querySelector('input[name="time"]');
+                        const typeSelect = form.querySelector('select[name="type"]');
+                        if (timeInput && time) timeInput.value = time;
+                        if (typeSelect && type) typeSelect.value = type;
+                        // If there's a title input, fill it
+                        const titleInput = form.querySelector('input[name="title"]');
+                        if (titleInput && title) titleInput.value = title;
+                    };
+                }
+            }
+        }
+
         // Auto-populate client selects if they exist in the modal
         const clientSelects = ['case-client-select', 'cal-client-select', 'client-related-select'];
         clientSelects.forEach(id => {
