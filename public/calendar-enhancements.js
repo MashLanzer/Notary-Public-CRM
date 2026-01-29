@@ -63,6 +63,28 @@ const CalendarEnhancements = {
                 });
             }
 
+            // Add status filter UI
+            if (!document.getElementById('calendar-status-filter')) {
+                const filterEl = document.createElement('select');
+                filterEl.id = 'calendar-status-filter';
+                filterEl.className = 'form-input';
+                filterEl.style.cssText = 'width: 160px; margin-left: auto;';
+                filterEl.innerHTML = `
+                    <option value="all">Todos los estados</option>
+                    <option value="confirmed">Confirmada</option>
+                    <option value="pending">Pendiente</option>
+                    <option value="cancelled">Cancelada</option>
+                    <option value="no-show">No-show</option>
+                `;
+                // Place filter in the toolbar area
+                const toolbarArea = document.getElementById('calendar-views-toggle');
+                if (toolbarArea) toolbarArea.appendChild(filterEl);
+
+                filterEl.addEventListener('change', () => {
+                    if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+                });
+            }
+
             // Initialize FullCalendar instance if not present
             if (!window.NotaryCRM.calendar && window.FullCalendar) {
                 const calendarEl = document.getElementById('calendar');
@@ -72,7 +94,11 @@ const CalendarEnhancements = {
                     editable: true,
                     dayMaxEventRows: false,
                     events: (fetchInfo, successCallback) => {
-                        const appts = (window.NotaryCRM.state.appointments || []).map(a => {
+                        const filter = document.getElementById('calendar-status-filter')?.value || 'all';
+                        const appts = (window.NotaryCRM.state.appointments || []).filter(a => {
+                            if (filter === 'all') return true;
+                            return (a.status || '').toString() === filter;
+                        }).map(a => {
                             const start = a.date && a.time ? new Date(a.date + 'T' + a.time) : new Date(a.start || a.date || Date.now());
                             return {
                                 id: a.id,
@@ -83,6 +109,39 @@ const CalendarEnhancements = {
                             };
                         });
                         successCallback(appts);
+                    },
+                    eventContent: function(arg) {
+                        const appt = arg.event.extendedProps || {};
+                        const title = document.createElement('div');
+                        title.style.display = 'flex';
+                        title.style.alignItems = 'center';
+                        title.style.gap = '6px';
+
+                        const t = document.createElement('span');
+                        t.textContent = arg.event.title;
+                        t.style.fontSize = '0.78rem';
+                        t.style.fontWeight = '500';
+
+                        title.appendChild(t);
+
+                        // Status badge
+                        const status = (appt.status || '').toString();
+                        if (status) {
+                            const b = document.createElement('span');
+                            b.className = `cal-badge ${status.replace(/\s+/g,'-')}`;
+                            b.textContent = status;
+                            title.appendChild(b);
+                        }
+
+                        // Priority badge
+                        if (appt.priority) {
+                            const p = document.createElement('span');
+                            p.className = `cal-badge priority-${(appt.priority||'low').toString().toLowerCase()}`;
+                            p.textContent = appt.priority;
+                            title.appendChild(p);
+                        }
+
+                        return { domNodes: [title] };
                     },
                     dateClick: (info) => {
                         NotaryCRM.openModal('calendar-modal');

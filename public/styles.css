@@ -2492,6 +2492,23 @@ body:not(.authenticated) {
     pointer-events: none;
 }
 
+/* Badges inside calendar events */
+.cal-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    color: #fff;
+    margin-left: 4px;
+}
+.cal-badge.confirmed { background: #10b981; }
+.cal-badge.pending { background: #f59e0b; }
+.cal-badge.cancelled { background: #ef4444; }
+.cal-badge.no-show { background: #6b7280; }
+.cal-badge.priority-high { background: #ef4444; }
+.cal-badge.priority-medium { background: #f59e0b; }
+.cal-badge.priority-low { background: #10b981; }
+
 .fc .fc-toolbar-title {
     font-size: 1.25rem !important;
     font-weight: 700;
