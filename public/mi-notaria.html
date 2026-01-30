@@ -494,6 +494,12 @@
                         <div id="portal-next-appointment">
                             <p style="font-size: 0.9rem; opacity: 0.9;">No hay citas agendadas.</p>
                         </div>
+                        <div style="margin-top:1rem; background: rgba(255,255,255,0.06); padding:0.75rem; border-radius:8px;">
+                            <h4 style="margin:0 0 0.5rem 0; font-size:0.95rem;">Citas Canceladas</h4>
+                            <div id="portal-cancelled-list" style="font-size:0.9rem; color:rgba(255,255,255,0.9);">
+                                <p style="opacity:0.9; font-size:0.85rem;">No hay cancelaciones recientes.</p>
+                            </div>
+                        </div>
                         <a href="booking.html" class="btn-ghost"
                             style="display:block; text-align:center; margin-top: 1rem; border-color: rgba(255,255,255,0.4);">Agendar
                             Nueva Cita</a>
@@ -777,6 +783,25 @@
                             <p style="font-size: 0.85rem; opacity: 0.9;">Hora: ${next.time}</p>
                             <p style="font-size: 0.85rem; opacity: 0.9;">Télefono: (813) 373-9797</p>
                         `;
+                    }
+                    // Also render cancelled appointments and reasons
+                    const cancelledEl = document.getElementById('portal-cancelled-list');
+                    const cancelled = appSnap.docs.map(d => d.data()).filter(a => (a.status || '') === 'cancelled').sort((a,b) => new Date(b.cancelledAt || 0) - new Date(a.cancelledAt || 0));
+                    if (cancelledEl) {
+                        if (cancelled.length === 0) {
+                            cancelledEl.innerHTML = '<p style="opacity:0.9; font-size:0.85rem;">No hay cancelaciones recientes.</p>';
+                        } else {
+                            cancelledEl.innerHTML = '';
+                            cancelled.forEach(ca => {
+                                const item = document.createElement('div');
+                                item.style.cssText = 'padding:8px; border-radius:6px; background: rgba(255,255,255,0.04); margin-bottom:8px;';
+                                item.innerHTML = `
+                                    <div style="font-weight:700;">${ca.date} · ${ca.time || ''}</div>
+                                    <div style="font-size:0.85rem; opacity:0.9;">Motivo: ${ca.cancellationReason || 'No especificado'}</div>
+                                `;
+                                cancelledEl.appendChild(item);
+                            });
+                        }
                     }
                 }
 

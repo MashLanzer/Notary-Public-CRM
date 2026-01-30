@@ -2059,7 +2059,7 @@ const SpecializedManager = {
 
 const IDExpirationManager = {
     check() {
-        const clients = NotaryCRM.state.clients || [];
+        const clients = (window.NotaryCRM && window.NotaryCRM.state && window.NotaryCRM.state.clients) ? window.NotaryCRM.state.clients : [];
         const today = new Date();
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(today.getDate() + 30);
@@ -3074,6 +3074,15 @@ window.NotaryCRM = {
 
         // Modals & Forms
         addL('calendar-form', 'submit', (e) => { e.preventDefault(); this.addAppointment(e.target); });
+        addL('find-free-slots-btn', 'click', (e) => {
+            const form = document.getElementById('calendar-form');
+            if (!form) return;
+            const date = form.querySelector('input[name="date"]')?.value || new Date().toISOString().slice(0, 10);
+            const time = form.querySelector('input[name="time"]')?.value || '09:00';
+            const duration = parseInt(form.querySelector('input[name="duration"]')?.value || '30', 10);
+            const start = new Date(date + 'T' + time);
+            this.showRescheduleSuggestions(start, duration, 6);
+        });
         addL('client-form', 'submit', (e) => { e.preventDefault(); this.addClient(e.target); });
         addL('case-form', 'submit', (e) => { e.preventDefault(); this.addCase(e.target); });
         addL('add-client-btn', 'click', () => this.openModal('client-modal'));
@@ -3094,6 +3103,77 @@ window.NotaryCRM = {
                 const modal = e.target.closest('.modal');
                 if (modal) this.closeModal(modal.id);
             });
+        });
+
+        // Wire confirm cancel button in cancel-reason-modal
+        const confirmCancelBtn = document.getElementById('confirm-cancel-with-reason');
+        if (confirmCancelBtn) {
+            confirmCancelBtn.addEventListener('click', async (e) => {
+                const id = document.getElementById('cancel-reason-appointment-id')?.value || '';
+                const reason = document.getElementById('cancel-reason-text')?.value || '';
+                if (!id) { Toast.error('Error', 'ID de cita inválida.'); return; }
+                if (!reason || reason.trim().length < 3) {
+                    if (!confirm('No indicó un motivo. ¿Desea cancelar sin motivo?')) return;
+                }
+                await this.cancelAppointment(id, reason);
+            });
+        }
+
+        // Calendar settings form
+        addL('calendar-settings-form', 'submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const workStart = form.querySelector('input[name="workStart"]')?.value || '09:00';
+            const workEnd = form.querySelector('input[name="workEnd"]')?.value || '18:00';
+            const timezone = form.querySelector('select[name="timezone"]')?.value || 'auto';
+            const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"][name^="wd-"]'));
+            const workDays = checkboxes.filter(c => c.checked).map(c => parseInt(c.value, 10));
+            const settings = { workStart, workEnd, workDays, timezone };
+            const ok = this.saveCalendarSettings(settings);
+            if (ok) {
+                try {
+                    if (window.NotaryCRM && window.NotaryCRM.calendar) {
+                        window.NotaryCRM.calendar.setOption('businessHours', {
+                            daysOfWeek: settings.workDays,
+                            startTime: settings.workStart,
+                            endTime: settings.workEnd
+                        });
+                        if (settings.timezone !== 'auto') {
+                            window.NotaryCRM.calendar.setOption('timeZone', settings.timezone);
+                        }
+                        window.NotaryCRM.calendar.refetchEvents();
+                    }
+                } catch (e) { console.warn('Applying calendar settings failed', e); }
+                this.closeModal('calendar-settings-modal');
+            }
+        });
+
+        // Appointment Export Handlers
+        addL('export-appointments-csv', 'click', () => this.exportAppointments('csv'));
+        addL('export-appointments-pdf', 'click', () => this.exportAppointments('pdf'));
+        addL('export-appointments-ics', 'click', () => this.exportAppointments('ics'));
+
+        // Add blocked time handler
+        addL('add-blocked-time-btn', 'click', (e) => {
+            const form = document.getElementById('calendar-settings-form');
+            if (!form) return;
+            const startDate = form.querySelector('input[name="blockStartDate"]')?.value;
+            const startTime = form.querySelector('input[name="blockStartTime"]')?.value || '09:00';
+            const endDate = form.querySelector('input[name="blockEndDate"]')?.value || startDate;
+            const endTime = form.querySelector('input[name="blockEndTime"]')?.value || startTime;
+            if (!startDate) { Toast.error('Error', 'Seleccione la fecha de inicio del bloqueo.'); return; }
+            const start = new Date(startDate + 'T' + startTime);
+            const end = new Date(endDate + 'T' + endTime);
+            if (end <= start) { Toast.error('Error', 'La fecha/hora de fin debe ser posterior a la de inicio.'); return; }
+            const blocked = { id: 'blk_' + Date.now(), start: start.toISOString(), end: end.toISOString(), title: 'Bloqueado' };
+            this.addBlockedTime(blocked);
+            this.renderBlockedTimes();
+            Toast.success('Bloqueo agregado', 'Horario bloqueado correctamente.');
+            // clear inputs
+            form.querySelector('input[name="blockStartDate"]').value = '';
+            form.querySelector('input[name="blockStartTime"]').value = '09:00';
+            form.querySelector('input[name="blockEndDate"]').value = '';
+            form.querySelector('input[name="blockEndTime"]').value = '10:00';
         });
 
         // Search
@@ -3646,7 +3726,57 @@ window.NotaryCRM = {
     openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
+        // Ensure critical action modals are appended to document.body to avoid stacking-context issues
+        try {
+            const portalIds = [
+                'send-email-modal', 'attachments-modal', 'event-quick-edit-modal',
+                'calendar-day-modal', 'client-details-modal', 'calendar-modal',
+                'cancel-reason-modal', 'case-details-modal', 'appointment-details-modal',
+                'client-modal', 'case-modal', 'template-modal', 'auth-modal',
+                'duplicates-modal', 'reminders-modal', 'signature-modal'
+            ];
+            if (portalIds.includes(modalId) && modal.parentNode !== document.body) {
+                document.body.appendChild(modal);
+            }
+        } catch (e) { console.warn('openModal portal append failed', e); }
+
+        // Manage z-index and backdrops so the newly opened modal is always on top
+        const activeModals = Array.from(document.querySelectorAll('.modal.active')).filter(m => m.id !== modalId);
+        // Hide all other backdrops immediately
+        document.querySelectorAll('.modal .modal-backdrop').forEach(b => b.style.display = 'none');
+
+        // Reserve a high z-index range
+        const topBase = 20000 + (activeModals.length * 100);
+
+        // Demote existing active modals
+        activeModals.forEach((m, idx) => {
+            const mc = m.querySelector('.modal-content');
+            if (mc) {
+                mc.style.setProperty('z-index', String(15000 + idx * 10), 'important');
+                mc.style.pointerEvents = 'none';
+            }
+            const mb = m.querySelector('.modal-backdrop');
+            if (mb) mb.style.display = 'none';
+        });
+
+        const modalContent = modal.querySelector('.modal-content');
+        const backdrop = modal.querySelector('.modal-backdrop');
+
+        if (backdrop) {
+            backdrop.style.display = 'block';
+            backdrop.style.setProperty('z-index', String(topBase + 10), 'important');
+        }
+
+        // Force the modal container to be on top
+        modal.style.setProperty('z-index', String(topBase + 15), 'important');
+
+        if (modalContent) {
+            modalContent.style.setProperty('z-index', String(topBase + 20), 'important');
+            modalContent.style.pointerEvents = 'auto';
+        }
+
         modal.classList.add('active');
+        // Prevent body scroll while any modal active
         document.body.style.overflow = 'hidden';
 
         // Reset step if it's the client modal
@@ -3656,7 +3786,7 @@ window.NotaryCRM = {
         }
         if (modalId === 'case-modal') {
             this.renderCustomFieldsInForm('case');
-            SpecializedManager.reset();
+            if (window.SpecializedManager) SpecializedManager.reset();
             const form = document.getElementById('case-form');
             if (form) form.reset();
         }
@@ -3672,6 +3802,47 @@ window.NotaryCRM = {
             window.lucide.createIcons();
         }
 
+        // If opening cancel reason modal, ensure confirm button is wired
+        if (modalId === 'cancel-reason-modal') {
+            const confirmBtn = document.getElementById('confirm-cancel-with-reason');
+            if (confirmBtn) {
+                confirmBtn.onclick = async () => {
+                    const id = document.getElementById('cancel-reason-appointment-id')?.value || '';
+                    const reason = document.getElementById('cancel-reason-text')?.value || '';
+                    if (!id) { Toast.error('Error', 'ID de cita inválida.'); return; }
+                    if (!reason || reason.trim().length < 3) {
+                        if (!confirm('No indicó un motivo. ¿Desea cancelar sin motivo?')) return;
+                    }
+                    await this.cancelAppointment(id, reason);
+                };
+            }
+        }
+
+        // If opening calendar settings modal, populate with current settings
+        if (modalId === 'calendar-settings-modal') {
+            try {
+                const settings = this.loadCalendarSettings();
+                const form = document.getElementById('calendar-settings-form');
+                if (form) {
+                    form.querySelector('input[name="workStart"]').value = settings.workStart || '09:00';
+                    form.querySelector('input[name="workEnd"]').value = settings.workEnd || '18:00';
+                    const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"][name^="wd-"]'));
+                    checkboxes.forEach(cb => { cb.checked = (settings.workDays || [1, 2, 3, 4, 5]).includes(parseInt(cb.value, 10)); });
+                }
+                // Apply immediately to calendar view
+                if (window.NotaryCRM && window.NotaryCRM.calendar) {
+                    window.NotaryCRM.calendar.setOption('businessHours', {
+                        daysOfWeek: settings.workDays || [1, 2, 3, 4, 5],
+                        startTime: settings.workStart || '09:00',
+                        endTime: settings.workEnd || '18:00'
+                    });
+                    window.NotaryCRM.calendar.refetchEvents();
+                }
+            } catch (e) { console.warn('populate calendar settings failed', e); }
+            // render existing blocked times
+            try { this.renderBlockedTimes(); } catch (e) { /* ignore */ }
+        }
+
         // Announce modal opening for screen readers
         if (window.ScreenReaderManager) {
             const modalTitle = modal.querySelector('.modal-title')?.textContent || 'Dialog';
@@ -3682,24 +3853,40 @@ window.NotaryCRM = {
         if (modalId === 'calendar-modal') {
             const form = document.getElementById('calendar-form');
             if (form) {
+                // Ensure clients array available for all inner code paths
+                const clients = (this.state && this.state.clients) ? this.state.clients : [];
+
                 // Populate clients select
                 const clientSel = form.querySelector('#cal-client-select') || form.querySelector('select[name="clientId"]');
                 if (clientSel) {
                     clientSel.innerHTML = '<option value="">Selecciona un cliente</option>';
-                    const clients = (this.state && this.state.clients) ? this.state.clients : [];
                     clients.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
-                        opt.textContent = c.name || (c.firstName ? `${c.firstName} ${c.lastName||''}` : 'Cliente');
+                        opt.textContent = c.name || (c.firstName ? `${c.firstName} ${c.lastName || ''}` : 'Cliente');
                         clientSel.appendChild(opt);
                     });
                 }
 
                 // Ensure appointment templates exist
+                // Load saved appointment templates from localStorage if present
+                const savedApptTpl = localStorage.getItem('notary_appointment_templates');
+                if (savedApptTpl) {
+                    try { this.appointmentTemplates = JSON.parse(savedApptTpl); } catch (e) { console.warn('Invalid saved appointment templates', e); }
+                }
+
                 if (!this.appointmentTemplates) {
                     this.appointmentTemplates = [
                         { id: 'tpl-quick-1', name: 'Consulta 30min', time: '09:00', duration: 30, type: 'Other', title: 'Consulta' },
-                        { id: 'tpl-quick-2', name: 'Firma 60min', time: '10:00', duration: 60, type: 'Acknowledgment', title: 'Firma Documento' }
+                        { id: 'tpl-quick-2', name: 'Firma 60min', time: '10:00', duration: 60, type: 'Acknowledgment', title: 'Firma Documento' },
+                        { id: 'tpl-apostille', name: 'Apostilla - 45min', time: '11:00', duration: 45, type: 'Apostille', title: 'Apostilla' },
+                        { id: 'tpl-poa', name: 'Poder Notarial - 30min', time: '09:30', duration: 30, type: 'Power of Attorney', title: 'Poder Notarial' },
+                        { id: 'tpl-immig', name: 'Trámite Inmigración - 60min', time: '14:00', duration: 60, type: 'Immigration Forms', title: 'Formulario Inmigración' },
+                        { id: 'tpl-mobile', name: 'Notaría Móvil - 60min', time: '15:00', duration: 60, type: 'Mobile Notary', title: 'Notaría Móvil' },
+                        { id: 'tpl-ron', name: 'RON - Sesión Remota 30min', time: '16:00', duration: 30, type: 'RON', title: 'Notaría Remota' },
+                        { id: 'tpl-translation', name: 'Traducción / Intérprete 45min', time: '13:00', duration: 45, type: 'Translation', title: 'Traducción / Intérprete' },
+                        { id: 'tpl-doc-review', name: 'Revisión de Documentos 30min', time: '12:00', duration: 30, type: 'Document Review', title: 'Revisión Documentos' },
+                        { id: 'tpl-title-search', name: 'Búsqueda de Títulos 60min', time: '10:30', duration: 60, type: 'Title Search', title: 'Búsqueda de Títulos' }
                     ];
                 }
 
@@ -3719,7 +3906,7 @@ window.NotaryCRM = {
                 const tplSelect = document.getElementById('calendar-template-select');
                 if (tplSelect) {
                     tplSelect.innerHTML = '<option value="">Seleccionar plantilla</option>' + (this.appointmentTemplates || []).map(t =>
-                        `<option value="${t.id}" data-time="${t.time||''}" data-duration="${t.duration||60}" data-type="${t.type||''}" data-title="${(t.title||'').replace(/\"/g,'')}">${t.name}</option>`
+                        `<option value="${t.id}" data-time="${t.time || ''}" data-duration="${t.duration || 60}" data-type="${t.type || ''}" data-title="${(t.title || '').replace(/\"/g, '')}">${t.name}</option>`
                     ).join('');
 
                     tplSelect.onchange = (e) => {
@@ -3728,29 +3915,85 @@ window.NotaryCRM = {
                         const time = opt.getAttribute('data-time');
                         const type = opt.getAttribute('data-type');
                         const title = opt.getAttribute('data-title');
+                        const duration = opt.getAttribute('data-duration');
                         const timeInput = form.querySelector('input[name="time"]');
                         const typeSelect = form.querySelector('select[name="type"]');
                         if (timeInput && time) timeInput.value = time;
                         if (typeSelect && type) typeSelect.value = type;
+                        const durInput = form.querySelector('input[name="duration"]');
+                        if (durInput && duration) durInput.value = duration;
                         // If there's a title input, fill it
                         const titleInput = form.querySelector('input[name="title"]');
                         if (titleInput && title) titleInput.value = title;
+                    };
+
+                    // Populate client datalist for quick search
+                    const clientList = document.getElementById('cal-client-list');
+                    if (clientList) {
+                        clientList.innerHTML = (clients || []).map(c => `<option data-id="${c.id}" value="${(c.name || c.firstName || '').replace(/\"/g, '')}${c.email ? ' <' + c.email + '>' : ''}"></option>`).join('');
+                    }
+
+                    // Wire save template button
+                    const saveTplBtn = document.getElementById('save-template-btn');
+                    if (saveTplBtn) {
+                        saveTplBtn.onclick = () => {
+                            const name = prompt('Nombre de la plantilla:');
+                            if (!name) return;
+                            const t = {
+                                id: 'tpl-' + Date.now(),
+                                name: name,
+                                time: form.querySelector('input[name="time"]')?.value || '',
+                                duration: parseInt(form.querySelector('input[name="duration"]')?.value || '30', 10),
+                                type: form.querySelector('select[name="type"]')?.value || 'Other',
+                                title: form.querySelector('input[name="title"]')?.value || ''
+                            };
+                            this.appointmentTemplates = this.appointmentTemplates || [];
+                            this.appointmentTemplates.push(t);
+                            try { localStorage.setItem('notary_appointment_templates', JSON.stringify(this.appointmentTemplates)); } catch (e) { console.warn('Saving tpl failed', e); }
+                            // Re-render select
+                            const tplSelect2 = document.getElementById('calendar-template-select');
+                            if (tplSelect2) tplSelect2.innerHTML = '<option value="">Seleccionar plantilla</option>' + (this.appointmentTemplates || []).map(tt => `<option value="${tt.id}" data-time="${tt.time || ''}" data-duration="${tt.duration || 60}" data-type="${tt.type || ''}" data-title="${(tt.title || '').replace(/\"/g, '')}">${tt.name}</option>`).join('');
+                            Toast.success('Plantilla Guardada', 'Plantilla guardada correctamente.');
+                        };
+                    }
+
+                    // Wire export CSV button
+                    const exportBtn = document.getElementById('export-appointments-csv');
+                    if (exportBtn) {
+                        exportBtn.onclick = () => {
+                            const rows = (this.state.appointments || []).map(a => ({
+                                id: a.id || '', clientName: a.clientName || '', clientId: a.clientId || '', date: a.date || '', time: a.time || '', type: a.type || '', title: a.title || '', status: a.status || '', priority: a.priority || '', duration: a.duration || '', note: a.note || '', cancellationReason: a.cancellationReason || ''
+                            }));
+                            if (!rows.length) { Toast.info('Sin datos', 'No hay citas para exportar.'); return; }
+                            const csv = [Object.keys(rows[0]).join(',')].concat(rows.map(r => Object.values(r).map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))).join('\n');
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'appointments_export_' + (new Date().toISOString().slice(0, 10)) + '.csv';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        };
+                    }
+                }
+
+                // Wire client search selection to set client select
+                const clientSearch = document.getElementById('cal-client-search');
+                if (clientSearch) {
+                    clientSearch.onchange = (e) => {
+                        const v = clientSearch.value || '';
+                        const matched = (clients || []).find(c => (c.name || '').toLowerCase() === v.toLowerCase() || (`${c.name} <${c.email}>`).toLowerCase() === v.toLowerCase());
+                        if (matched) {
+                            const sel = document.getElementById('cal-client-select');
+                            if (sel) sel.value = matched.id;
+                        }
                     };
                 }
             }
         }
 
         // Auto-populate client selects if they exist in the modal
-        const clientSelects = ['case-client-select', 'cal-client-select', 'client-related-select'];
-        clientSelects.forEach(id => {
-            const select = document.getElementById(id);
-            if (select) {
-                const currentVal = select.value;
-                const isEs = I18nManager.currentLang === 'es';
-                select.innerHTML = `<option value = ""> ${isEs ? 'Selecciona un cliente' : 'Select a client'}</option> ` +
-                    this.state.clients.map(c => `<option value = "${c.id}" ${c.id === currentVal ? 'selected' : ''}> ${c.name}</option> `).join('');
-            }
-        });
+        this.refreshClientSelects();
 
         // Init FAQs if opening help center
         if (modalId === 'help-center-modal') {
@@ -3789,7 +4032,27 @@ window.NotaryCRM = {
         if (!modal) return;
         modal.classList.remove('active');
         modal.style.display = ''; // Clear inline styles that might force display
-        document.body.style.overflow = '';
+        // If there are other active modals, restore their interactivity; otherwise restore body scroll
+        const remaining = Array.from(document.querySelectorAll('.modal.active'));
+        if (remaining.length === 0) {
+            document.body.style.overflow = '';
+        } else {
+            // Restore pointer events and remove inline z-index overrides for remaining modals
+            remaining.forEach((m, idx) => {
+                const mc = m.querySelector('.modal-content');
+                if (mc) {
+                    mc.style.pointerEvents = '';
+                    mc.style.removeProperty('z-index');
+                    mc.removeAttribute('data-previous-pointer');
+                }
+                const mb = m.querySelector('.modal-backdrop');
+                if (mb) {
+                    mb.style.display = 'block';
+                    mb.style.removeProperty('z-index');
+                }
+            });
+            document.body.style.overflow = 'hidden';
+        }
 
         // Reset form
         const form = modal.querySelector('form');
@@ -4103,12 +4366,26 @@ window.NotaryCRM = {
 
                     this.closeModal('client-modal');
 
+                    // Refresh all client dropdowns across the app
+                    this.refreshClientSelects(docRef.id);
+
                     // Clear draft after successful save
                     if (window.DraftManager) {
                         DraftManager.clearDraft('client-form');
                     }
 
                     Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
+
+                    // Specific logic for when we were in the calendar modal
+                    const calModal = document.getElementById('calendar-modal');
+                    if (calModal && calModal.classList.contains('active')) {
+                        const calSelect = document.getElementById('cal-client-select');
+                        if (calSelect) {
+                            calSelect.value = docRef.id;
+                            // Trigger any change listener if needed
+                            calSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
                     // also save to SQL backend (if available)
                     try {
                         const api = getApiBase();
@@ -4126,32 +4403,181 @@ window.NotaryCRM = {
                     Toast.error('Error', 'No se pudo agregar el cliente.');
                 });
         } else {
-            client.id = Date.now().toString();
-            this.state.clients.push(client);
+            const newId = Date.now().toString();
+            this.state.clients.push(Object.assign({ id: newId }, client));
             this.saveData();
-            this.closeModal('client-modal');
-            Toast.success('Cliente Agregado', `${client.name} ha sido añadido exitosamente.`);
             this.render();
+            this.closeModal('client-modal');
+            this.refreshClientSelects(newId);
+            Toast.success('Cliente Agregado', `${client.name} ha sido añadido localmente.`);
         }
+    },
+
+    refreshClientSelects(selectedId = null) {
+        const selects = ['case-client-select', 'cal-client-select', 'client-related-select'];
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                const currentVal = selectedId || select.value;
+                const isEs = I18nManager.currentLang === 'es';
+                select.innerHTML = `<option value="">${isEs ? 'Selecciona un cliente' : 'Select a client'}</option>` +
+                    (this.state.clients || []).map(c => `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.name}</option>`).join('');
+
+                if (selectedId) select.value = selectedId;
+            }
+        });
+    },
+
+    // Export a specific day's agenda to PDF
+    exportDayAgenda(dateStr) {
+        const appts = (this.state.appointments || []).filter(a => a.date === dateStr && a.status !== 'cancelled');
+        if (!appts.length) return Toast.info('Día libre', 'No hay citas para exportar en esta fecha.');
+
+        // Sort by time
+        appts.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+
+        let jsPDFClass = window.jspdf?.jsPDF || window.jsPDF;
+        if (!jsPDFClass) return Toast.error('Error', 'La librería PDF no está cargada.');
+
+        const doc = new jsPDFClass();
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        // Header
+        doc.setFillColor(59, 130, 246);
+        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text('AGENDA DIARIA', 20, 25);
+        doc.setFontSize(12);
+        doc.text(`Fecha: ${dateStr}`, 20, 33);
+
+        // Content
+        doc.setTextColor(51, 65, 85);
+        let y = 55;
+
+        appts.forEach((a, i) => {
+            if (y > 250) { doc.addPage(); y = 20; }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${a.time || '--:--'} - ${a.title || 'Cita'}`, 20, y);
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Cliente: ${a.clientName || this.state.clients.find(c => c.id === a.clientId)?.name || 'N/A'}`, 25, y + 7);
+            doc.text(`Servicio: ${a.type || 'Otro'}`, 25, y + 13);
+            if (a.note) doc.text(`Notas: ${a.note}`, 25, y + 19);
+
+            doc.setDrawColor(226, 228, 230);
+            doc.line(20, y + 25, pageWidth - 20, y + 25);
+            y += 35;
+        });
+
+        doc.save(`Agenda_${dateStr}.pdf`);
+        Toast.success('PDF Generado', `Agenda del ${dateStr} lista.`);
     },
 
     // Add appointment (from calendar modal)
     async addAppointment(form) {
+        if (!this.currentUser) return Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para agendar citas.');
         const formData = new FormData(form);
+        const editingId = formData.get('appointmentId') || '';
+
+        if (editingId) {
+            // Edit existing appointment
+            const updates = {
+                clientId: formData.get('clientId'),
+                date: formData.get('date'),
+                time: formData.get('time'),
+                type: formData.get('type') || 'Other',
+                title: formData.get('title') || '',
+                status: formData.get('status') || 'pending',
+                priority: formData.get('priority') || 'Medium',
+                note: formData.get('note') || '',
+                duration: parseInt(formData.get('duration') || '30', 10),
+                attendees: (formData.get('attendees') || '').split(',').map(s => s.trim()).filter(Boolean),
+                color: formData.get('color') || '#3b82f6',
+                notifyAttendees: formData.get('notifyAttendees') === 'on',
+                updatedAt: new Date().toISOString()
+            };
+            return this.updateAppointment(editingId, updates);
+        }
+
+        const isRecurring = formData.get('recurring') === 'on';
         const clientId = formData.get('clientId') || '';
         const client = this.state.clients.find(c => c.id === clientId) || {};
-        const appointment = {
-            clientId: clientId || null,
-            clientName: client.name || formData.get('clientName') || '',
-            date: formData.get('date'),
-            time: formData.get('time'),
-            type: formData.get('type') || 'Other',
-            title: formData.get('title') || (client.name ? `Cita con ${client.name}` : (formData.get('type') || 'Cita')),
-            status: formData.get('status') || 'pending',
-            priority: formData.get('priority') || 'Low',
-            ownerId: this.currentUser ? this.currentUser.uid : null,
-            createdAt: new Date().toISOString()
-        };
+        const count = isRecurring ? 4 : 1;
+        const appointments = [];
+
+        for (let i = 0; i < count; i++) {
+            let appDateStr = formData.get('date');
+            if (i > 0) {
+                const dateObj = new Date(appDateStr + 'T00:00:00');
+                dateObj.setDate(dateObj.getDate() + (i * 7));
+                appDateStr = dateObj.toISOString().split('T')[0];
+            }
+
+            appointments.push({
+                clientId: clientId || null,
+                clientName: client.name || formData.get('clientName') || '',
+                date: appDateStr,
+                time: formData.get('time'),
+                type: formData.get('type') || 'Other',
+                title: formData.get('title') || (client.name ? `Cita con ${client.name}` : (formData.get('type') || 'Cita')),
+                status: formData.get('status') || 'pending',
+                priority: formData.get('priority') || 'Medium',
+                duration: parseInt(formData.get('duration') || '30', 10),
+                note: formData.get('note') || '',
+                reminder: formData.get('reminder') === 'on',
+                attendees: (formData.get('attendees') || '').split(',').map(s => s.trim()).filter(Boolean),
+                color: formData.get('color') || '#3b82f6',
+                notifyAttendees: formData.get('notifyAttendees') === 'on',
+                ownerId: this.currentUser.uid,
+                createdAt: new Date().toISOString()
+            });
+        }
+
+        // Before saving, check for conflicts on the first (or only) appointment
+        const first = appointments[0];
+        const newStart = new Date(first.date + 'T' + (first.time || '00:00'));
+        const newEnd = new Date(newStart.getTime() + (first.duration || 30) * 60000);
+        const appts = this.state.appointments || [];
+        const conflicts = appts.filter(a => {
+            if (!a.date || !a.time || a.status === 'cancelled') return false;
+            const aStart = new Date(a.date + 'T' + (a.time || '00:00'));
+            const aEnd = new Date(aStart.getTime() + (a.duration || 60) * 60000);
+            return (newStart < aEnd && newEnd > aStart);
+        });
+        // Check blocked times
+        const blocked = this.loadBlockedTimes ? this.loadBlockedTimes() : [];
+        const blockedConflicts = blocked.filter(b => {
+            try {
+                const bStart = new Date(b.start);
+                const bEnd = new Date(b.end);
+                return (newStart < bEnd && newEnd > bStart);
+            } catch (e) { return false; }
+        });
+        const conflictBox = document.getElementById('calendar-conflict-suggestions');
+        if (blockedConflicts.length > 0) {
+            const msg = `<strong>Conflicto con bloqueos (${blockedConflicts.length}):</strong><ul style="margin:6px 0 0 16px;">` + blockedConflicts.map(b => {
+                try { const s = new Date(b.start); const e = new Date(b.end); return `<li>${s.toLocaleString()} → ${e.toLocaleString()}</li>`; } catch (ex) { return `<li>${b.id}</li>`; }
+            }).join('') + `</ul>`;
+            if (conflictBox) { conflictBox.style.display = 'block'; conflictBox.innerHTML = msg; }
+            Toast.error('Conflicto con horario bloqueado', 'La cita se solapa con un bloqueo definido. Ajusta la fecha/hora o elimina el bloqueo.');
+            return;
+        }
+        if (conflicts.length > 0) {
+            if (conflictBox) {
+                conflictBox.style.display = 'block';
+                conflictBox.innerHTML = `<strong>Conflictos detectados (${conflicts.length}):</strong><ul style="margin:6px 0 0 16px;">` + conflicts.map(c => `<li>${c.date} ${c.time} · ${c.title || c.type || c.clientName} (${c.duration || 60}min)</li>`).join('') + `</ul>`;
+            }
+            if (!confirm('Se detectaron citas que se solapan. ¿Desea continuar de todas formas?')) {
+                return;
+            }
+        } else if (conflictBox) {
+            conflictBox.style.display = 'none';
+            conflictBox.innerHTML = '';
+        }
 
         // If using Firestore, persist
         if (this.useFirestore) {
@@ -4160,21 +4586,39 @@ window.NotaryCRM = {
                 return;
             }
             try {
+                this.updateSyncStatus('syncing');
                 const { collection, addDoc, serverTimestamp } = window.dbFuncs;
                 const appointmentsCol = collection(window.firebaseDB, 'appointments');
-                const toInsert = Object.assign({}, appointment, {
-                    ownerId: this.currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-                this.updateSyncStatus('syncing');
-                const docRef = await addDoc(appointmentsCol, toInsert);
+
+                for (const appointment of appointments) {
+                    const toInsert = Object.assign({}, appointment, {
+                        ownerId: this.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                    const docRef = await addDoc(appointmentsCol, toInsert);
+
+                    // Audit
+                    if (window.AuditManager) AuditManager.logAction('Crear Cita', appointment.title, `ID: ${docRef.id}`);
+
+                    // Notify attendees if requested
+                    try {
+                        if (appointment.attendees && appointment.attendees.length && form.querySelector('input[name="notifyAttendees"]')?.checked) {
+                            const emails = appointment.attendees;
+                            const subject = `Notificación de cita: ${appointment.title}`;
+                            const body = `Tiene una cita programada el ${appointment.date} a las ${appointment.time}. Servicio: ${appointment.type}\n\nNota: ${appointment.note || ''}`;
+                            if (window.AdvancedFeatures && typeof window.AdvancedFeatures.callCloudFunction === 'function') {
+                                emails.forEach(em => {
+                                    window.AdvancedFeatures.callCloudFunction('sendEmail', { to: em.trim(), subject, body });
+                                });
+                            }
+                        }
+                    } catch (e) { console.warn('Notify attendees failed', e); }
+                }
+
                 this.updateSyncStatus('synced');
-                Toast.success('Cita Agendada', 'La cita ha sido creada correctamente.');
-                // close form and refresh
+                Toast.success('Cita Agendada', appointments.length > 1 ? `${appointments.length} citas creadas correctamente.` : 'La cita ha sido creada correctamente.');
                 this.closeModal('calendar-modal');
                 if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
-                // Audit
-                if (window.AuditManager) AuditManager.logAction('Crear Cita', appointment.title, `ID: ${docRef.id}`);
             } catch (err) {
                 console.error('Add appointment failed', err);
                 this.updateSyncStatus('error');
@@ -4182,13 +4626,557 @@ window.NotaryCRM = {
             }
         } else {
             // Local fallback
-            appointment.id = Date.now().toString();
-            this.state.appointments.push(appointment);
+            appointments.forEach(appointment => {
+                appointment.id = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 4);
+                this.state.appointments.push(appointment);
+
+                // Notify attendees when local and requested
+                try {
+                    if (appointment.attendees && appointment.attendees.length && form.querySelector('input[name="notifyAttendees"]')?.checked) {
+                        const emails = appointment.attendees;
+                        const subject = `Notificación de cita: ${appointment.title}`;
+                        const body = `Tiene una cita programada el ${appointment.date} a las ${appointment.time}. Servicio: ${appointment.type}\n\nNota: ${appointment.note || ''}`;
+                        if (window.AdvancedFeatures && typeof window.AdvancedFeatures.callCloudFunction === 'function') {
+                            emails.forEach(em => {
+                                window.AdvancedFeatures.callCloudFunction('sendEmail', { to: em.trim(), subject, body });
+                            });
+                        }
+                    }
+                } catch (e) { console.warn('Notify attendees failed (local)', e); }
+            });
+
             this.saveData && this.saveData();
             this.closeModal('calendar-modal');
-            Toast.success('Cita Agendada', 'La cita ha sido creada localmente.');
+            Toast.success('Cita Agendada', appointments.length > 1 ? `${appointments.length} citas creadas localmente.` : 'La cita ha sido creada localmente.');
             if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
         }
+    },
+
+    // Show a client's read-only profile in the client details modal
+    showClientDetails(clientId) {
+        const client = (this.state.clients || []).find(c => c.id === clientId) || null;
+        const container = document.getElementById('client-details-content');
+        if (!container) return;
+        if (!client) {
+            container.innerHTML = '<div style="padding:1rem;">Cliente no encontrado.</div>';
+            this.openModal('client-details-modal');
+            return;
+        }
+        container.innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 320px; gap: 1rem;">
+                <div>
+                    <h3 style="margin:0 0 0.5rem 0;">${client.name || client.firstName || 'Cliente'}</h3>
+                    <div style="color:var(--text-muted); margin-bottom:0.5rem;">${client.email || ''} · ${client.phone || ''}</div>
+                    <div style="font-size:0.95rem;">${client.address || ''}</div>
+                    <div style="margin-top:1rem;">${client.notes || ''}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="btn btn-primary" onclick="NotaryCRM.editClientPrompt('${clientId}')">Editar Cliente</button>
+                    <button class="btn" onclick="NotaryCRM.openModal('case-modal')">Ver Expedientes</button>
+                </div>
+            </div>
+        `;
+        this.openModal('client-details-modal');
+    },
+
+    // Show appointment details in the appointment-details-modal
+    showAppointmentDetails(appointmentOrId) {
+        let appt = appointmentOrId || {};
+        if (typeof appt === 'string') {
+            appt = (this.state.appointments || []).find(a => a.id === appt) || { id: appt };
+        }
+
+        // Ensure we have current data
+        const currentAppt = (this.state.appointments || []).find(a => a.id === (appt.id || appt)) || appt;
+        const start = currentAppt.start ? new Date(currentAppt.start) : (currentAppt.date && currentAppt.time ? new Date(currentAppt.date + 'T' + currentAppt.time) : null);
+
+        // Populate Modal Fields
+        const headerColor = document.getElementById('appt-details-header-color');
+        const titleEl = document.getElementById('appt-details-title');
+        const clientNameEl = document.getElementById('appt-client-name');
+        const clientEmailEl = document.getElementById('appt-client-email');
+        const clientPhoneEl = document.getElementById('appt-client-phone');
+        const fullTimeEl = document.getElementById('appt-full-time');
+        const serviceTypeEl = document.getElementById('appt-service-type');
+        const notesContentEl = document.getElementById('appt-notes-content');
+        const statusTextEl = document.getElementById('appt-status-text');
+        const statusBadgeEl = document.getElementById('appt-current-status-badge');
+        const mainIconEl = document.getElementById('appt-main-icon');
+
+        if (headerColor) headerColor.style.background = currentAppt.color || '#3b82f6';
+        if (titleEl) titleEl.textContent = currentAppt.title || 'Detalle de Cita';
+
+        const client = (this.state && Array.isArray(this.state.clients)) ? this.state.clients.find(c => c.id === currentAppt.clientId) : null;
+        if (clientNameEl) clientNameEl.textContent = client ? client.name : (currentAppt.clientName || 'Sin cliente');
+        if (clientEmailEl) clientEmailEl.innerHTML = `<i data-lucide="mail" style="width: 12px; height: 12px;"></i> ${client ? client.email : 'N/A'}`;
+        if (clientPhoneEl) clientPhoneEl.innerHTML = `<i data-lucide="phone" style="width: 12px; height: 12px;"></i> ${client ? client.phone : 'N/A'}`;
+
+        if (fullTimeEl) fullTimeEl.textContent = start ? start.toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : (currentAppt.date + ' ' + currentAppt.time);
+        if (serviceTypeEl) serviceTypeEl.textContent = currentAppt.type || 'General';
+        if (notesContentEl) notesContentEl.textContent = currentAppt.note || 'Sin notas adicionales.';
+
+        const status = (currentAppt.status || 'pending').toLowerCase();
+        if (statusTextEl) statusTextEl.textContent = status.toUpperCase();
+
+        // Status Badge Styling
+        if (statusBadgeEl) {
+            const colors = {
+                confirmed: { bg: '#dcfce7', text: '#166534' },
+                pending: { bg: '#fef9c3', text: '#854d0e' },
+                cancelled: { bg: '#f1f5f9', text: '#475569' },
+                'no-show': { bg: '#fee2e2', text: '#991b1b' }
+            };
+            const c = colors[status] || colors.pending;
+            statusBadgeEl.style.background = c.bg;
+            statusBadgeEl.style.color = c.text;
+        }
+
+        // Wire Status Buttons
+        document.querySelectorAll('.status-btn-quick').forEach(btn => {
+            const s = btn.getAttribute('data-status');
+            btn.onclick = async () => {
+                await this.updateAppointmentStatus(currentAppt.id, s);
+                this.showAppointmentDetails(currentAppt.id); // Refresh modal
+            };
+        });
+
+        // Wire Main Actions
+        const editBtn = document.getElementById('appt-edit-btn');
+        const waBtn = document.getElementById('appt-whatsapp-btn');
+        const gcalBtn = document.getElementById('appt-gcal-btn');
+        const deleteBtn = document.getElementById('appt-cancel-btn-details');
+
+        if (editBtn) editBtn.onclick = () => { this.closeModal('appointment-details-modal'); this.openAppointmentInCalendar(currentAppt.id); };
+        if (waBtn) waBtn.onclick = () => {
+            const phone = client ? client.phone : '';
+            const text = `Hola ${client ? client.name : ''}, le recordamos su cita: ${currentAppt.title} para el ${fullTimeEl.textContent}.`;
+            window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+        };
+        if (gcalBtn) gcalBtn.onclick = () => {
+            const s = start ? start.toISOString().replace(/-|:|\.\d+/g, '') : '';
+            const e = start ? new Date(start.getTime() + (currentAppt.duration || 60) * 60000).toISOString().replace(/-|:|\.\d+/g, '') : '';
+            window.open(`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentAppt.title)}&dates=${s}/${e}&details=${encodeURIComponent(currentAppt.note || '')}`, '_blank');
+        };
+        if (deleteBtn) deleteBtn.onclick = async () => {
+            if (confirm('¿Está seguro de que desea eliminar esta cita?')) {
+                await this.cancelAppointment(currentAppt.id);
+                this.closeModal('appointment-details-modal');
+            }
+        };
+
+        if (window.lucide) window.lucide.createIcons();
+        this.openModal('appointment-details-modal');
+    },
+
+    async updateAppointmentStatus(id, status) {
+        return this.updateAppointment(id, { status: status });
+    },
+
+    // Open calendar modal prefilled for editing/rescheduling an appointment
+    openAppointmentInCalendar(appointment) {
+        const form = document.getElementById('calendar-form');
+        if (!form) return;
+        // Accept either id or full object
+        let appt = appointment;
+        if (typeof appointment === 'string') appt = (this.state.appointments || []).find(a => a.id === appointment) || {};
+        form.querySelector('#cal-appointment-id').value = appt.id || '';
+        if (form.querySelector('select[name="clientId"]')) form.querySelector('select[name="clientId"]').value = appt.clientId || '';
+        if (form.querySelector('input[name="date"]')) form.querySelector('input[name="date"]').value = appt.date || '';
+        if (form.querySelector('input[name="time"]')) form.querySelector('input[name="time"]').value = appt.time || '';
+        if (form.querySelector('select[name="type"]')) form.querySelector('select[name="type"]').value = appt.type || 'Other';
+        if (form.querySelector('input[name="attendees"]')) form.querySelector('input[name="attendees"]').value = (Array.isArray(appt.attendees) ? appt.attendees.join(', ') : (appt.attendees || ''));
+        if (form.querySelector('input[name="color"]')) form.querySelector('input[name="color"]').value = appt.color || '#3b82f6';
+        if (form.querySelector('input[name="notifyAttendees"]')) form.querySelector('input[name="notifyAttendees"]').checked = !!appt.notifyAttendees;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitText = document.getElementById('calendar-submit-text');
+        if (submitText) submitText.textContent = appt.id ? 'Actualizar Cita' : 'Agendar Cita';
+        else if (submitBtn) submitBtn.textContent = appt.id ? 'Actualizar Cita' : 'Agendar Cita';
+        this.openModal('calendar-modal');
+    },
+
+    // Find next available free slots starting from a date/time
+    findNextFreeSlots(startDate, durationMinutes = 30, count = 5) {
+        const appts = (this.state.appointments || []).filter(a => a.status !== 'cancelled');
+        const blocked = this.loadBlockedTimes();
+        const start = new Date(startDate instanceof Date ? startDate : startDate);
+        // Normalize to next 15-min increment
+        const roundTo = 15 * 60 * 1000;
+        const rem = start.getTime() % roundTo;
+        if (rem) start.setTime(start.getTime() + (roundTo - rem));
+        const slots = [];
+        const maxSearchHours = 24 * 30; // search up to 30 days
+        const endSearch = new Date(start.getTime() + maxSearchHours * 3600000);
+        let cursor = new Date(start);
+        const durationMs = durationMinutes * 60000;
+        while (cursor < endSearch && slots.length < count) {
+            // respect configured working hours/days
+            const settings = this.loadCalendarSettings();
+            const workStart = settings.workStart || '09:00';
+            const workEnd = settings.workEnd || '18:00';
+            const workDays = settings.workDays || [1, 2, 3, 4, 5];
+            const hour = cursor.getHours();
+            const day = cursor.getDay();
+            const withinDay = workDays.includes(day);
+            const startMinutes = parseInt(workStart.split(':')[0], 10) * 60 + parseInt(workStart.split(':')[1], 10);
+            const endMinutes = parseInt(workEnd.split(':')[0], 10) * 60 + parseInt(workEnd.split(':')[1], 10);
+            const cursorMinutes = cursor.getHours() * 60 + cursor.getMinutes();
+            if (withinDay && cursorMinutes >= startMinutes && (cursorMinutes + durationMinutes) <= endMinutes) {
+                const candidateStart = new Date(cursor);
+                const candidateEnd = new Date(candidateStart.getTime() + durationMs);
+                const overlaps = appts.some(a => {
+                    if (!a.date || !a.time) return false;
+                    const aStart = new Date(a.date + 'T' + (a.time || '00:00'));
+                    const aEnd = new Date(aStart.getTime() + (a.duration || 30) * 60000);
+                    return (candidateStart < aEnd && candidateEnd > aStart);
+                });
+                // check blocked times
+                const blockedOverlap = blocked.some(b => {
+                    try {
+                        const bStart = new Date(b.start);
+                        const bEnd = new Date(b.end);
+                        return (candidateStart < bEnd && candidateEnd > bStart);
+                    } catch (e) { return false; }
+                });
+                if (overlaps || blockedOverlap) {
+                    // move on
+                } else {
+                    slots.push(new Date(candidateStart));
+                }
+            }
+            cursor = new Date(cursor.getTime() + roundTo);
+        }
+        return slots;
+    },
+
+    showRescheduleSuggestions(startDate, durationMinutes = 30, count = 5) {
+        const container = document.getElementById('reschedule-suggestions');
+        if (!container) return;
+        const slots = this.findNextFreeSlots(startDate, durationMinutes, count);
+        if (!slots.length) {
+            container.style.display = 'block';
+            container.innerHTML = '<div>No se encontraron huecos en los próximos 30 días.</div>';
+            return;
+        }
+        container.style.display = 'flex';
+        container.innerHTML = '';
+        slots.forEach(s => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn';
+            btn.style.padding = '6px 10px';
+            btn.textContent = new Date(s).toLocaleString();
+            btn.addEventListener('click', () => {
+                const form = document.getElementById('calendar-form');
+                if (!form) return;
+                const d = s.toISOString().slice(0, 10);
+                const t = s.toTimeString().slice(0, 5);
+                form.querySelector('input[name="date"]').value = d;
+                form.querySelector('input[name="time"]').value = t;
+                container.style.display = 'none';
+            });
+            container.appendChild(btn);
+        });
+    },
+
+    // Calendar settings persistence
+    loadCalendarSettings() {
+        try {
+            const raw = localStorage.getItem('notary_calendar_settings');
+            if (!raw) return { workStart: '09:00', workEnd: '18:00', workDays: [1, 2, 3, 4, 5] };
+            return JSON.parse(raw);
+        } catch (e) { return { workStart: '09:00', workEnd: '18:00', workDays: [1, 2, 3, 4, 5] }; }
+    },
+
+    openAppointmentModal(date) {
+        const form = document.getElementById('calendar-form');
+        if (!form) return;
+
+        // Reset form but keep defaults
+        form.reset();
+        form.querySelector('#cal-appointment-id').value = '';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitText = document.getElementById('calendar-submit-text');
+        if (submitText) submitText.textContent = 'Agendar Cita';
+        else if (submitBtn) submitBtn.textContent = 'Agendar Cita';
+
+        // If date provided, set it
+        if (date) {
+            const dateInput = form.querySelector('input[name="date"]');
+            if (dateInput) dateInput.value = date;
+        } else {
+            // Default to today
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = form.querySelector('input[name="date"]');
+            if (dateInput) dateInput.value = today;
+        }
+
+        this.openModal('calendar-modal');
+    },
+
+    saveCalendarSettings(settings) {
+        try {
+            localStorage.setItem('notary_calendar_settings', JSON.stringify(settings));
+            Toast.success('Configuración guardada', 'Horario laboral actualizado.');
+            // Apply to calendar if available
+            try {
+                if (window.NotaryCRM && window.NotaryCRM.calendar) {
+                    window.NotaryCRM.calendar.setOption('businessHours', {
+                        daysOfWeek: settings.workDays || [1, 2, 3, 4, 5],
+                        startTime: settings.workStart || '09:00',
+                        endTime: settings.workEnd || '18:00'
+                    });
+                    window.NotaryCRM.calendar.refetchEvents();
+                }
+            } catch (e) { console.warn('could not apply calendar settings', e); }
+            return true;
+        } catch (e) { Toast.error('Error', 'No se pudo guardar la configuración.'); return false; }
+    },
+
+    // Blocked times persistence
+    loadBlockedTimes() {
+        try {
+            const raw = localStorage.getItem('notary_calendar_blocked_times');
+            if (!raw) return [];
+            return JSON.parse(raw) || [];
+        } catch (e) { return []; }
+    },
+
+    saveBlockedTimes(list) {
+        try {
+            localStorage.setItem('notary_calendar_blocked_times', JSON.stringify(list || []));
+            if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+            return true;
+        } catch (e) { console.warn('Could not save blocked times', e); return false; }
+    },
+
+    addBlockedTime(block) {
+        const list = this.loadBlockedTimes();
+        list.push(block);
+        this.saveBlockedTimes(list);
+    },
+
+    removeBlockedTime(id) {
+        const list = this.loadBlockedTimes().filter(b => b.id !== id);
+        this.saveBlockedTimes(list);
+        this.renderBlockedTimes();
+    },
+
+    renderBlockedTimes() {
+        const container = document.getElementById('block-times-list');
+        if (!container) return;
+        const list = this.loadBlockedTimes();
+        container.innerHTML = '';
+        if (!list.length) { container.innerHTML = '<div style="color:#6b7280;">No hay bloqueos definidos.</div>'; return; }
+        list.forEach(b => {
+            const el = document.createElement('div');
+            el.style.display = 'flex'; el.style.justifyContent = 'space-between'; el.style.alignItems = 'center';
+            const left = document.createElement('div');
+            const s = new Date(b.start); const e = new Date(b.end);
+            left.textContent = `${s.toLocaleString()} → ${e.toLocaleString()}`;
+            const del = document.createElement('button');
+            del.className = 'btn btn-sm'; del.textContent = 'Eliminar';
+            del.addEventListener('click', () => { if (confirm('Eliminar este bloqueo?')) this.removeBlockedTime(b.id); });
+            el.appendChild(left); el.appendChild(del);
+            container.appendChild(el);
+        });
+    },
+
+    async deleteAppointment(id) {
+        if (!confirm('¿Estás seguro de eliminar esta cita de forma permanente?')) return;
+        try {
+            if (this.useFirestore) {
+                const { doc, deleteDoc } = window.dbFuncs;
+                await deleteDoc(doc(window.firebaseDB, 'appointments', id));
+                if (window.AuditManager) AuditManager.logAction('Eliminar Cita', id);
+            } else {
+                this.state.appointments = this.state.appointments.filter(a => a.id !== id);
+                this.saveData();
+                this.render();
+            }
+            Toast.success('Cita Eliminada', 'La cita se eliminó correctamente.');
+        } catch (err) {
+            console.error('deleteAppointment failed', err);
+            Toast.error('Error', 'No se pudo eliminar la cita.');
+        }
+    },
+
+    async cancelAppointment(id, reason) {
+        if (!id) return;
+        try {
+            const updates = {
+                status: 'cancelled',
+                cancellationReason: reason || 'Cancelada por usuario',
+                cancelledAt: new Date().toISOString()
+            };
+            await this.updateAppointment(id, updates);
+            Toast.info('Cita Cancelada', 'El estado se cambió a cancelada.');
+            this.closeModal('cancel-reason-modal'); // Close the modal if it was open
+        } catch (err) {
+            console.error('cancelAppointment failed', err);
+            Toast.error('Error', 'No se pudo cancelar la cita.');
+        }
+    },
+
+    // --- New Calendar Export Functions ---
+    exportAppointments(format) {
+        const appts = this.state.appointments || [];
+        if (!appts.length) return Toast.info('Sin datos', 'No hay citas para exportar.');
+
+        if (format === 'csv') {
+            const rows = appts.map(a => ({
+                id: a.id || '', client: a.clientName || '', date: a.date || '', time: a.time || '', service: a.type || '', title: a.title || '', status: a.status || '', note: a.note || ''
+            }));
+            const csv = [Object.keys(rows[0]).join(',')].concat(rows.map(r => Object.values(r).map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))).join('\n');
+            this.downloadBlob(`citas_${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8;');
+        }
+        else if (format === 'ics') {
+            let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//NotaryCRM//ES\n";
+            appts.forEach(a => {
+                if (a.status === 'cancelled') return;
+                const start = (a.date + 'T' + (a.time || '09:00:00')).replace(/-|:/g, '');
+                ics += "BEGIN:VEVENT\n";
+                ics += `SUMMARY:${a.title || a.type || 'Cita Notarial'}\n`;
+                ics += `DTSTART:${start}\n`;
+                ics += `DESCRIPTION:${a.clientName || ''} - ${a.note || ''}\n`;
+                ics += "END:VEVENT\n";
+            });
+            ics += "END:VCALENDAR";
+            this.downloadBlob(`citas_${new Date().toISOString().slice(0, 10)}.ics`, ics, 'text/calendar;charset=utf-8;');
+        }
+        else if (format === 'pdf') {
+            this.generateCalendarPDF(appts);
+        }
+    },
+
+    async generateCalendarPDF(appts) {
+        let jsPDFClass = window.jspdf?.jsPDF || window.jsPDF;
+        if (!jsPDFClass) return Toast.error('Error', 'La librería PDF no está cargada.');
+
+        const doc = new jsPDFClass();
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.text('AGENDA DE CITAS NOTARIALES', 20, 20);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generado el: ${new Date().toLocaleString()} `, 20, 28);
+        doc.line(20, 32, 190, 32);
+
+        let y = 45;
+        // Sort by date/time
+        const sorted = [...appts].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+        sorted.forEach(a => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            if (a.status === 'cancelled') doc.setTextColor(200, 0, 0);
+            else doc.setTextColor(0, 0, 0);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${a.date} | ${a.time || '--:--'} `, 20, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${a.title || a.type} - ${a.clientName || 'Sin cliente'} `, 60, y);
+
+            y += 8;
+            if (a.note) {
+                doc.setFontSize(8);
+                doc.setTextColor(100);
+                doc.text(`Nota: ${a.note.slice(0, 80)} `, 65, y);
+                y += 6;
+                doc.setFontSize(10);
+            }
+            doc.line(20, y - 2, 190, y - 2);
+            y += 6;
+        });
+
+        doc.save(`Agenda_${new Date().toISOString().slice(0, 10)}.pdf`);
+    },
+
+    // Update appointment (persist to Firestore or local state)
+    async updateAppointment(id, updates) {
+        if (!id) return;
+        if (this.useFirestore) {
+            if (!this.currentUser) { Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para editar citas.'); return; }
+            try {
+                const { doc, updateDoc, serverTimestamp } = window.dbFuncs;
+                const ref = doc(window.firebaseDB, 'appointments', id);
+                const payload = Object.assign({}, updates, { updatedAt: serverTimestamp() });
+                await updateDoc(ref, payload);
+                if (window.AuditManager) AuditManager.logAction('Actualizar Cita', id, JSON.stringify(updates));
+                Toast.success('Cita Actualizada', 'La cita se actualizó correctamente.');
+                this.closeModal('calendar-modal');
+                if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+                // Notify attendees if provided in updates and notify flag set
+                try {
+                    if (updates.attendees && updates.attendees.length && updates.notifyAttendees) {
+                        const subject = `Actualización de cita: ${updates.title || ''}`;
+                        const body = `Su cita ha sido actualizada. Nueva fecha: ${updates.date || ''} ${updates.time || ''} \nNota: ${updates.note || ''}`;
+                        if (window.AdvancedFeatures && typeof window.AdvancedFeatures.callCloudFunction === 'function') {
+                            updates.attendees.forEach(em => window.AdvancedFeatures.callCloudFunction('sendEmail', { to: em, subject, body }));
+                        }
+                    }
+                } catch (e) { console.warn('Notify attendees after update failed', e); }
+                return;
+            } catch (err) {
+                console.error('updateAppointment failed', err);
+                Toast.error('Error', 'No se pudo actualizar la cita en el servidor.');
+                return;
+            }
+        }
+        // Local fallback
+        this.state.appointments = (this.state.appointments || []).map(a => a.id === id ? Object.assign({}, a, updates) : a);
+        this.saveData && this.saveData();
+        Toast.success('Cita Actualizada', 'La cita fue actualizada localmente.');
+        this.closeModal('calendar-modal');
+        if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+    },
+
+    // Cancel appointment (mark as cancelled). If no reason provided, open reason modal.
+    async cancelAppointment(id, reason) {
+        if (!id) return;
+        if (!reason) {
+            // Open modal to collect reason
+            const el = document.getElementById('cancel-reason-appointment-id');
+            const txt = document.getElementById('cancel-reason-text');
+            if (el) el.value = id;
+            if (txt) txt.value = '';
+            this.openModal('cancel-reason-modal');
+            return;
+        }
+
+        const confirmed = confirm('¿Confirmar cancelación de la cita?');
+        if (!confirmed) return;
+
+        const updates = {
+            status: 'cancelled',
+            cancellationReason: reason,
+            cancelledAt: new Date().toISOString()
+        };
+
+        if (this.useFirestore) {
+            if (!this.currentUser) { Toast.warning('Autenticación Requerida', 'Debes iniciar sesión para cancelar citas.'); return; }
+            try {
+                const { doc, updateDoc, serverTimestamp } = window.dbFuncs;
+                const ref = doc(window.firebaseDB, 'appointments', id);
+                const payload = Object.assign({}, updates, { cancelledAt: serverTimestamp() });
+                await updateDoc(ref, payload);
+                if (window.AuditManager) AuditManager.logAction('Cancelar Cita', id, `Motivo: ${reason}`);
+                Toast.success('Cita Cancelada', 'La cita fue marcada como cancelada.');
+                this.closeModal('cancel-reason-modal');
+                if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
+                return;
+            } catch (err) {
+                console.error('cancelAppointment failed', err);
+                Toast.error('Error', 'No se pudo cancelar la cita en el servidor.');
+                return;
+            }
+        }
+
+        // Local fallback
+        this.state.appointments = (this.state.appointments || []).map(a => a.id === id ? Object.assign({}, a, updates) : a);
+        this.saveData && this.saveData();
+        Toast.success('Cita Cancelada', 'La cita fue cancelada localmente.');
+        this.closeModal('cancel-reason-modal');
+        if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
     },
 
     // Delete client
@@ -4908,7 +5896,7 @@ window.NotaryCRM = {
     showCaseDetails(id) {
         // Redirect to the new case details modal
         return this.showNewCaseDetails(id);
-        
+
         // Old implementation below (kept for reference, but not executed)
         console.log('Attempting to show details for case ID:', id);
         // Use loose equality to handle string/number mismatches
@@ -5260,28 +6248,28 @@ window.NotaryCRM = {
                 }
 
                 // --- Categorized, editable details section ---
-                    const makeFieldBlock = (key, label, value, type = 'text', options = null) => {
-                        // Determine display value
-                        let displayVal = (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) ? '-' : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+                const makeFieldBlock = (key, label, value, type = 'text', options = null) => {
+                    // Determine display value
+                    let displayVal = (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) ? '-' : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+                    if (type === 'select' && Array.isArray(options)) {
+                        const found = options.find(o => String(o.value) === String(value));
+                        if (found) displayVal = found.label;
+                    }
+
+                    const inputHtml = (() => {
                         if (type === 'select' && Array.isArray(options)) {
-                            const found = options.find(o => String(o.value) === String(value));
-                            if (found) displayVal = found.label;
+                            return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value) === String(value) ? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
                         }
+                        if (type === 'checkbox') {
+                            return `<input type="checkbox" class="inline-input" style="display:none;" data-field="${key}" ${value ? 'checked' : ''} />`;
+                        }
+                        if (type === 'number') return `<input type="number" step="0.01" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                        if (type === 'date') return `<input type="date" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                        if (type === 'textarea') return `<textarea class="inline-input" style="display:none; width:100%; padding:6px; min-height:80px;" data-field="${key}">${value || ''}</textarea>`;
+                        return `<input type="text" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
+                    })();
 
-                        const inputHtml = (() => {
-                            if (type === 'select' && Array.isArray(options)) {
-                                return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value)===String(value)? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
-                            }
-                            if (type === 'checkbox') {
-                                return `<input type="checkbox" class="inline-input" style="display:none;" data-field="${key}" ${value ? 'checked' : ''} />`;
-                            }
-                            if (type === 'number') return `<input type="number" step="0.01" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
-                            if (type === 'date') return `<input type="date" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
-                            if (type === 'textarea') return `<textarea class="inline-input" style="display:none; width:100%; padding:6px; min-height:80px;" data-field="${key}">${value || ''}</textarea>`;
-                            return `<input type="text" class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}" value="${value || ''}" />`;
-                        })();
-
-                        return `
+                    return `
             <div class="case-detail-item" style="background:white; padding:0.75rem; border:1px solid #e2e8f0; border-radius:6px;">
                 <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; margin-bottom:6px;">${label}</div>
                 <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
@@ -5297,32 +6285,32 @@ window.NotaryCRM = {
                 </div>
             </div>
 `;
-                    };
+                };
 
-                    let categorizedHtml = `
+                let categorizedHtml = `
         <div style="margin-top:1.25rem; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
             <div>
                 <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Cliente</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                     ${makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
-                    ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients||[]).map(c=>({value:c.id,label:c.name})))}
+                    ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients || []).map(c => ({ value: c.id, label: c.name })))}
                     ${makeFieldBlock('clientName_display', 'Nombre (no editable)', caseItem.clientName)}
                 </div>
 
                 <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Servicio & Estado</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                     ${makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
-                        {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
-                    ])}
-                    ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
-                    ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                    { value: 'Apostille', label: 'Apostilla' }, { value: 'Power of Attorney', label: 'Poder Notarial' }, { value: 'Affidavit', label: 'Declaración Jurada' }, { value: 'Real Estate Deed', label: 'Escritura Inmobiliaria' }, { value: 'Wills / Trusts', label: 'Testamentos / Fideicomisos' }, { value: 'Certified Copies', label: 'Copias Certificadas' }, { value: 'Oath / Affirmation', label: 'Juramento / Afirmación' }, { value: 'Loan Signing', label: 'Firma de Préstamos' }, { value: 'Acknowledgment', label: 'Reconocimiento' }, { value: 'Other', label: 'Otro' }
+                ])}
+                    ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'in-progress', label: 'En proceso' }, { value: 'completed', label: 'Completado' }])}
+                    ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'partial', label: 'Pago Parcial' }, { value: 'paid', label: 'Pagado' }])}
                 </div>
 
                 <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin:1.25rem 0 0.75rem;">Fechas & Pagos</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                     ${makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
                     ${makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
-                    ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                    ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{ value: 'Oficina', label: 'Oficina' }, { value: 'Casa', label: 'Casa' }, { value: 'Online', label: 'Online' }])}
                     ${makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
                 </div>
 
@@ -5368,48 +6356,48 @@ window.NotaryCRM = {
         </div>
     `;
 
-                    // categorizedHtml was previously inserted here, but is now handled by the new advanced modal
+                // categorizedHtml was previously inserted here, but is now handled by the new advanced modal
 
-                    // (tabs insertion deferred to later after we prepare split panels)
+                // (tabs insertion deferred to later after we prepare split panels)
 
-                    // Split categorizedHtml into tab-specific sections and insert into panels
-                    const clientHtml = `
+                // Split categorizedHtml into tab-specific sections and insert into panels
+                const clientHtml = `
                         <div style="margin-bottom:1rem;">
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Cliente</h4>
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                                 ${makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
-                                ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients||[]).map(c=>({value:c.id,label:c.name})))}
+                                ${makeFieldBlock('clientId', 'Cliente', caseItem.clientId, 'select', (this.state.clients || []).map(c => ({ value: c.id, label: c.name })))}
                                 ${makeFieldBlock('clientName_display', 'Nombre (no editable)', caseItem.clientName)}
                             </div>
                         </div>
                     `;
 
-                    const servicioHtml = `
+                const servicioHtml = `
                         <div>
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Servicio & Estado</h4>
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                                 ${makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
-                                    {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
-                                ])}
-                                ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
-                                ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                    { value: 'Apostille', label: 'Apostilla' }, { value: 'Power of Attorney', label: 'Poder Notarial' }, { value: 'Affidavit', label: 'Declaración Jurada' }, { value: 'Real Estate Deed', label: 'Escritura Inmobiliaria' }, { value: 'Wills / Trusts', label: 'Testamentos / Fideicomisos' }, { value: 'Certified Copies', label: 'Copias Certificadas' }, { value: 'Oath / Affirmation', label: 'Juramento / Afirmación' }, { value: 'Loan Signing', label: 'Firma de Préstamos' }, { value: 'Acknowledgment', label: 'Reconocimiento' }, { value: 'Other', label: 'Otro' }
+                ])}
+                                ${makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'in-progress', label: 'En proceso' }, { value: 'completed', label: 'Completado' }])}
+                                ${makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'partial', label: 'Pago Parcial' }, { value: 'paid', label: 'Pagado' }])}
                             </div>
                         </div>
                     `;
 
-                    const fechasHtml = `
+                const fechasHtml = `
                         <div>
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Fechas & Pagos</h4>
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
                                 ${makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
                                 ${makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
-                                ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                                ${makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{ value: 'Oficina', label: 'Oficina' }, { value: 'Casa', label: 'Casa' }, { value: 'Online', label: 'Online' }])}
                                 ${makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
                             </div>
                         </div>
                     `;
 
-                    const notasHtml = `
+                const notasHtml = `
                         <div>
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Registro & Notas</h4>
                             <div style="display:grid; grid-template-columns: 1fr; gap:0.75rem;">
@@ -5418,7 +6406,7 @@ window.NotaryCRM = {
                         </div>
                     `;
 
-                    const registrosHtml = `
+                const registrosHtml = `
                         <div>
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Registros Notariales</h4>
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
@@ -5429,7 +6417,7 @@ window.NotaryCRM = {
                         </div>
                     `;
 
-                    const especializadosHtml = `
+                const especializadosHtml = `
                         <div>
                             <h4 style="font-size:0.95rem; font-weight:700; color:#334155; margin-bottom:0.75rem;">Campos Especializados</h4>
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem;">
@@ -5442,286 +6430,286 @@ window.NotaryCRM = {
                         </div>
                     `;
 
-                    // Insert a single button after the witness section that opens the advanced details modal
-                    const witnessSectionEl = document.getElementById('detail-witness-section');
-                    const advancedButtonHtml = `<div style="margin-top:1rem;"><button id="open-advanced-details-btn" class="btn btn-outline" style="width:100%;">Ver Información Completa</button></div>`;
-                    // Remove any existing advanced button to avoid duplicates
-                    const existingBtn = document.getElementById('open-advanced-details-btn');
-                    if (existingBtn && existingBtn.parentNode) existingBtn.parentNode.removeChild(existingBtn);
+                // Insert a single button after the witness section that opens the advanced details modal
+                const witnessSectionEl = document.getElementById('detail-witness-section');
+                const advancedButtonHtml = `<div style="margin-top:1rem;"><button id="open-advanced-details-btn" class="btn btn-outline" style="width:100%;">Ver Información Completa</button></div>`;
+                // Remove any existing advanced button to avoid duplicates
+                const existingBtn = document.getElementById('open-advanced-details-btn');
+                if (existingBtn && existingBtn.parentNode) existingBtn.parentNode.removeChild(existingBtn);
 
-                    if (witnessSectionEl) {
-                        witnessSectionEl.insertAdjacentHTML('afterend', advancedButtonHtml);
-                        console.log('Advanced details button inserted after witness section for case', caseItem.id);
-                    } else {
-                        container.insertAdjacentHTML('beforeend', advancedButtonHtml);
-                        console.log('Advanced details button inserted at end of container for case', caseItem.id);
+                if (witnessSectionEl) {
+                    witnessSectionEl.insertAdjacentHTML('afterend', advancedButtonHtml);
+                    console.log('Advanced details button inserted after witness section for case', caseItem.id);
+                } else {
+                    container.insertAdjacentHTML('beforeend', advancedButtonHtml);
+                    console.log('Advanced details button inserted at end of container for case', caseItem.id);
+                }
+
+                // Attach click handler robustly (use small defer and guard to avoid duplicate bindings)
+                setTimeout(() => {
+                    let openAdvBtn = document.getElementById('open-advanced-details-btn');
+                    if (!openAdvBtn) {
+                        // fallback: try querySelector
+                        openAdvBtn = document.querySelector('#open-advanced-details-btn');
                     }
 
-                    // Attach click handler robustly (use small defer and guard to avoid duplicate bindings)
-                    setTimeout(() => {
-                        let openAdvBtn = document.getElementById('open-advanced-details-btn');
-                        if (!openAdvBtn) {
-                            // fallback: try querySelector
-                            openAdvBtn = document.querySelector('#open-advanced-details-btn');
-                        }
+                    if (!openAdvBtn) {
+                        console.warn('Advanced details button not found to attach handler for case', caseItem.id);
+                        return;
+                    }
 
-                        if (!openAdvBtn) {
-                            console.warn('Advanced details button not found to attach handler for case', caseItem.id);
+                    if (openAdvBtn.dataset.advBound) {
+                        // already bound
+                        return;
+                    }
+
+                    openAdvBtn.dataset.advBound = '1';
+                    openAdvBtn.addEventListener('click', (ev) => {
+                        console.log('Advanced details button clicked for case', caseItem.id);
+                        // Ensure advanced modal container exists
+                        const advContainer = document.getElementById('case-advanced-container');
+                        if (!advContainer) {
+                            console.warn('Advanced details modal container not found');
                             return;
                         }
 
-                        if (openAdvBtn.dataset.advBound) {
-                            // already bound
-                            return;
-                        }
+                        // Inject tabs and panels into advanced modal
+                        advContainer.innerHTML = tabsHeaderHtml + panelsHtml;
 
-                        openAdvBtn.dataset.advBound = '1';
-                        openAdvBtn.addEventListener('click', (ev) => {
-                            console.log('Advanced details button clicked for case', caseItem.id);
-                            // Ensure advanced modal container exists
-                            const advContainer = document.getElementById('case-advanced-container');
-                            if (!advContainer) {
-                                console.warn('Advanced details modal container not found');
-                                return;
-                            }
+                        // Populate panels content
+                        const panelCliente = document.getElementById('tab-cliente');
+                        const panelServicio = document.getElementById('tab-servicio');
+                        const panelFechas = document.getElementById('tab-fechas');
+                        const panelNotas = document.getElementById('tab-notas');
+                        const panelRegistros = document.getElementById('tab-registros');
+                        const panelEspecializados = document.getElementById('tab-especializados');
+                        const panelPersonalizados = document.getElementById('tab-personalizados');
 
-                            // Inject tabs and panels into advanced modal
-                            advContainer.innerHTML = tabsHeaderHtml + panelsHtml;
+                        if (panelCliente) panelCliente.innerHTML = clientHtml;
+                        if (panelServicio) panelServicio.innerHTML = servicioHtml;
+                        if (panelFechas) panelFechas.innerHTML = fechasHtml;
+                        if (panelNotas) panelNotas.innerHTML = notasHtml;
+                        if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
+                        if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
 
-                            // Populate panels content
-                            const panelCliente = document.getElementById('tab-cliente');
-                            const panelServicio = document.getElementById('tab-servicio');
-                            const panelFechas = document.getElementById('tab-fechas');
-                            const panelNotas = document.getElementById('tab-notas');
-                            const panelRegistros = document.getElementById('tab-registros');
-                            const panelEspecializados = document.getElementById('tab-especializados');
-                            const panelPersonalizados = document.getElementById('tab-personalizados');
-
-                            if (panelCliente) panelCliente.innerHTML = clientHtml;
-                            if (panelServicio) panelServicio.innerHTML = servicioHtml;
-                            if (panelFechas) panelFechas.innerHTML = fechasHtml;
-                            if (panelNotas) panelNotas.innerHTML = notasHtml;
-                            if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
-                            if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
-
-                            // Custom fields into 'Personalizados' tab
-                            const customPanel = document.getElementById('tab-personalizados');
-                            if (customPanel) {
-                                if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
-                                    Object.entries(caseItem.customFields).forEach(([k, v]) => {
-                                        const html = makeFieldBlock(k, k, v);
-                                        customPanel.insertAdjacentHTML('beforeend', html);
-                                    });
-                                } else {
-                                    customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
-                                }
-                            }
-
-                            // Wire tab click handlers inside advanced modal
-                            const tabsContainerEl = document.getElementById('detail-tabs');
-                            if (tabsContainerEl) {
-                                const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
-                                const activate = (btn) => {
-                                    tabButtons.forEach(b=>{
-                                        b.classList.remove('active');
-                                        b.style.background = 'transparent';
-                                        b.style.borderColor = 'transparent';
-                                        b.style.boxShadow = 'none';
-                                        b.style.color = '';
-                                    });
-                                    btn.classList.add('active');
-                                    btn.style.background = '#fff';
-                                    btn.style.borderColor = '#e6eef8';
-                                    btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
-                                };
-
-                                tabButtons.forEach(btn => {
-                                    btn.addEventListener('click', (ev) => {
-                                        const target = btn.getAttribute('data-tab');
-                                        activate(btn);
-                                        document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
-                                        const panel = document.getElementById(target);
-                                        if (panel) panel.style.display = 'block';
-                                    });
+                        // Custom fields into 'Personalizados' tab
+                        const customPanel = document.getElementById('tab-personalizados');
+                        if (customPanel) {
+                            if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                                Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                                    const html = makeFieldBlock(k, k, v);
+                                    customPanel.insertAdjacentHTML('beforeend', html);
                                 });
-
-                                if (tabButtons[0]) activate(tabButtons[0]);
-                            }
-
-                            // Attach inline edit handlers inside advanced modal
-                            const advPanels = advContainer.querySelector('.detail-tab-panels') || advContainer;
-                            advPanels.querySelectorAll('.inline-edit-btn').forEach(btn => {
-                                btn.addEventListener('click', (e) => {
-                                    const field = btn.getAttribute('data-field');
-                                    const root = btn.closest('.case-detail-item');
-                                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
-                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
-                                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
-                                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
-                                    if (!input || !valueEl) return;
-                                    valueEl.style.display = 'none';
-                                    input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
-                                    editBtn.style.display = 'none';
-                                    saveBtn.style.display = 'inline-block';
-                                    cancelBtn.style.display = 'inline-block';
-                                });
-                            });
-
-                            advPanels.querySelectorAll('.inline-cancel-btn').forEach(btn => {
-                                btn.addEventListener('click', (e) => {
-                                    const field = btn.getAttribute('data-field');
-                                    const root = btn.closest('.case-detail-item');
-                                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
-                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
-                                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
-                                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
-                                    if (!input || !valueEl) return;
-                                    input.style.display = 'none';
-                                    valueEl.style.display = 'block';
-                                    editBtn.style.display = 'inline-block';
-                                    saveBtn.style.display = 'none';
-                                    cancelBtn.style.display = 'none';
-                                });
-                            });
-
-                            advPanels.querySelectorAll('.inline-save-btn').forEach(btn => {
-                                btn.addEventListener('click', async (e) => {
-                                    const field = btn.getAttribute('data-field');
-                                    const root = btn.closest('.case-detail-item');
-                                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                                    if (!input) return;
-                                    let newVal = input.type === 'checkbox' ? input.checked : input.value;
-                                    btn.textContent = 'Guardando...';
-                                    try {
-                                        await this.updateCaseAttribute(caseItem.id, field, newVal);
-                                        if (field === 'clientId') {
-                                            const client = (this.state.clients || []).find(c => String(c.id) === String(newVal));
-                                            const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
-                                            if (nameEl) nameEl.textContent = client ? client.name : '-';
-                                        }
-                                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
-                                        if (valueEl) valueEl.textContent = (input.tagName === 'SELECT') ? input.options[input.selectedIndex].text : (input.type==='checkbox' ? (newVal ? 'Sí' : 'No') : newVal);
-                                        btn.textContent = 'Guardar';
-                                        Toast.success('Actualizado', 'Campo actualizado correctamente');
-                                    } catch (err) {
-                                        console.error('Inline update failed', err);
-                                        btn.textContent = 'Guardar';
-                                        Toast.error('Error', 'No se pudo actualizar el campo');
-                                    }
-                                });
-                            });
-
-                            // Open the advanced modal (use global reference to avoid `this` issues)
-                            console.log('Opening advanced details modal for case', caseItem.id, ' — attempting NotaryCRM.openModal');
-                            try {
-                                if (window.NotaryCRM && typeof window.NotaryCRM.openModal === 'function') {
-                                    window.NotaryCRM.openModal('case-advanced-modal');
-                                } else if (typeof this.openModal === 'function') {
-                                    this.openModal('case-advanced-modal');
-                                } else {
-                                    console.warn('openModal not available on NotaryCRM or this; will try direct DOM fallback');
-                                }
-                            } catch (err) {
-                                console.error('Error calling NotaryCRM.openModal:', err);
-                            }
-
-                            // Verify modal visible; if not, force the `.active` class as a fallback so we can rule out openModal issues
-                            const modalEl = document.getElementById('case-advanced-modal');
-                            if (modalEl) {
-                                const isActive = modalEl.classList && modalEl.classList.contains('active');
-                                console.log('case-advanced-modal exists; active=', isActive);
-                                if (!isActive) {
-                                    console.log('Applying fallback: adding .active to case-advanced-modal');
-                                    modalEl.classList.add('active');
-                                }
                             } else {
-                                console.warn('case-advanced-modal element not found in DOM');
+                                customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
                             }
-                            if (window.lucide) window.lucide.createIcons();
-                        });
-                    }, 40);
-
-                    // Insert content into respective panels
-                    const panelCliente = document.getElementById('tab-cliente');
-                    const panelServicio = document.getElementById('tab-servicio');
-                    const panelFechas = document.getElementById('tab-fechas');
-                    const panelNotas = document.getElementById('tab-notas');
-                    const panelRegistros = document.getElementById('tab-registros');
-                    const panelEspecializados = document.getElementById('tab-especializados');
-                    const panelPersonalizados = document.getElementById('tab-personalizados');
-
-                    if (panelCliente) panelCliente.innerHTML = clientHtml;
-                    if (panelServicio) panelServicio.innerHTML = servicioHtml;
-                    if (panelFechas) panelFechas.innerHTML = fechasHtml;
-                    if (panelNotas) panelNotas.innerHTML = notasHtml;
-                    if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
-                    if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
-
-                    // Custom fields into 'Personalizados' tab
-                    const customPanel = document.getElementById('tab-personalizados');
-                    if (customPanel) {
-                        if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
-                            Object.entries(caseItem.customFields).forEach(([k, v]) => {
-                                const html = makeFieldBlock(k, k, v);
-                                customPanel.insertAdjacentHTML('beforeend', html);
-                            });
-                        } else {
-                            customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
                         }
-                    }
 
-                    // Wire tab click handlers now that tabs exist, and set active/inactive styles dynamically
-                    const tabsContainerEl = document.getElementById('detail-tabs');
-                    if (tabsContainerEl) {
-                        const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
-                        const activate = (btn) => {
-                            tabButtons.forEach(b=>{
-                                b.classList.remove('active');
-                                b.style.background = 'transparent';
-                                b.style.borderColor = 'transparent';
-                                b.style.boxShadow = 'none';
-                                b.style.color = '';
+                        // Wire tab click handlers inside advanced modal
+                        const tabsContainerEl = document.getElementById('detail-tabs');
+                        if (tabsContainerEl) {
+                            const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
+                            const activate = (btn) => {
+                                tabButtons.forEach(b => {
+                                    b.classList.remove('active');
+                                    b.style.background = 'transparent';
+                                    b.style.borderColor = 'transparent';
+                                    b.style.boxShadow = 'none';
+                                    b.style.color = '';
+                                });
+                                btn.classList.add('active');
+                                btn.style.background = '#fff';
+                                btn.style.borderColor = '#e6eef8';
+                                btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
+                            };
+
+                            tabButtons.forEach(btn => {
+                                btn.addEventListener('click', (ev) => {
+                                    const target = btn.getAttribute('data-tab');
+                                    activate(btn);
+                                    document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
+                                    const panel = document.getElementById(target);
+                                    if (panel) panel.style.display = 'block';
+                                });
                             });
-                            btn.classList.add('active');
-                            btn.style.background = '#fff';
-                            btn.style.borderColor = '#e6eef8';
-                            btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
-                        };
 
-                        tabButtons.forEach(btn => {
-                            btn.addEventListener('click', (ev) => {
-                                const target = btn.getAttribute('data-tab');
-                                activate(btn);
-                                document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
-                                const panel = document.getElementById(target);
-                                if (panel) panel.style.display = 'block';
+                            if (tabButtons[0]) activate(tabButtons[0]);
+                        }
+
+                        // Attach inline edit handlers inside advanced modal
+                        const advPanels = advContainer.querySelector('.detail-tab-panels') || advContainer;
+                        advPanels.querySelectorAll('.inline-edit-btn').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                const field = btn.getAttribute('data-field');
+                                const root = btn.closest('.case-detail-item');
+                                const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                                const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                                const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                                if (!input || !valueEl) return;
+                                valueEl.style.display = 'none';
+                                input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
+                                editBtn.style.display = 'none';
+                                saveBtn.style.display = 'inline-block';
+                                cancelBtn.style.display = 'inline-block';
                             });
                         });
 
-                        // activate first button visually
-                        if (tabButtons[0]) activate(tabButtons[0]);
-                    }
-
-                    // Insert custom fields
-                    const customContainer = document.getElementById('detail-custom-fields');
-                    if (customContainer) {
-                        if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
-                            Object.entries(caseItem.customFields).forEach(([k, v]) => {
-                                const html = makeFieldBlock(k, k, v);
-                                customContainer.insertAdjacentHTML('beforeend', html);
+                        advPanels.querySelectorAll('.inline-cancel-btn').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                const field = btn.getAttribute('data-field');
+                                const root = btn.closest('.case-detail-item');
+                                const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                                const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                                const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                                if (!input || !valueEl) return;
+                                input.style.display = 'none';
+                                valueEl.style.display = 'block';
+                                editBtn.style.display = 'inline-block';
+                                saveBtn.style.display = 'none';
+                                cancelBtn.style.display = 'none';
                             });
-                        } else {
-                            customContainer.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
-                        }
-                    }
+                        });
 
-                    // Ensure the main modal actions panel contains the quick action buttons
-                    try {
-                        const actionsPanelEl = document.getElementById('detail-actions-panel');
-                        if (actionsPanelEl) {
-                            actionsPanelEl.innerHTML = `
+                        advPanels.querySelectorAll('.inline-save-btn').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                const field = btn.getAttribute('data-field');
+                                const root = btn.closest('.case-detail-item');
+                                const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                                if (!input) return;
+                                let newVal = input.type === 'checkbox' ? input.checked : input.value;
+                                btn.textContent = 'Guardando...';
+                                try {
+                                    await this.updateCaseAttribute(caseItem.id, field, newVal);
+                                    if (field === 'clientId') {
+                                        const client = (this.state.clients || []).find(c => String(c.id) === String(newVal));
+                                        const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
+                                        if (nameEl) nameEl.textContent = client ? client.name : '-';
+                                    }
+                                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                                    if (valueEl) valueEl.textContent = (input.tagName === 'SELECT') ? input.options[input.selectedIndex].text : (input.type === 'checkbox' ? (newVal ? 'Sí' : 'No') : newVal);
+                                    btn.textContent = 'Guardar';
+                                    Toast.success('Actualizado', 'Campo actualizado correctamente');
+                                } catch (err) {
+                                    console.error('Inline update failed', err);
+                                    btn.textContent = 'Guardar';
+                                    Toast.error('Error', 'No se pudo actualizar el campo');
+                                }
+                            });
+                        });
+
+                        // Open the advanced modal (use global reference to avoid `this` issues)
+                        console.log('Opening advanced details modal for case', caseItem.id, ' — attempting NotaryCRM.openModal');
+                        try {
+                            if (window.NotaryCRM && typeof window.NotaryCRM.openModal === 'function') {
+                                window.NotaryCRM.openModal('case-advanced-modal');
+                            } else if (typeof this.openModal === 'function') {
+                                this.openModal('case-advanced-modal');
+                            } else {
+                                console.warn('openModal not available on NotaryCRM or this; will try direct DOM fallback');
+                            }
+                        } catch (err) {
+                            console.error('Error calling NotaryCRM.openModal:', err);
+                        }
+
+                        // Verify modal visible; if not, force the `.active` class as a fallback so we can rule out openModal issues
+                        const modalEl = document.getElementById('case-advanced-modal');
+                        if (modalEl) {
+                            const isActive = modalEl.classList && modalEl.classList.contains('active');
+                            console.log('case-advanced-modal exists; active=', isActive);
+                            if (!isActive) {
+                                console.log('Applying fallback: adding .active to case-advanced-modal');
+                                modalEl.classList.add('active');
+                            }
+                        } else {
+                            console.warn('case-advanced-modal element not found in DOM');
+                        }
+                        if (window.lucide) window.lucide.createIcons();
+                    });
+                }, 40);
+
+                // Insert content into respective panels
+                const panelCliente = document.getElementById('tab-cliente');
+                const panelServicio = document.getElementById('tab-servicio');
+                const panelFechas = document.getElementById('tab-fechas');
+                const panelNotas = document.getElementById('tab-notas');
+                const panelRegistros = document.getElementById('tab-registros');
+                const panelEspecializados = document.getElementById('tab-especializados');
+                const panelPersonalizados = document.getElementById('tab-personalizados');
+
+                if (panelCliente) panelCliente.innerHTML = clientHtml;
+                if (panelServicio) panelServicio.innerHTML = servicioHtml;
+                if (panelFechas) panelFechas.innerHTML = fechasHtml;
+                if (panelNotas) panelNotas.innerHTML = notasHtml;
+                if (panelRegistros) panelRegistros.innerHTML = registrosHtml;
+                if (panelEspecializados) panelEspecializados.innerHTML = especializadosHtml;
+
+                // Custom fields into 'Personalizados' tab
+                const customPanel = document.getElementById('tab-personalizados');
+                if (customPanel) {
+                    if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                        Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                            const html = makeFieldBlock(k, k, v);
+                            customPanel.insertAdjacentHTML('beforeend', html);
+                        });
+                    } else {
+                        customPanel.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                    }
+                }
+
+                // Wire tab click handlers now that tabs exist, and set active/inactive styles dynamically
+                const tabsContainerEl = document.getElementById('detail-tabs');
+                if (tabsContainerEl) {
+                    const tabButtons = Array.from(tabsContainerEl.querySelectorAll('.detail-tab'));
+                    const activate = (btn) => {
+                        tabButtons.forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = 'transparent';
+                            b.style.borderColor = 'transparent';
+                            b.style.boxShadow = 'none';
+                            b.style.color = '';
+                        });
+                        btn.classList.add('active');
+                        btn.style.background = '#fff';
+                        btn.style.borderColor = '#e6eef8';
+                        btn.style.boxShadow = '0 2px 8px rgba(16,24,40,0.06)';
+                    };
+
+                    tabButtons.forEach(btn => {
+                        btn.addEventListener('click', (ev) => {
+                            const target = btn.getAttribute('data-tab');
+                            activate(btn);
+                            document.querySelectorAll('.detail-tab-panel').forEach(p => p.style.display = 'none');
+                            const panel = document.getElementById(target);
+                            if (panel) panel.style.display = 'block';
+                        });
+                    });
+
+                    // activate first button visually
+                    if (tabButtons[0]) activate(tabButtons[0]);
+                }
+
+                // Insert custom fields
+                const customContainer = document.getElementById('detail-custom-fields');
+                if (customContainer) {
+                    if (caseItem.customFields && Object.keys(caseItem.customFields).length > 0) {
+                        Object.entries(caseItem.customFields).forEach(([k, v]) => {
+                            const html = makeFieldBlock(k, k, v);
+                            customContainer.insertAdjacentHTML('beforeend', html);
+                        });
+                    } else {
+                        customContainer.innerHTML = `<div style="color:#94a3b8; padding:0.75rem; border:1px dashed #cbd5e1; border-radius:6px;">Sin campos personalizados</div>`;
+                    }
+                }
+
+                // Ensure the main modal actions panel contains the quick action buttons
+                try {
+                    const actionsPanelEl = document.getElementById('detail-actions-panel');
+                    if (actionsPanelEl) {
+                        actionsPanelEl.innerHTML = `
                 <div style="background:#f8fafc; padding:1rem; border-radius:12px; border:1px solid #e2e8f0;">
                     <h4 style="font-size:0.85rem; font-weight:700; color:#64748b; text-transform:uppercase;">Acciones R E1pidas</h4>
                     <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.75rem;">
@@ -5734,102 +6722,102 @@ window.NotaryCRM = {
                     <div style="font-size:0.85rem; color:#64748b; margin-top:0.5rem;">ID: ${caseItem.id}</div>
                 </div>
                             `;
-                            if (window.lucide) window.lucide.createIcons();
-                        }
-                    } catch (err) {
-                        console.error('Failed to populate actions panel:', err);
+                        if (window.lucide) window.lucide.createIcons();
                     }
+                } catch (err) {
+                    console.error('Failed to populate actions panel:', err);
+                }
 
-                    // Attach inline edit handlers (target the whole tab panels container so edits in any tab work)
-                    const containerEl = document.querySelector('.detail-tab-panels') || container;
-                    const self = this;
+                // Attach inline edit handlers (target the whole tab panels container so edits in any tab work)
+                const containerEl = document.querySelector('.detail-tab-panels') || container;
+                const self = this;
 
-                    const toggleToEdit = (root, field) => {
-                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
-                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
-                        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
-                        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
-                        if (!input || !valueEl) return;
-                        valueEl.style.display = 'none';
-                        input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
-                        editBtn.style.display = 'none';
-                        saveBtn.style.display = 'inline-block';
-                        cancelBtn.style.display = 'inline-block';
-                    };
+                const toggleToEdit = (root, field) => {
+                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                    if (!input || !valueEl) return;
+                    valueEl.style.display = 'none';
+                    input.style.display = (input.type === 'checkbox') ? 'inline-block' : 'block';
+                    editBtn.style.display = 'none';
+                    saveBtn.style.display = 'inline-block';
+                    cancelBtn.style.display = 'inline-block';
+                };
 
-                    const toggleToView = (root, field, newVal) => {
-                        const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
-                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                        const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
-                        const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
-                        const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
-                        if (!input || !valueEl) return;
-                        input.style.display = 'none';
-                        valueEl.style.display = 'block';
-                        editBtn.style.display = 'inline-block';
-                        saveBtn.style.display = 'none';
-                        cancelBtn.style.display = 'none';
-                        if (newVal !== undefined) {
-                            // If input is select, show selected option label
-                            if (input.tagName === 'SELECT') {
-                                const sel = input.options[input.selectedIndex];
-                                valueEl.textContent = sel ? sel.text : (newVal === null || newVal === '' ? '-' : String(newVal));
-                            } else if (input.type === 'checkbox') {
-                                valueEl.textContent = newVal ? 'Sí' : 'No';
-                            } else {
-                                valueEl.textContent = newVal === null || newVal === '' ? '-' : String(newVal);
-                            }
+                const toggleToView = (root, field, newVal) => {
+                    const valueEl = root.querySelector(`.inline-value[data-field="${field}"]`);
+                    const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                    const editBtn = root.querySelector(`.inline-edit-btn[data-field="${field}"]`);
+                    const saveBtn = root.querySelector(`.inline-save-btn[data-field="${field}"]`);
+                    const cancelBtn = root.querySelector(`.inline-cancel-btn[data-field="${field}"]`);
+                    if (!input || !valueEl) return;
+                    input.style.display = 'none';
+                    valueEl.style.display = 'block';
+                    editBtn.style.display = 'inline-block';
+                    saveBtn.style.display = 'none';
+                    cancelBtn.style.display = 'none';
+                    if (newVal !== undefined) {
+                        // If input is select, show selected option label
+                        if (input.tagName === 'SELECT') {
+                            const sel = input.options[input.selectedIndex];
+                            valueEl.textContent = sel ? sel.text : (newVal === null || newVal === '' ? '-' : String(newVal));
+                        } else if (input.type === 'checkbox') {
+                            valueEl.textContent = newVal ? 'Sí' : 'No';
+                        } else {
+                            valueEl.textContent = newVal === null || newVal === '' ? '-' : String(newVal);
                         }
-                    };
+                    }
+                };
 
-                    containerEl.querySelectorAll('.inline-edit-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const field = btn.getAttribute('data-field');
-                            const root = btn.closest('.case-detail-item');
-                            toggleToEdit(root, field);
-                        });
+                containerEl.querySelectorAll('.inline-edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        toggleToEdit(root, field);
                     });
+                });
 
-                    containerEl.querySelectorAll('.inline-cancel-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const field = btn.getAttribute('data-field');
-                            const root = btn.closest('.case-detail-item');
-                            toggleToView(root, field);
-                        });
+                containerEl.querySelectorAll('.inline-cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        toggleToView(root, field);
                     });
+                });
 
-                    containerEl.querySelectorAll('.inline-save-btn').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            const field = btn.getAttribute('data-field');
-                            const root = btn.closest('.case-detail-item');
-                            const input = root.querySelector(`.inline-input[data-field="${field}"]`);
-                            if (!input) return;
-                            let newVal;
-                            if (input.type === 'checkbox') newVal = input.checked;
-                            else newVal = input.value;
+                containerEl.querySelectorAll('.inline-save-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const field = btn.getAttribute('data-field');
+                        const root = btn.closest('.case-detail-item');
+                        const input = root.querySelector(`.inline-input[data-field="${field}"]`);
+                        if (!input) return;
+                        let newVal;
+                        if (input.type === 'checkbox') newVal = input.checked;
+                        else newVal = input.value;
 
-                            btn.textContent = 'Guardando...';
-                            try {
-                                await self.updateCaseAttribute(caseItem.id, field, newVal);
-                                // If clientId changed, also update displayed client name block
-                                if (field === 'clientId') {
-                                    const client = (self.state.clients || []).find(c => String(c.id) === String(newVal));
-                                    const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
-                                    if (nameEl) nameEl.textContent = client ? client.name : '-';
-                                }
-                                toggleToView(root, field, newVal);
-                                btn.textContent = 'Guardar';
-                                Toast.success('Actualizado', 'Campo actualizado correctamente');
-                            } catch (err) {
-                                console.error('Inline update failed', err);
-                                btn.textContent = 'Guardar';
-                                Toast.error('Error', 'No se pudo actualizar el campo');
+                        btn.textContent = 'Guardando...';
+                        try {
+                            await self.updateCaseAttribute(caseItem.id, field, newVal);
+                            // If clientId changed, also update displayed client name block
+                            if (field === 'clientId') {
+                                const client = (self.state.clients || []).find(c => String(c.id) === String(newVal));
+                                const nameEl = document.querySelector('.inline-value[data-field="clientName_display"]');
+                                if (nameEl) nameEl.textContent = client ? client.name : '-';
                             }
-                        });
+                            toggleToView(root, field, newVal);
+                            btn.textContent = 'Guardar';
+                            Toast.success('Actualizado', 'Campo actualizado correctamente');
+                        } catch (err) {
+                            console.error('Inline update failed', err);
+                            btn.textContent = 'Guardar';
+                            Toast.error('Error', 'No se pudo actualizar el campo');
+                        }
                     });
+                });
 
-                
+
 
                 this.openModal('case-details-modal');
                 if (window.lucide) window.lucide.createIcons();
@@ -5916,7 +6904,7 @@ window.NotaryCRM = {
 
         const inputHtml = (() => {
             if (type === 'select' && Array.isArray(options)) {
-                return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value)===String(value)? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
+                return `<select class="inline-input" style="display:none; width:100%; padding:6px;" data-field="${key}">` + options.map(o => `<option value="${o.value}" ${String(o.value) === String(value) ? 'selected' : ''}>${o.label}</option>`).join('') + `</select>`;
             }
             if (type === 'checkbox') {
                 return `<input type="checkbox" class="inline-input" style="display:none;" data-field="${key}" ${value ? 'checked' : ''} />`;
@@ -6117,13 +7105,13 @@ window.NotaryCRM = {
                     <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:0.75rem; margin-bottom: 1.5rem;">
                         ${this.makeFieldBlock('caseNumber', 'Número de Caso', caseItem.caseNumber)}
                         ${this.makeFieldBlock('type', 'Tipo de Servicio', caseItem.type, 'select', [
-                            {value:'Apostille',label:'Apostilla'},{value:'Power of Attorney',label:'Poder Notarial'},{value:'Affidavit',label:'Declaración Jurada'},{value:'Real Estate Deed',label:'Escritura Inmobiliaria'},{value:'Wills / Trusts',label:'Testamentos / Fideicomisos'},{value:'Certified Copies',label:'Copias Certificadas'},{value:'Oath / Affirmation',label:'Juramento / Afirmación'},{value:'Loan Signing',label:'Firma de Préstamos'},{value:'Acknowledgment',label:'Reconocimiento'},{value:'Other',label:'Otro'}
-                        ])}
-                        ${this.makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{value:'pending',label:'Pendiente'},{value:'in-progress',label:'En proceso'},{value:'completed',label:'Completado'}])}
-                        ${this.makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{value:'pending',label:'Pendiente'},{value:'partial',label:'Pago Parcial'},{value:'paid',label:'Pagado'}])}
+                { value: 'Apostille', label: 'Apostilla' }, { value: 'Power of Attorney', label: 'Poder Notarial' }, { value: 'Affidavit', label: 'Declaración Jurada' }, { value: 'Real Estate Deed', label: 'Escritura Inmobiliaria' }, { value: 'Wills / Trusts', label: 'Testamentos / Fideicomisos' }, { value: 'Certified Copies', label: 'Copias Certificadas' }, { value: 'Oath / Affirmation', label: 'Juramento / Afirmación' }, { value: 'Loan Signing', label: 'Firma de Préstamos' }, { value: 'Acknowledgment', label: 'Reconocimiento' }, { value: 'Other', label: 'Otro' }
+            ])}
+                        ${this.makeFieldBlock('status', 'Estado', caseItem.status, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'in-progress', label: 'En proceso' }, { value: 'completed', label: 'Completado' }])}
+                        ${this.makeFieldBlock('paymentStatus', 'Estado de Pago', caseItem.paymentStatus, 'select', [{ value: 'pending', label: 'Pendiente' }, { value: 'partial', label: 'Pago Parcial' }, { value: 'paid', label: 'Pagado' }])}
                         ${this.makeFieldBlock('dueDate', 'Fecha de Vencimiento', caseItem.dueDate, 'date')}
                         ${this.makeFieldBlock('amount', 'Importe ($)', caseItem.amount, 'number')}
-                        ${this.makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{value:'Oficina',label:'Oficina'},{value:'Casa',label:'Casa'},{value:'Online',label:'Online'}])}
+                        ${this.makeFieldBlock('location', 'Ubicación', caseItem.location, 'select', [{ value: 'Oficina', label: 'Oficina' }, { value: 'Casa', label: 'Casa' }, { value: 'Online', label: 'Online' }])}
                         ${this.makeFieldBlock('mileage', 'Kilometraje (Millas)', caseItem.mileage, 'number')}
                     </div>
 
@@ -6380,29 +7368,49 @@ window.NotaryCRM = {
                         <p style="font-size: 0.75rem;">¡Aprovecha para adelantar trabajo!</p>
                     </div> `;
             } else {
-                agendaListEl.innerHTML = todaysAppointments.map(app => `
-    <div class="agenda-item"
-style = "padding: 1rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 1rem; transition: background 0.2s; cursor: pointer;"
-onmouseover = "this.style.background='#f8fafc'"
-onmouseout = "this.style.background='transparent'"
-onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
-                        <div style="background: #eff6ff; color: #1d4ed8; padding: 0.5rem; border-radius: 10px; width: 60px; text-align: center; flex-shrink: 0;">
-                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Hoy</div>
-                            <div style="font-size: 0.9rem; font-weight: 800;">${app.time || '--:--'}</div>
+                agendaListEl.innerHTML = todaysAppointments.map(app => {
+                    const client = this.state.clients.find(c => c.id === app.clientId);
+                    const color = app.color || (window.CalendarEnhancements ? CalendarEnhancements.serviceColors[app.type] : '#3b82f6');
+
+                    return `
+                    <div class="agenda-item" 
+                         style="padding: 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 1.25rem; transition: all 0.2s; cursor: pointer; border-left: 4px solid transparent;"
+                         onmouseover="this.style.background='#f8fafc'; this.style.borderLeftColor='${color}'"
+                         onmouseout="this.style.background='transparent'; this.style.borderLeftColor='transparent'"
+                         onclick="NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
+                        
+                        <div style="background: ${color}15; color: ${color}; padding: 0.75rem; border-radius: 12px; width: 65px; text-align: center; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; border: 1px solid ${color}30;">
+                            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">Hoy</div>
+                            <div style="font-size: 1rem; font-weight: 800;">${app.time || '--:--'}</div>
                         </div>
+
                         <div style="flex: 1; min-width: 0;">
-                            <p style="font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${app.title || 'Consulta Notarial'}
-                            </p>
-                            <p style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 4px;">
-                                👤 ${app.clientName || app.client || 'Cliente General'}
-                            </p>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <p style="font-weight: 700; font-size: 1rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">
+                                    ${app.title || app.type || 'Consulta Notarial'}
+                                </p>
+                                ${app.priority === 'High' ? '<span style="background:#fee2e2; color:#ef4444; font-size:10px; padding:2px 6px; border-radius:10px; font-weight:800; text-transform:uppercase;">Urgente</span>' : ''}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <p style="font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 4px; margin: 0;">
+                                    <i data-lucide="user" style="width: 14px; height: 14px;"></i>
+                                    ${client?.name || app.clientName || app.client || 'Cliente General'}
+                                </p>
+                                <p style="font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 4px; margin: 0;">
+                                    <i data-lucide="tag" style="width: 14px; height: 14px;"></i>
+                                    ${app.type || 'Sin tipo'}
+                                </p>
+                            </div>
                         </div>
-                        <div style="color: var(--color-primary); opacity: 0.5;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+
+                        <div style="color: #cbd5e1; transition: transform 0.2s;" class="agenda-arrow">
+                            <i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i>
                         </div>
                     </div>
-    `).join('');
+                `;
+                }).join('');
+
+                if (window.lucide) window.lucide.createIcons({ root: agendaListEl });
             }
         }
 
@@ -6489,6 +7497,9 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
 
         const signedCountEl = document.getElementById('dash-signed-count');
         if (signedCountEl) signedCountEl.textContent = signedCases;
+
+        // Render Dashboard Visual Calendar
+        this.renderDashboardCalendar();
 
         // Ensure Lucide icons are initialized for the new cards
         if (window.lucide) {
@@ -7261,11 +8272,21 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         if (this.fullCalendar) this.fullCalendar.destroy();
 
         // Regular Appointments
-        const events = this.state.appointments.map(app => ({
-            title: `${app.clientName}-${app.type}`,
-            start: `${app.date}T${app.time}`,
-            color: '#1e3a8a'
-        }));
+        const events = this.state.appointments.map(app => {
+            const client = (this.state.clients || []).find(c => c.id === app.clientId);
+            const defaultColor = (window.CalendarEnhancements && window.CalendarEnhancements.serviceColors) ?
+                (window.CalendarEnhancements.serviceColors[app.type] || '#1e3a8a') : '#1e3a8a';
+
+            return {
+                id: app.id,
+                title: app.title || (client?.name || app.clientName || 'Cita Notarial'),
+                start: app.date && app.time ? `${app.date}T${app.time}` : (app.start || app.date),
+                backgroundColor: app.color || defaultColor,
+                borderColor: app.color || defaultColor,
+                textColor: '#ffffff',
+                extendedProps: { ...app, clientName: client?.name || app.clientName }
+            };
+        });
 
         // Blocked Dates
         if (this.state.blockedDates) {
@@ -7274,10 +8295,9 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
                     title: 'DÍA BLOQUEADO',
                     start: block.date,
                     display: 'background',
-                    backgroundColor: '#fee2e2',
+                    backgroundColor: 'rgba(254, 226, 226, 0.5)',
                     allDay: true
                 });
-                // Optional: Add a text label as a separate event if background doesn't show text well
                 events.push({
                     title: '🚫 BLOQUEADO',
                     start: block.date,
@@ -7294,38 +8314,167 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
+                right: 'dayGridMonth,timeGridWeek,listWeek'
             },
             editable: true,
             droppable: true,
             themeSystem: 'standard',
             events: events,
-            height: 'auto',
+            height: 700, // Fixed height for better adjustment
             dayMaxEvents: true,
+            eventContent: (arg) => {
+                const appt = arg.event.extendedProps;
+                const status = (appt.status || 'pending').toLowerCase();
+                const title = arg.event.title;
+                const timeStr = arg.timeText;
+                const statusColors = { confirmed: '#10b981', pending: '#f59e0b', cancelled: '#94a3b8', 'no-show': '#ef4444' };
+                const color = statusColors[status] || '#ffffff';
+
+                return {
+                    html: `
+                    <div class="fc-custom-event" style="padding: 3px 6px; border-radius: 6px; color: #fff; width:100%; height:100%; background: ${arg.event.backgroundColor}; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; overflow:hidden;">
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${timeStr ? timeStr + ' ' : ''}${title}</span>
+                            <div class="quick-status-bar" style="display:none; gap:3px; background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius:12px;">
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="confirmed" title="Confirmar" style="cursor:pointer; font-size:11px;">✅</span>
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="pending" title="Pendiente" style="cursor:pointer; font-size:11px;">⏳</span>
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="cancelled" title="Cancelar" style="cursor:pointer; font-size:11px;">❌</span>
+                            </div>
+                        </div>
+                        <div style="height:4px; background:${color}; margin-top:3px; border-radius:2px; opacity: 0.9;"></div>
+                    </div>
+                ` };
+            },
+            eventDidMount: (info) => {
+                const el = info.el;
+                const statusBar = el.querySelector('.quick-status-bar');
+                if (statusBar) {
+                    el.addEventListener('mouseenter', () => statusBar.style.display = 'flex');
+                    el.addEventListener('mouseleave', () => statusBar.style.display = 'none');
+                    statusBar.querySelectorAll('.qstatus-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            const id = btn.getAttribute('data-id');
+                            const status = btn.getAttribute('data-status');
+                            this.updateAppointmentStatus(id, status).then(() => {
+                                if (this.fullCalendar) this.fullCalendar.refetchEvents();
+                                if (this.dashboardCalendar) this.dashboardCalendar.refetchEvents();
+                                Toast.success('Estado Actualizado', `Cita marcada como ${status}`);
+                            });
+                        };
+                    });
+                }
+            },
             dateClick: (info) => {
                 this.showDayDetails(info.dateStr);
             },
             eventClick: (info) => {
-                const dateStr = info.event.start.toISOString().split('T')[0];
-                this.showDayDetails(dateStr);
+                this.showAppointmentDetails(info.event.id);
             },
             eventDrop: async (info) => {
                 const newStart = info.event.start;
                 const d = new Date(newStart);
                 const dateStr = d.toISOString().split('T')[0];
                 const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                await this.updateAppointment(info.event.id, {
-                    date: dateStr,
-                    time: timeStr
-                });
-
+                await this.updateAppointment(info.event.id, { date: dateStr, time: timeStr });
                 Toast.success('Agenda Actualizada', `Cita reprogramada al ${dateStr}-${timeStr} `);
             }
         });
 
         this.calendar = this.fullCalendar;
         this.fullCalendar.render();
+        if (window.lucide) window.lucide.createIcons();
+    },
+
+    // --- Dashboard Calendar Rendering ---
+    renderDashboardCalendar() {
+        const calendarEl = document.getElementById('dashboard-calendar-view');
+        if (!calendarEl || !window.FullCalendar) return;
+
+        // Sort appointments by time for the tooltip/listing
+        const sortedAppts = [...this.state.appointments].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+        const events = sortedAppts.map(app => {
+            const client = this.state.clients.find(c => c.id === app.clientId);
+            return {
+                id: app.id,
+                title: app.title || (client?.name || 'Cita Notarial'),
+                start: `${app.date}T${app.time || '00:00:00'}`,
+                color: app.color || (window.CalendarEnhancements ? CalendarEnhancements.serviceColors[app.type] : '#1e3a8a'),
+                extendedProps: { ...app, clientName: client?.name || app.clientName }
+            };
+        });
+
+        if (this.dashboardCalendar) this.dashboardCalendar.destroy();
+
+        this.dashboardCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: ''
+            },
+            height: 'auto',
+            dayMaxEvents: 2,
+            events: events,
+            themeSystem: 'standard',
+            eventContent: (arg) => {
+                const appt = arg.event.extendedProps;
+                const status = (appt.status || 'pending').toLowerCase();
+                const title = arg.event.title;
+                const statusColors = { confirmed: '#10b981', pending: '#f59e0b', cancelled: '#94a3b8', 'no-show': '#ef4444' };
+                const color = statusColors[status] || '#3b82f6';
+                return {
+                    html: `
+                    <div class="fc-custom-event dash-event" style="padding: 1px 3px; border-radius: 4px; color: #fff; width:100%; height:100%; background: ${arg.event.backgroundColor || '#1e3a8a'};">
+                        <div style="font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; overflow:hidden;">
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</span>
+                            <div class="dash-quick-status" style="display:none; gap:2px; background: rgba(0,0,0,0.5); padding: 1px 2px; border-radius:4px;">
+                                <span class="dqstatus-btn" data-id="${arg.event.id}" data-status="confirmed" title="Confirmar" style="cursor:pointer; font-size:10px;">✅</span>
+                                <span class="dqstatus-btn" data-id="${arg.event.id}" data-status="pending" title="Pendiente" style="cursor:pointer; font-size:10px;">⏳</span>
+                                <span class="dqstatus-btn" data-id="${arg.event.id}" data-status="cancelled" title="Cancelar" style="cursor:pointer; font-size:10px;">❌</span>
+                            </div>
+                        </div>
+                        <div style="height:2px; background:${color}; margin-top:1px; border-radius:1px; opacity: 0.9;"></div>
+                    </div>
+                ` };
+            },
+            eventDidMount: (info) => {
+                const el = info.el;
+                const statusBar = el.querySelector('.dash-quick-status');
+                if (statusBar) {
+                    el.addEventListener('mouseenter', () => statusBar.style.display = 'flex');
+                    el.addEventListener('mouseleave', () => statusBar.style.display = 'none');
+                    statusBar.querySelectorAll('.dqstatus-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            const id = btn.getAttribute('data-id');
+                            const status = btn.getAttribute('data-status');
+                            this.updateAppointmentStatus(id, status).then(() => {
+                                if (this.fullCalendar) this.fullCalendar.refetchEvents();
+                                if (this.dashboardCalendar) this.dashboardCalendar.refetchEvents();
+                                Toast.success('Estado Actualizado', `Cita marcada como ${status}`);
+                            });
+                        };
+                    });
+                }
+            },
+            dateClick: (info) => {
+                this.openModal('calendar-modal');
+                const form = document.getElementById('calendar-form');
+                if (form) {
+                    const dateInput = form.querySelector('input[name="date"]');
+                    if (dateInput) dateInput.value = info.dateStr;
+                }
+            },
+            eventClick: (info) => {
+                this.showAppointmentDetails(info.event.id);
+            }
+        });
+
+        this.dashboardCalendar.render();
+        if (window.lucide) window.lucide.createIcons();
     },
 
     showDayDetails(dateStr) {
@@ -7840,101 +8989,6 @@ onclick = "NotaryCRM.gotoAppointment('${app.date}', '${app.id}')">
         }
     },
 
-
-    async addAppointment(form) {
-        if (!this.currentUser) return alert('Debes iniciar sesión.');
-
-        const formData = new FormData(form);
-        const clientId = formData.get('clientId');
-        const client = this.state.clients.find(c => c.id === clientId);
-
-        const isRecurring = formData.get('recurring') === 'on';
-        const appointments = [];
-
-        const dateStr = formData.get('date');
-        const timeStr = formData.get('time');
-
-        const count = isRecurring ? 4 : 1;
-        for (let i = 0; i < count; i++) {
-            let appDateStr = dateStr;
-
-            if (i > 0) {
-                const dateObj = new Date(dateStr + 'T00:00:00');
-                dateObj.setDate(dateObj.getDate() + (i * 7));
-                appDateStr = dateObj.toISOString().split('T')[0];
-            }
-
-            appointments.push({
-                clientId: clientId,
-                clientName: client ? client.name : 'Unknown',
-                date: appDateStr,
-                time: timeStr,
-                type: formData.get('type'),
-                ownerId: this.currentUser.uid,
-                createdAt: new Date().toISOString()
-            });
-        }
-
-        try {
-            const { addDoc, collection } = window.dbFuncs;
-            const db = window.firebaseDB;
-
-            if (this.useFirestore) {
-                for (const app of appointments) {
-                    await addDoc(collection(db, 'appointments'), app);
-                }
-            } else {
-                this.state.appointments.push(...appointments);
-                this.saveData();
-                this.render();
-            }
-
-            form.reset();
-            this.closeModal('calendar-modal');
-            Toast.success('Cita(s) Agendada(s)', isRecurring ? 'Se han creado 4 citas semanales.' : 'La cita ha sido creada.');
-
-            // Trigger External Sync if configured
-            if (window.AdvancedCalendarFeatures) {
-                appointments.forEach(apt => AdvancedCalendarFeatures.syncToExternalCalendar(apt));
-            }
-            // Refresh calendar and navigate to the date of the first created appointment
-            try {
-                this.renderCalendar();
-                this.switchTab('calendar');
-                if (this.fullCalendar && appointments[0] && appointments[0].date) {
-                    this.fullCalendar.gotoDate(appointments[0].date);
-                }
-            } catch (e) {
-                console.warn('Could not navigate to appointment date', e);
-            }
-        } catch (err) {
-            console.error('Error adding appointment:', err);
-            Toast.error('Error', 'No se pudo agendar la cita.');
-        }
-    },
-
-    async deleteAppointment(id) {
-        if (!confirm('¿Estás seguro de eliminar esta cita?')) return;
-        if (this.useFirestore) {
-            const { doc, deleteDoc } = window.dbFuncs;
-            await deleteDoc(doc(window.firebaseDB, 'appointments', id));
-        } else {
-            this.state.appointments = this.state.appointments.filter(a => a.id !== id);
-            this.saveData();
-            this.render();
-        }
-    },
-
-    async updateAppointment(id, updates) {
-        if (this.useFirestore) {
-            const { doc, updateDoc } = window.dbFuncs;
-            await updateDoc(doc(window.firebaseDB, 'appointments', id), updates);
-        } else {
-            this.state.appointments = this.state.appointments.map(a => a.id === id ? { ...a, ...updates } : a);
-            this.saveData();
-            this.render();
-        }
-    },
 
     exportClients(format) {
         const data = this.state.clients || [];

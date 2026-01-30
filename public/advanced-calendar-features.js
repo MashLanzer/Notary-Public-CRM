@@ -80,8 +80,9 @@ const AdvancedCalendarFeatures = {
     // TIMEZONE SUPPORT
     // ============================================
     setupTimezoneSupport() {
-        this.addTimezoneSelector();
-        this.displayTimezoneInfo();
+        // We'll use the one in calendar settings modal instead of adding a second UI
+        // this.addTimezoneSelector(); 
+        // this.displayTimezoneInfo();
     },
 
     addTimezoneSelector() {
@@ -139,21 +140,23 @@ const AdvancedCalendarFeatures = {
 
         // Handle timezone change
         const select = document.getElementById('timezone-select');
-        select.addEventListener('change', (e) => {
-            this.userTimezone = e.target.value;
-            localStorage.setItem('user_timezone', this.userTimezone);
-            this.updateTimeDisplay();
-            Toast.success('Zona Horaria Actualizada', this.getTimezoneName(this.userTimezone));
+        if (select) {
+            select.addEventListener('change', (e) => {
+                this.userTimezone = e.target.value;
+                localStorage.setItem('user_timezone', this.userTimezone);
+                this.updateTimeDisplay();
+                Toast.success('Zona Horaria Actualizada', this.getTimezoneName(this.userTimezone));
 
-            // Refresh calendar
-            if (window.NotaryCRM && window.NotaryCRM.calendar) {
-                window.NotaryCRM.calendar.refetchEvents();
-            }
-        });
+                // Refresh calendar
+                if (window.NotaryCRM && window.NotaryCRM.calendar) {
+                    window.NotaryCRM.calendar.refetchEvents();
+                }
+            });
+        }
 
         // Load saved timezone
         const savedTz = localStorage.getItem('user_timezone');
-        if (savedTz) {
+        if (savedTz && select) {
             this.userTimezone = savedTz;
             select.value = savedTz;
         }

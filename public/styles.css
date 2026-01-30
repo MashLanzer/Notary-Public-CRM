@@ -1563,6 +1563,47 @@ textarea:focus-visible,
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     animation: fadeIn var(--transition-base);
+
+    /* ensure backdrop is below modal content but above calendar UI */
+    z-index: 13999 !important;
+}
+
+/* Force calendar elements to remain below modals */
+/* Main Calendar Enhancements */
+.fc-custom-event {
+    transition: all 0.2s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fc-custom-event:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.fc-daygrid-event {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Ensure no transparent background ever */
+.fc-v-event,
+.fc-h-event {
+    background-color: #1e3a8a !important;
+    /* Fallback for transparency */
+}
+
+/* Dash Event specific */
+.dash-event {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Status Bar logic */
+.quick-status-bar,
+.dash-quick-status {
+    z-index: 100 !important;
 }
 
 .modal-content {
@@ -1577,6 +1618,7 @@ textarea:focus-visible,
     animation: slideUp var(--transition-slow);
     z-index: 1001;
 }
+
 
 @keyframes slideUp {
     from {
@@ -2475,7 +2517,8 @@ body:not(.authenticated) {
 
 /* Limitar el contenedor visual de eventos para evitar que el cuadro del día se estire */
 .fc-daygrid-day-events {
-    max-height: 78px; /* espacio disponible dentro del día */
+    max-height: 78px;
+    /* espacio disponible dentro del día */
     overflow: hidden;
     position: relative;
 }
@@ -2484,7 +2527,7 @@ body:not(.authenticated) {
     position: absolute;
     right: 4px;
     bottom: 2px;
-    background: rgba(0,0,0,0.65);
+    background: rgba(0, 0, 0, 0.65);
     color: #fff;
     font-size: 0.7rem;
     padding: 2px 6px;
@@ -2501,13 +2544,34 @@ body:not(.authenticated) {
     color: #fff;
     margin-left: 4px;
 }
-.cal-badge.confirmed { background: #10b981; }
-.cal-badge.pending { background: #f59e0b; }
-.cal-badge.cancelled { background: #ef4444; }
-.cal-badge.no-show { background: #6b7280; }
-.cal-badge.priority-high { background: #ef4444; }
-.cal-badge.priority-medium { background: #f59e0b; }
-.cal-badge.priority-low { background: #10b981; }
+
+.cal-badge.confirmed {
+    background: #10b981;
+}
+
+.cal-badge.pending {
+    background: #f59e0b;
+}
+
+.cal-badge.cancelled {
+    background: #ef4444;
+}
+
+.cal-badge.no-show {
+    background: #6b7280;
+}
+
+.cal-badge.priority-high {
+    background: #ef4444;
+}
+
+.cal-badge.priority-medium {
+    background: #f59e0b;
+}
+
+.cal-badge.priority-low {
+    background: #10b981;
+}
 
 .fc .fc-toolbar-title {
     font-size: 1.25rem !important;
@@ -3626,13 +3690,21 @@ body:not(.authenticated) {
 }
 
 /* Modales secundarios (acciones rápidas) deben estar por encima del modal principal */
+/* Apply high z-index to known action modals and newly added cancel/quick-edit/client modals */
 #send-email-modal,
 #email-modal,
 #biometric-modal,
 #case-attachments-modal,
 #signature-modal,
-#payment-modal {
-    z-index: 12000 !important;
+#payment-modal,
+#event-quick-edit-modal,
+#cancel-reason-modal,
+#client-details-modal,
+#calendar-day-modal,
+#client-modal,
+#case-modal,
+#calendar-modal {
+    z-index: 14000 !important;
 }
 
 #send-email-modal .modal-content,
@@ -3640,8 +3712,20 @@ body:not(.authenticated) {
 #biometric-modal .modal-content,
 #case-attachments-modal .modal-content,
 #signature-modal .modal-content,
-#payment-modal .modal-content {
-    z-index: 12001 !important;
+#payment-modal .modal-content,
+#event-quick-edit-modal .modal-content,
+#cancel-reason-modal .modal-content,
+#client-details-modal .modal-content,
+#calendar-day-modal .modal-content,
+#client-modal .modal-content,
+#case-modal .modal-content,
+#calendar-modal .modal-content {
+    z-index: 14001 !important;
+}
+
+/* Ensure backdrops are below modal content but above everything else */
+.modal-backdrop {
+    z-index: 13999 !important;
 }
 
 /* ============================================

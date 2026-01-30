@@ -65,8 +65,8 @@
                 </div>
             </div>
         </div>
-                <!-- Advanced Case Details Modal (Tabbed) -->
-                <!-- (moved to end of body to avoid stacking context issues) -->
+        <!-- Advanced Case Details Modal (Tabbed) -->
+        <!-- (moved to end of body to avoid stacking context issues) -->
     </div>
 
     <!-- Header -->
@@ -449,54 +449,99 @@
 
                 <!-- New Dashboard Widgets Row -->
                 <div class="stats-grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 2rem;">
-                    <!-- Today's Agenda -->
-                    <div class="card" style="margin:0; height: 100%;">
+                    style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 2.5rem; gap: 1.5rem;">
+
+                    <!-- Visual Month Calendar -->
+                    <div class="card" style="margin:0; height: 100%; display: flex; flex-direction: column;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 class="card-title" style="margin:0;">Agenda de Hoy</h3>
-                            <span id="today-appointments-badge" class="badge"
-                                style="background:#eff6ff; color:#1d4ed8;">0</span>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div
+                                    style="background: var(--color-primary-light); color: var(--color-primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="calendar" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <h3 class="card-title" style="margin:0;">Vista Mensual</h3>
+                            </div>
+                            <button class="btn btn-sm btn-outline" onclick="NotaryCRM.openAppointmentModal()">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                                Nueva Cita
+                            </button>
                         </div>
-                        <div id="dashboard-agenda-list" style="max-height: 200px; overflow-y: auto;">
-                            <p class="empty-state" style="padding: 1rem 0;">No hay citas para hoy.</p>
+                        <div id="dashboard-calendar-view" style="min-height: 400px; font-size: 0.85rem;">
+                            <!-- FullCalendar will be injected here -->
                         </div>
                     </div>
 
-                    <!-- Activity Summary (Replaces Pending Payments) -->
-                    <div class="card" style="margin:0; height: 100%;">
+                    <!-- Today's Agenda -->
+                    <div class="card" style="margin:0; height: 100%; display: flex; flex-direction: column;">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 class="card-title" style="margin:0;">Actividad del Mes</h3>
-                            <span class="badge" style="background:#f0fdf4; color:#15803d;">Activo</span>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div
+                                    style="background: #fef2f2; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="clock" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <h3 class="card-title" style="margin:0;">Agenda de Hoy</h3>
+                            </div>
+                            <span id="today-appointments-badge" class="badge"
+                                style="background:#eff6ff; color:#1d4ed8; padding: 4px 10px; border-radius: 20px; font-weight: 700;">0</span>
                         </div>
-                        <div style="padding: 0.5rem 0;">
+                        <div id="dashboard-agenda-list"
+                            style="flex: 1; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                            <p class="empty-state" style="padding: 2rem 0;">No hay citas para hoy.</p>
+                        </div>
+                    </div>
+
+                    <!-- Activity Summary -->
+                    <div class="card" style="margin:0; height: 100%; display: flex; flex-direction: column;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div
+                                    style="background: #f0fdf4; color: #16a34a; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="trending-up" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <h3 class="card-title" style="margin:0;">Resumen Crítico</h3>
+                            </div>
+                            <span class="badge"
+                                style="background:#f0fdf4; color:#15803d; border: 1px solid #bbf7d0;">Activo</span>
+                        </div>
+                        <div style="padding: 0.5rem 0; flex: 1;">
                             <div
-                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
-                                <span style="color: #64748b;">Casos Activos</span>
-                                <span id="dash-active-count" style="font-weight: 700; color: #0f172a;">0</span>
+                                style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b; font-weight: 500;">Expedientes en curso</span>
+                                <span id="dash-active-count"
+                                    style="font-weight: 800; color: #0f172a; font-size: 1.1rem;">0</span>
                             </div>
 
                             <div
-                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
-                                <span style="color: #64748b;">Ingresos del Mes</span>
-                                <span id="dash-month-revenue" style="font-weight: 700; color: #16a34a;">$0.00</span>
+                                style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b; font-weight: 500;">Recaudación del mes</span>
+                                <span id="dash-month-revenue"
+                                    style="font-weight: 800; color: #16a34a; font-size: 1.1rem;">$0.00</span>
                             </div>
                             <div
-                                style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0;">
-                                <span style="color: #64748b;">Nuevos Clientes</span>
-                                <span id="dash-new-clients" style="font-weight: 700; color: #0f172a;">0</span>
+                                style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #e2e8f0;">
+                                <span style="color: #64748b; font-weight: 500;">Clientes nuevos (30d)</span>
+                                <span id="dash-new-clients"
+                                    style="font-weight: 800; color: #0f172a; font-size: 1.1rem;">0</span>
                             </div>
+
                             <div
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.5rem;">
-                                <button class="btn btn-outline" onclick="NotaryCRM.switchTab('clients')"
-                                    style="padding: 0.875rem; font-weight: 600;">
-                                    Clientes
-                                </button>
-                                <button class="btn btn-primary" onclick="NotaryCRM.switchTab('cases')"
-                                    style="padding: 0.875rem; font-weight: 600;">
-                                    Casos
-                                </button>
+                                style="margin-top: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                                <p
+                                    style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                                    Acciones Administrativas</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                    <button class="btn btn-outline" onclick="NotaryCRM.switchTab('clients')"
+                                        style="padding: 0.75rem; font-weight: 600; background: white;">
+                                        Clientes
+                                    </button>
+                                    <button class="btn btn-primary" onclick="NotaryCRM.switchTab('cases')"
+                                        style="padding: 0.75rem; font-weight: 600;">
+                                        Casos
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -663,6 +708,25 @@
                 </div>
                 <div class="card" style="margin-top: 1.5rem; padding: 1.5rem;">
                     <div id="calendar-view"></div>
+
+                    <div id="calendar-legend"
+                        style="margin-top: 1.5rem; display: flex; gap: 15px; flex-wrap: wrap; padding-top: 1.5rem; border-top: 1px solid #f1f5f9; font-size: 0.85rem;">
+                        <div style="display:flex; align-items:center; gap:6px;"><span
+                                style="width:12px; height:12px; border-radius:3px; background:#3b82f6;"></span>
+                            Apostilla / Poder</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span
+                                style="width:12px; height:12px; border-radius:3px; background:#ef4444;"></span> Alta
+                            Prioridad</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span
+                                style="width:12px; height:12px; border-radius:3px; background:#f59e0b;"></span>
+                            Inmobiliario / Préstamos</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span
+                                style="width:12px; height:12px; border-radius:3px; background:#10b981;"></span>
+                            Confirmada</div>
+                        <div style="display:flex; align-items:center; gap:6px;"><span
+                                style="width:12px; height:12px; border-radius:3px; background:#94a3b8;"></span>
+                            Pendiente / Otro</div>
+                    </div>
                 </div>
             </div>
 
@@ -3103,44 +3167,187 @@
                     </svg>
                 </button>
             </div>
-            <form class="modal-body" id="calendar-form">
-                <div class="form-group">
-                    <label class="form-label">Cliente</label>
-                    <select class="form-input" name="clientId" id="cal-client-select" required>
-                        <option value="">Selecciona un cliente</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label class="form-label">Fecha</label>
-                        <input type="date" class="form-input" name="date" required>
+            <form class="modal-body" id="calendar-form" style="padding: 1.5rem;">
+                <input type="hidden" name="appointmentId" id="cal-appointment-id" value="">
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label"
+                        style="font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="user" style="width: 16px; height: 16px;"></i> Cliente
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-input" name="clientId" id="cal-client-select" required
+                            style="flex: 1; border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                            <option value="">Selecciona un cliente</option>
+                        </select>
+                        <button type="button" class="btn btn-outline" style="padding: 0 12px; border-radius: 10px;"
+                            onclick="NotaryCRM.openModal('client-modal')" title="Nuevo Cliente">
+                            <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+                        </button>
                     </div>
-                    <div class="form-group flex-1">
-                        <label class="form-label">Hora</label>
-                        <input type="time" class="form-input" name="time" required>
+                </div>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="calendar" style="width: 16px; height: 16px;"></i> Fecha
+                        </label>
+                        <input type="date" class="form-input" name="date" required
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="clock" style="width: 16px; height: 16px;"></i> Hora
+                        </label>
+                        <input type="time" class="form-input" name="time" required
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Tipo de Servicio</label>
-                    <select class="form-input" name="type" required>
-                        <option value="Apostille">Apostilla</option>
-                        <option value="Power of Attorney">Poder Notarial</option>
-                        <option value="Affidavit">Declaración Jurada</option>
-                        <option value="Real Estate Deed">Escritura Inmobiliaria</option>
-                        <option value="Wills / Trusts">Testamentos / Fideicomisos</option>
-                        <option value="Certified Copies">Copias Certificadas</option>
-                        <option value="Oath / Affirmation">Juramento / Afirmación</option>
-                        <option value="Loan Signing">Firma de Préstamos</option>
-                        <option value="Acknowledgment">Reconocimiento</option>
-                        <option value="Other">Otro</option>
-                    </select>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="briefcase" style="width: 16px; height: 16px;"></i> Tipo de Servicio
+                        </label>
+                        <select class="form-input" name="type" required
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                            <option value="Apostille">Apostilla</option>
+                            <option value="Power of Attorney">Poder Notarial</option>
+                            <option value="Affidavit">Declaración Jurada</option>
+                            <option value="Real Estate Deed">Escritura Inmobiliaria</option>
+                            <option value="Wills / Trusts">Testamentos / Fideicomisos</option>
+                            <option value="Certified Copies">Copias Certificadas</option>
+                            <option value="Oath / Affirmation">Juramento / Afirmación</option>
+                            <option value="Loan Signing">Firma de Préstamos</option>
+                            <option value="Acknowledgment">Reconocimiento</option>
+                            <option value="Notary Protest">Protesta Notarial</option>
+                            <option value="Immigration Forms">Trámites de Inmigración</option>
+                            <option value="Translation">Traducción / Intérprete</option>
+                            <option value="Mobile Notary">Notaría Móvil</option>
+                            <option value="RON">Notaría Remota (RON)</option>
+                            <option value="Document Review">Revisión de Documentos</option>
+                            <option value="Title Search">Búsqueda de Títulos</option>
+                            <option value="Other">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"
+                            style="font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="zap" style="width: 16px; height: 16px;"></i> Prioridad
+                        </label>
+                        <select class="form-input" name="priority"
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                            <option value="High">🔴 Alta</option>
+                            <option value="Medium" selected>🟡 Media</option>
+                            <option value="Low">🟢 Baja</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
-                    <input type="checkbox" name="recurring" id="cal-recurring" style="width: 18px; height: 18px;">
-                    <label for="cal-recurring" class="form-label" style="margin-bottom: 0;">Cita Recurrente (Cada Lunes
-                        por 4 semanas)</label>
+
+                <div class="form-group"
+                    style="margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #f1f5f9;">
+                    <label class="form-label"
+                        style="font-weight: 700; font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">OPCIONES
+                        AVANZADAS Y EXPORTACIÓN</label>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <select id="calendar-template-select" class="form-input"
+                            style="flex:1; min-width:180px; border-radius: 8px; border: 1px solid #cbd5e1; height: 36px; font-size: 0.9rem;">
+                            <option value="">Cargar plantilla...</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline" id="save-template-btn"
+                            title="Guardar como plantilla" style="height: 36px; width: 36px; padding: 0;">
+                            <i data-lucide="save" style="width:16px; height:16px;"></i>
+                        </button>
+                        <div style="width: 1px; height: 24px; background: #e2e8f0; margin: 0 4px;"></div>
+                        <button type="button" class="btn btn-sm" id="export-appointments-csv" title="Excel/CSV"
+                            style="background:#059669; color:white; border:none; border-radius:8px;">
+                            <i data-lucide="database" style="width:14px; height:14px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm" id="export-appointments-pdf" title="Lista PDF"
+                            style="background:#dc2626; color:white; border:none; border-radius:8px;">
+                            <i data-lucide="file-text" style="width:14px; height:14px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm" id="export-appointments-ics" title="Sincronizar .ics"
+                            style="background:#2563eb; color:white; border:none; border-radius:8px;">
+                            <i data-lucide="shuffle" style="width:14px; height:14px;"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Agendar Cita</button>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="font-weight: 700;">Título / Asunto</label>
+                    <input type="text" class="form-input" name="title" placeholder="Ej: Firma de testamento"
+                        style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                </div>
+
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Duración</label>
+                        <select class="form-input" name="duration"
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                            <option value="15">15 minutos</option>
+                            <option value="30" selected>30 minutos</option>
+                            <option value="45">45 minutos</option>
+                            <option value="60">1 hora</option>
+                            <option value="90">1.5 horas</option>
+                            <option value="120">2 horas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Estado</label>
+                        <select class="form-input" name="status"
+                            style="border-radius: 10px; border: 1px solid #e2e8f0; height: 42px;">
+                            <option value="confirmed">Confirmada</option>
+                            <option value="pending" selected>Pendiente</option>
+                            <option value="cancelled">Cancelada</option>
+                            <option value="no-show">No-show</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="font-weight: 700;">Notas Adicionales</label>
+                    <textarea class="form-input" name="note" rows="2" placeholder="Indicaciones para la cita..."
+                        style="border-radius: 10px; border: 1px solid #e2e8f0; resize: none;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label"
+                        style="font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                        <span>Recordatorios y Notificaciones</span>
+                        <input type="checkbox" name="notifyAttendees" id="cal-notify-attendees"
+                            style="width: 20px; height: 20px; cursor: pointer;">
+                    </label>
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; margin-top: 8px; color: #64748b; font-size: 0.85rem;">
+                        <input type="checkbox" name="reminder" id="cal-reminder" checked>
+                        <label for="cal-reminder" style="margin: 0; cursor: pointer;">Activar recordatorio
+                            automático</label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px;">
+                    <input type="checkbox" name="recurring" id="cal-recurring"
+                        style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="cal-recurring" style="margin: 0; cursor: pointer; font-weight: 600;">Repetir
+                        semanalmente (4 semanas)</label>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" style="border-radius: 12px; height: 48px; font-weight: 600;"
+                        onclick="NotaryCRM.closeModal('calendar-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"
+                        style="border-radius: 12px; height: 48px; font-weight: 700; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                        <i data-lucide="plus-circle" style="width: 18px; height: 18px; margin-right: 4px;"></i>
+                        <span id="calendar-submit-text">Agendar Cita</span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -3217,7 +3424,10 @@
                 </div>
                 <div style="display:flex; gap:8px; margin-top:1rem;">
                     <button class="btn btn-primary" id="quick-edit-save">Guardar</button>
-                    <button class="btn" onclick="NotaryCRM.closeModal('event-quick-edit-modal')">Cancelar</button>
+                    <button class="btn" id="quick-edit-view-client">Ver Perfil Cliente</button>
+                    <button class="btn" id="quick-edit-reschedule">Reagendar</button>
+                    <button class="btn btn-danger" id="quick-edit-cancel">Cancelar Cita</button>
+                    <button class="btn" onclick="NotaryCRM.closeModal('event-quick-edit-modal')">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -3238,6 +3448,240 @@
             </div>
             <div class="modal-body" id="client-details-content">
                 <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Details Modal -->
+    <div class="modal" id="appointment-details-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('appointment-details-modal')"></div>
+        <div class="modal-content"
+            style="max-width:700px; border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div id="appt-details-header-color" style="height: 10px; background: var(--color-primary);"></div>
+            <div class="modal-header"
+                style="background: #fafafa; border-bottom: 1px solid #f0f0f0; padding: 1.5rem 2rem;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="appt-status-icon-container"
+                        style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <i id="appt-main-icon" data-lucide="calendar" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <h3 class="modal-title" id="appt-details-title"
+                            style="font-size: 1.35rem; font-weight: 800; color: #1e293b;">Detalle de Cita</h3>
+                        <p id="appt-details-subtitle" style="margin: 0; color: #64748b; font-size: 0.9rem;">Información
+                            completa de la cita</p>
+                    </div>
+                </div>
+                <button class="modal-close" data-modal="appointment-details-modal"
+                    style="background: #f1f5f9; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="appt-details-body" style="padding: 2rem; background: white;">
+                <div style="display:grid; grid-template-columns: 1fr 280px; gap:2.5rem;">
+                    <!-- Left Column: Details -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <section>
+                            <h4
+                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="user" style="width: 14px; height: 14px;"></i> Cliente y Contacto
+                            </h4>
+                            <div id="appt-client-card"
+                                style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                <div id="appt-client-name"
+                                    style="font-weight: 700; color: #0f172a; font-size: 1.1rem; margin-bottom: 4px;">
+                                    Nombre del Cliente</div>
+                                <div id="appt-client-info"
+                                    style="color: #64748b; font-size: 0.9rem; display: flex; flex-direction: column; gap: 4px;">
+                                    <span id="appt-client-email"
+                                        style="display: flex; align-items: center; gap: 6px;"><i data-lucide="mail"
+                                            style="width: 12px; height: 12px;"></i> email@ejemplo.com</span>
+                                    <span id="appt-client-phone"
+                                        style="display: flex; align-items: center; gap: 6px;"><i data-lucide="phone"
+                                            style="width: 12px; height: 12px;"></i> +1 234 567 890</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h4
+                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="clock" style="width: 14px; height: 14px;"></i> Horario y Servicio
+                            </h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div
+                                    style="background: #fdf2f2; padding: 12px; border-radius: 10px; border: 1px solid #fee2e2;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #b91c1c; font-weight: 700; text-transform: uppercase;">
+                                        Fecha y Hora</div>
+                                    <div id="appt-full-time" style="font-weight: 700; color: #991b1b; margin-top: 2px;">
+                                        30 Ene, 10:00 AM</div>
+                                </div>
+                                <div
+                                    style="background: #f0f9ff; padding: 12px; border-radius: 10px; border: 1px solid #e0f2fe;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #0369a1; font-weight: 700; text-transform: uppercase;">
+                                        Tipo de Servicio</div>
+                                    <div id="appt-service-type"
+                                        style="font-weight: 700; color: #075985; margin-top: 2px;">Notarización</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h4
+                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Notas y Notas
+                                Adicionales
+                            </h4>
+                            <div id="appt-notes-content"
+                                style="background: #fff; padding: 1rem; border-radius: 12px; border: 1px dashed #e2e8f0; color: #334155; font-size: 0.95rem; min-height: 60px;">
+                                Sin notas adicionales.
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Right Column: Status & Quick Actions -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <section
+                            style="background: #f8fafc; padding: 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0;">
+                            <h4
+                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 1rem; text-align: center;">
+                                Cambiar Estado Rápido</h4>
+                            <div class="status-quick-grid"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <button class="btn btn-sm status-btn-quick" data-status="confirmed"
+                                    style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-weight: 600;">Confirmar</button>
+                                <button class="btn btn-sm status-btn-quick" data-status="pending"
+                                    style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-weight: 600;">Pendiente</button>
+                                <button class="btn btn-sm status-btn-quick" data-status="no-show"
+                                    style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; font-weight: 600;">No-Show</button>
+                                <button class="btn btn-sm status-btn-quick" data-status="cancelled"
+                                    style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 600;">Cancelar</button>
+                            </div>
+                            <div id="appt-current-status-badge"
+                                style="margin-top: 12px; text-align: center; padding: 6px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">
+                                ESTADO ACTUAL: <span id="appt-status-text">CONFIRMADA</span>
+                            </div>
+                        </section>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn btn-primary" id="appt-edit-btn"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;">
+                                <i data-lucide="edit-3" style="width: 18px; height: 18px;"></i> Editar / Reagendar
+                            </button>
+                            <button class="btn btn-outline" id="appt-whatsapp-btn"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-color: #22c55e; color: #15803d; background: #f0fdf4;">
+                                <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i> Enviar WhatsApp
+                            </button>
+                            <button class="btn btn-outline" id="appt-gcal-btn"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;">
+                                <i data-lucide="external-link" style="width: 18px; height: 18px;"></i> Google Calendar
+                            </button>
+                            <button class="btn btn-ghost" id="appt-cancel-btn-details"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; color: #ef4444;">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i> Eliminar Cita
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Settings Modal (Working Hours & Block Time) -->
+    <div class="modal" id="calendar-settings-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('calendar-settings-modal')"></div>
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Configuración de Calendario</h3>
+                <button class="modal-close" data-modal="calendar-settings-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form class="modal-body" id="calendar-settings-form">
+                <div class="form-group">
+                    <label class="form-label">Horario laboral (inicio)</label>
+                    <input type="time" class="form-input" name="workStart" value="09:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Horario laboral (fin)</label>
+                    <input type="time" class="form-input" name="workEnd" value="18:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🌍 Zona Horaria</label>
+                    <select class="form-input" name="timezone" id="calendar-timezone-select">
+                        <option value="auto">Detectar automáticamente</option>
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">New York (EST/EDT)</option>
+                        <option value="America/Chicago">Chicago (CST/CDT)</option>
+                        <option value="America/Denver">Denver (MST/MDT)</option>
+                        <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+                        <option value="America/Mexico_City">Ciudad de México</option>
+                        <option value="America/Bogota">Bogotá / Lima</option>
+                        <option value="America/Santiago">Santiago de Chile</option>
+                        <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                        <option value="Europe/Madrid">Madrid (España)</option>
+                        <option value="Europe/London">Londres</option>
+                        <option value="Europe/Paris">París</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Días laborales</label>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <label><input type="checkbox" name="wd-1" value="1" checked> Lun</label>
+                        <label><input type="checkbox" name="wd-2" value="2" checked> Mar</label>
+                        <label><input type="checkbox" name="wd-3" value="3" checked> Mié</label>
+                        <label><input type="checkbox" name="wd-4" value="4" checked> Jue</label>
+                        <label><input type="checkbox" name="wd-5" value="5" checked> Vie</label>
+                        <label><input type="checkbox" name="wd-6" value="6"> Sáb</label>
+                        <label><input type="checkbox" name="wd-0" value="0"> Dom</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bloquear Horario</label>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <input type="date" class="form-input" name="blockStartDate">
+                        <input type="time" class="form-input" name="blockStartTime" value="09:00">
+                        <input type="date" class="form-input" name="blockEndDate">
+                        <input type="time" class="form-input" name="blockEndTime" value="10:00">
+                        <button type="button" class="btn" id="add-blocked-time-btn">Añadir Bloqueo</button>
+                    </div>
+                    <div id="block-times-list" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:1rem;">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn" data-modal="calendar-settings-modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cancel Reason Modal -->
+    <div class="modal" id="cancel-reason-modal">
+        <div class="modal-backdrop" onclick="NotaryCRM.closeModal('cancel-reason-modal')"></div>
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Motivo de Cancelación</h3>
+                <button class="modal-close" data-modal="cancel-reason-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
+                <input type="hidden" id="cancel-reason-appointment-id" value="">
+                <label class="form-label">Por favor indique el motivo de la cancelación</label>
+                <textarea id="cancel-reason-text" class="form-input" rows="5" placeholder="Motivo..."></textarea>
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+                    <button class="btn" onclick="NotaryCRM.closeModal('cancel-reason-modal')">Cerrar</button>
+                    <button class="btn btn-danger" id="confirm-cancel-with-reason">Confirmar Cancelación</button>
+                </div>
             </div>
         </div>
     </div>
@@ -4799,26 +5243,28 @@
     <script type="module" src="app.js"></script>
 </body>
 
-    <!-- New Advanced Case Details Modal -->
-    <div class="modal" id="new-case-details-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
-                <div style="display: flex; flex-direction: column;">
-                    <h3 class="modal-title" style="color: white;" id="new-detail-case-number">Expediente #---</h3>
-                    <span id="new-detail-case-status" class="badge" style="margin-top: 5px;">Status</span>
-                </div>
-                <button class="modal-close" data-modal="new-case-details-modal" style="color: white;">&times;</button>
+<!-- New Advanced Case Details Modal -->
+<div class="modal" id="new-case-details-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+            <div style="display: flex; flex-direction: column;">
+                <h3 class="modal-title" style="color: white;" id="new-detail-case-number">Expediente #---</h3>
+                <span id="new-detail-case-status" class="badge" style="margin-top: 5px;">Status</span>
             </div>
-            <div class="modal-body" style="padding: 2rem;">
-                <div id="new-case-details-content">
-                    <!-- Content will be dynamically loaded here -->
-                </div>
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                    <button class="btn btn-primary" style="flex: 1;" id="new-detail-edit-btn">Editar Expediente</button>
-                    <button class="btn btn-outline" style="flex: 1;" onclick="NotaryCRM.closeModal('new-case-details-modal')">Cerrar</button>
-                </div>
+            <button class="modal-close" data-modal="new-case-details-modal" style="color: white;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <div id="new-case-details-content">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-primary" style="flex: 1;" id="new-detail-edit-btn">Editar Expediente</button>
+                <button class="btn btn-outline" style="flex: 1;"
+                    onclick="NotaryCRM.closeModal('new-case-details-modal')">Cerrar</button>
             </div>
         </div>
     </div>
+</div>
+
 </html>

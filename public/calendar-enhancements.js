@@ -29,326 +29,400 @@ const CalendarEnhancements = {
                 clearInterval(checkCalendar);
                 this.applyColorCoding();
                 this.addCalendarLegend();
-                    this.ensureCalendarUI();
+                this.ensureCalendarUI();
             }
         }, 500);
     },
 
-        ensureCalendarUI() {
-            const viewHolder = document.getElementById('calendar-view');
-            if (!viewHolder) return;
+    ensureCalendarUI() {
+        const viewHolder = document.getElementById('calendar-view');
+        if (!viewHolder) return;
 
-            if (!document.getElementById('calendar')) {
-                const calEl = document.createElement('div');
-                calEl.id = 'calendar';
-                viewHolder.appendChild(calEl);
+        if (!document.getElementById('calendar')) {
+            const calEl = document.createElement('div');
+            calEl.id = 'calendar';
+            viewHolder.appendChild(calEl);
+        }
+
+        if (!document.getElementById('calendar-toolbar')) {
+            const toolbar = document.createElement('div');
+            toolbar.id = 'calendar-toolbar';
+            toolbar.style.cssText = 'display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;';
+            toolbar.innerHTML = `
+                <div class="btn-group" style="display:flex; gap:1px; background:#e2e8f0; padding:2px; border-radius:8px;">
+                    <button class="btn btn-sm" id="calendar-today-btn" style="border-radius:6px; background:white; margin-right:4px;">Hoy</button>
+                    <button class="btn btn-sm" data-view="dayGridMonth" style="border-radius:6px; background:white;">Mes</button>
+                    <button class="btn btn-sm" data-view="timeGridWeek" style="border-radius:6px; background:transparent;">Semana</button>
+                    <button class="btn btn-sm" data-view="timeGridDay" style="border-radius:6px; background:transparent;">Día</button>
+                    <button class="btn btn-sm" data-view="listMonth" style="border-radius:6px; background:transparent;">Agenda</button>
+                </div>
+                
+                <div style="flex:1; min-width:200px; display:flex; gap:8px;">
+                     <div class="search-box" style="margin:0; flex:1; position:relative;">
+                        <input type="text" id="calendar-search" class="search-input" placeholder="Buscar por cliente o servicio..." style="padding-left:35px !important; width:100%;">
+                        <svg class="search-icon" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                     </div>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <select id="calendar-status-filter" class="form-input" style="width: 160px; margin:0; height:38px;">
+                        <option value="all">Todos los estados</option>
+                        <option value="confirmed">Confirmada</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="cancelled">Cancelada</option>
+                        <option value="no-show">No-show</option>
+                    </select>
+
+                    <button class="btn btn-outline" style="height:38px; display:flex; align-items:center; justify-content:center; width:40px; padding:0;" onclick="NotaryCRM.openModal('calendar-settings-modal')" title="Ajustes">
+                        <i data-lucide="settings" style="width:18px; height:18px;"></i>
+                    </button>
+
+                    <button class="btn btn-outline" id="calendar-refresh-btn" style="height:38px; display:flex; align-items:center; justify-content:center; width:40px; padding:0;" title="Refrescar">
+                        <i data-lucide="refresh-cw" style="width:18px; height:18px;"></i>
+                    </button>
+
+                    <button class="btn btn-outline" id="calendar-print-day-btn" style="height:38px; display:flex; align-items:center; justify-content:center; width:40px; padding:0;" title="Imprimir Agenda del Día">
+                        <i data-lucide="printer" style="width:18px; height:18px;"></i>
+                    </button>
+                </div>
+            `;
+            viewHolder.insertBefore(toolbar, viewHolder.firstChild);
+
+            toolbar.addEventListener('click', (e) => {
+                const b = e.target.closest('button[data-view]');
+                if (!b || !window.NotaryCRM || !window.NotaryCRM.calendar) return;
+
+                // Update active button state
+                toolbar.querySelectorAll('button[data-view]').forEach(btn => btn.style.background = 'transparent');
+                b.style.background = 'white';
+
+                window.NotaryCRM.calendar.changeView(b.getAttribute('data-view'));
+            });
+
+            const todayBtn = document.getElementById('calendar-today-btn');
+            if (todayBtn) {
+                todayBtn.onclick = () => {
+                    if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.today();
+                };
             }
 
-            if (!document.getElementById('calendar-views-toggle')) {
-                const toolbar = document.createElement('div');
-                toolbar.id = 'calendar-views-toggle';
-                toolbar.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
-                toolbar.innerHTML = `
-                    <button class="btn" data-view="dayGridMonth">Mes</button>
-                    <button class="btn" data-view="timeGridWeek">Semana</button>
-                    <button class="btn" data-view="timeGridDay">Día</button>
-                    <button class="btn" data-view="listDay">Agenda</button>
-                `;
-                viewHolder.insertBefore(toolbar, viewHolder.firstChild);
+            const refreshBtn = document.getElementById('calendar-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.onclick = () => {
+                    if (window.NotaryCRM && window.NotaryCRM.calendar) {
+                        window.NotaryCRM.calendar.refetchEvents();
+                        Toast.info('Refrescando', 'Sincronizando calendario...');
+                    }
+                };
+            }
 
-                toolbar.addEventListener('click', (e) => {
-                    const b = e.target.closest('button[data-view]');
-                    if (!b || !window.NotaryCRM || !window.NotaryCRM.calendar) return;
-                    window.NotaryCRM.calendar.changeView(b.getAttribute('data-view'));
+            const printBtn = document.getElementById('calendar-print-day-btn');
+            if (printBtn) {
+                printBtn.onclick = () => {
+                    if (window.NotaryCRM && typeof window.NotaryCRM.exportDayAgenda === 'function') {
+                        const date = window.NotaryCRM.calendar?.getDate() || new Date();
+                        window.NotaryCRM.exportDayAgenda(date.toISOString().split('T')[0]);
+                    }
+                };
+            }
+
+            const searchInput = document.getElementById('calendar-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
                 });
             }
 
-            // Add status filter UI
-            if (!document.getElementById('calendar-status-filter')) {
-                const filterEl = document.createElement('select');
-                filterEl.id = 'calendar-status-filter';
-                filterEl.className = 'form-input';
-                filterEl.style.cssText = 'width: 160px; margin-left: auto;';
-                filterEl.innerHTML = `
-                    <option value="all">Todos los estados</option>
-                    <option value="confirmed">Confirmada</option>
-                    <option value="pending">Pendiente</option>
-                    <option value="cancelled">Cancelada</option>
-                    <option value="no-show">No-show</option>
-                `;
-                // Place filter in the toolbar area
-                const toolbarArea = document.getElementById('calendar-views-toggle');
-                if (toolbarArea) toolbarArea.appendChild(filterEl);
-
+            const filterEl = document.getElementById('calendar-status-filter');
+            if (filterEl) {
                 filterEl.addEventListener('change', () => {
                     if (window.NotaryCRM && window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
                 });
             }
 
-            // Initialize FullCalendar instance if not present
-            if (!window.NotaryCRM.calendar && window.FullCalendar) {
-                const calendarEl = document.getElementById('calendar');
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: false,
-                    editable: true,
-                    dayMaxEventRows: false,
-                    events: (fetchInfo, successCallback) => {
-                        const filter = document.getElementById('calendar-status-filter')?.value || 'all';
-                        const appts = (window.NotaryCRM.state.appointments || []).filter(a => {
-                            if (filter === 'all') return true;
-                            return (a.status || '').toString() === filter;
-                        }).map(a => {
-                            const start = a.date && a.time ? new Date(a.date + 'T' + a.time) : new Date(a.start || a.date || Date.now());
-                            return {
-                                id: a.id,
-                                title: a.title || (window.NotaryCRM.state.clients.find(c=>c.id===a.clientId)?.name || 'Cita'),
-                                start: start,
-                                allDay: false,
-                                extendedProps: a
-                            };
-                        });
-                        successCallback(appts);
-                    },
-                    eventContent: function(arg) {
-                        const appt = arg.event.extendedProps || {};
-                        const title = document.createElement('div');
-                        title.style.display = 'flex';
-                        title.style.alignItems = 'center';
-                        title.style.gap = '6px';
+            if (window.lucide) window.lucide.createIcons({ root: toolbar });
+        }
 
-                        const t = document.createElement('span');
-                        t.textContent = arg.event.title;
-                        t.style.fontSize = '0.78rem';
-                        t.style.fontWeight = '500';
-
-                        title.appendChild(t);
-
-                        // Status badge
-                        const status = (appt.status || '').toString();
-                        if (status) {
-                            const b = document.createElement('span');
-                            b.className = `cal-badge ${status.replace(/\s+/g,'-')}`;
-                            b.textContent = status;
-                            title.appendChild(b);
-                        }
-
-                        // Priority badge
-                        if (appt.priority) {
-                            const p = document.createElement('span');
-                            p.className = `cal-badge priority-${(appt.priority||'low').toString().toLowerCase()}`;
-                            p.textContent = appt.priority;
-                            title.appendChild(p);
-                        }
-
-                        return { domNodes: [title] };
-                    },
-                    dateClick: (info) => {
-                        NotaryCRM.openModal('calendar-modal');
-                        const form = document.getElementById('calendar-form');
-                        if (form) {
-                            const dateInput = form.querySelector('input[name="date"]');
-                            const timeInput = form.querySelector('input[name="time"]');
-                            if (dateInput) dateInput.value = info.dateStr.slice(0,10);
-                            if (timeInput) timeInput.value = '09:00';
-                        }
-                    },
-                    eventClick: (info) => {
-                        const appt = info.event.extendedProps || {};
-                        // Open quick-edit modal and populate fields
-                        const modalId = 'event-quick-edit-modal';
-                        NotaryCRM.openModal(modalId);
-                        const hid = document.getElementById('quick-edit-id');
-                        const statusSel = document.getElementById('quick-edit-status');
-                        const prioSel = document.getElementById('quick-edit-priority');
-                        const noteInput = document.getElementById('quick-edit-note');
-                        if (hid) hid.value = appt.id || info.event.id || '';
-                        if (statusSel) statusSel.value = (appt.status || 'pending').toString();
-                        if (prioSel) prioSel.value = (appt.priority || 'Low').toString();
-                        if (noteInput) noteInput.value = appt.note || '';
-
-                        const saveBtn = document.getElementById('quick-edit-save');
-                        if (saveBtn) {
-                            saveBtn.onclick = async () => {
-                                const id = document.getElementById('quick-edit-id').value || info.event.id;
-                                const status = document.getElementById('quick-edit-status').value;
-                                const priority = document.getElementById('quick-edit-priority').value;
-                                const note = document.getElementById('quick-edit-note').value;
-
-                                const appts = window.NotaryCRM.state.appointments || [];
-                                const idx = appts.findIndex(a => (a.id || a._id || '') === (id || info.event.id));
-                                if (idx > -1) {
-                                    appts[idx].status = status;
-                                    appts[idx].priority = priority;
-                                    appts[idx].note = note;
-                                } else {
-                                    info.event.setExtendedProp('status', status);
-                                    info.event.setExtendedProp('priority', priority);
-                                    info.event.setExtendedProp('note', note);
-                                }
-
-                                // Persist to Firestore when available
-                                try {
-                                    if (window.NotaryCRM && window.NotaryCRM.useFirestore && window.NotaryCRM.currentUser) {
-                                        const { doc, updateDoc, serverTimestamp } = window.dbFuncs;
-                                        const ref = doc(window.firebaseDB, 'appointments', id);
-                                        await updateDoc(ref, {
-                                            status: status,
-                                            priority: priority,
-                                            note: note,
-                                            updatedAt: serverTimestamp()
-                                        });
-                                        // Audit
-                                        if (window.AuditManager) AuditManager.logAction('Update Appointment', id, `Status:${status} Priority:${priority}`);
-                                    }
-                                } catch (err) {
-                                    console.error('Persist quick-edit failed', err);
-                                    Toast.warning('Persistencia fallida', 'No se pudo guardar en servidor, cambios solo locales.');
-                                }
-
-                                // Close modal and refresh calendar view
-                                NotaryCRM.closeModal(modalId);
-                                if (window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
-                                Toast.success('Actualizado', 'Cita actualizada correctamente');
-                            };
-                        }
-                    },
-                    eventDrop: (info) => {
-                        const ev = info.event;
-                        const newStart = new Date(ev.start);
-                        const newEnd = ev.end ? new Date(ev.end) : new Date(newStart.getTime() + 60*60000);
-                        const appts = window.NotaryCRM.state.appointments || [];
-                        const conflict = appts.some(a => {
-                            if (a.id === ev.id) return false;
-                            const aStart = new Date(a.date + 'T' + (a.time || '00:00'));
-                            const aEnd = new Date(aStart.getTime() + (a.duration||60)*60000);
-                            return CalendarEnhancements.hasTimeOverlap(newStart, newEnd, aStart, aEnd);
-                        });
-                        if (conflict) {
-                            Toast.error('Conflicto', 'La nueva hora se solapa con otra cita.');
-                            info.revert();
-                        } else {
-                            const idx = appts.findIndex(a=>a.id===ev.id);
-                            if (idx>-1) {
-                                appts[idx].date = newStart.toISOString().slice(0,10);
-                                appts[idx].time = newStart.toTimeString().slice(0,5);
-                            }
-                            if (window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
-                        }
-                    },
-                    eventResize: (info) => {
-                        const ev = info.event;
-                        const newStart = new Date(ev.start);
-                        const newEnd = new Date(ev.end || newStart.getTime()+60*60000);
-                        const appts = window.NotaryCRM.state.appointments || [];
-                        const conflict = appts.some(a => {
-                            if (a.id === ev.id) return false;
-                            const aStart = new Date(a.date + 'T' + (a.time || '00:00'));
-                            const aEnd = new Date(aStart.getTime() + (a.duration||60)*60000);
-                            return CalendarEnhancements.hasTimeOverlap(newStart, newEnd, aStart, aEnd);
-                        });
-                        if (conflict) {
-                            Toast.error('Conflicto', 'La nueva duración se solapa con otra cita.');
-                            info.revert();
-                        } else {
-                            const idx = appts.findIndex(a=>a.id===ev.id);
-                            if (idx>-1) {
-                                appts[idx].duration = Math.round((newEnd-newStart)/60000);
-                            }
-                            if (window.NotaryCRM.calendar) window.NotaryCRM.calendar.refetchEvents();
-                        }
-                    }
-                });
-
-                calendar.render();
-                window.NotaryCRM.calendar = calendar;
-
-                document.addEventListener('click', (e) => {
-                    const ind = e.target.closest('.day-more-indicator');
-                    if (!ind) return;
-                    const dayFrame = ind.closest('.fc-daygrid-day-frame');
-                    if (!dayFrame) return;
-                    const dateAttr = dayFrame.closest('.fc-daygrid-day')?.getAttribute('data-date') || '';
-                    NotaryCRM.openModal('calendar-day-modal');
-                    const list = document.getElementById('day-appointments-list');
-                    const title = document.getElementById('calendar-day-date');
-                    if (title) title.textContent = `Citas del día ${dateAttr}`;
-                    if (list) {
-                        list.innerHTML = '';
-                        const appts = (window.NotaryCRM.state.appointments || []).filter(a => a.date === dateAttr);
-                        appts.forEach(a => {
-                            const client = window.NotaryCRM.state.clients.find(c=>c.id===a.clientId);
-                            const el = document.createElement('div');
-                            el.className = 'reminder-item';
-                            el.style.cssText = 'padding:8px;border-bottom:1px solid #f1f5f9;';
-                            el.innerHTML = `<div style="display:flex; justify-content:space-between; gap:8px;"><div><strong>${a.title|| (client?client.name:'Cliente')}</strong><div style='font-size:0.85rem; color:var(--text-muted)'>${a.time || ''} · ${a.type || ''}</div></div><div><button class='btn btn-sm' onclick="NotaryCRM.openEditModal('${a.id}')">Ver</button></div></div>`;
-                            list.appendChild(el);
-                        });
-                    }
-                });
-            }
-        },
-
-    applyColorCoding() {
-        // Override event rendering to include colors
-        const originalRenderAppointments = window.NotaryCRM.renderAppointments;
-        if (originalRenderAppointments) {
-            window.NotaryCRM.renderAppointments = function () {
-                originalRenderAppointments.call(this);
-                CalendarEnhancements.colorizeEvents();
-                // After events render, collapse overflowing day event lists
-                setTimeout(() => CalendarEnhancements.collapseDayEvents(), 50);
-            };
+        // Initialize FullCalendar instance if not present in NotaryCRM
+        if (!window.NotaryCRM.calendar && window.FullCalendar) {
+            this.initFullCalendar();
         }
     },
 
-    colorizeEvents() {
-        if (!window.NotaryCRM || !window.NotaryCRM.calendar) return;
+    initFullCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
 
-        const events = window.NotaryCRM.calendar.getEvents();
-        events.forEach(event => {
-            const serviceType = event.extendedProps?.serviceType || 'Other';
-            const color = this.serviceColors[serviceType] || this.serviceColors['Other'];
+        const settings = (window.NotaryCRM && typeof window.NotaryCRM.loadCalendarSettings === 'function') ? window.NotaryCRM.loadCalendarSettings() : { workStart: '09:00', workEnd: '18:00', workDays: [1, 2, 3, 4, 5] };
 
-            event.setProp('backgroundColor', color);
-            event.setProp('borderColor', color);
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            locale: 'es',
+            timeZone: (settings.timezone && settings.timezone !== 'auto') ? settings.timezone : 'local',
+            editable: true,
+            dayMaxEvents: true,
+            eventContent: (arg) => {
+                const appt = arg.event.extendedProps;
+                const status = (appt.status || 'pending').toLowerCase();
+                const title = arg.event.title;
+                const timeStr = arg.timeText;
+
+                // Status colors
+                const statusColors = {
+                    confirmed: '#10b981',
+                    pending: '#f59e0b',
+                    cancelled: '#94a3b8',
+                    'no-show': '#ef4444'
+                };
+                const color = statusColors[status] || '#3b82f6';
+
+                let html = `
+                    <div class="fc-custom-event" style="padding: 2px 4px; border-radius: 4px; color: #fff; width:100%; height:100%;">
+                        <div style="font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: space-between; overflow:hidden;">
+                            <span>${timeStr ? timeStr + ' ' : ''}${title}</span>
+                            <div class="quick-status-bar" style="display:none; gap:2px; background: rgba(0,0,0,0.2); padding: 1px 4px; border-radius:10px;">
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="confirmed" title="Confirmar" style="cursor:pointer; opacity:0.7; font-size:10px;">✅</span>
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="pending" title="Pendiente" style="cursor:pointer; opacity:0.7; font-size:10px;">⏳</span>
+                                <span class="qstatus-btn" data-id="${arg.event.id}" data-status="cancelled" title="Cancelar" style="cursor:pointer; opacity:0.7; font-size:10px;">❌</span>
+                            </div>
+                        </div>
+                        <div style="height:3px; background:${color}; margin-top:2px; border-radius:2px; opacity: 0.8;"></div>
+                    </div>
+                `;
+                return { html: html };
+            },
+            eventDidMount: (info) => {
+                const el = info.el;
+                const statusBar = el.querySelector('.quick-status-bar');
+                if (statusBar) {
+                    el.addEventListener('mouseenter', () => statusBar.style.display = 'flex');
+                    el.addEventListener('mouseleave', () => statusBar.style.display = 'none');
+
+                    statusBar.querySelectorAll('.qstatus-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            const id = btn.getAttribute('data-id');
+                            const status = btn.getAttribute('data-status');
+                            if (window.NotaryCRM && window.NotaryCRM.updateAppointmentStatus) {
+                                window.NotaryCRM.updateAppointmentStatus(id, status).then(() => {
+                                    window.NotaryCRM.calendar.refetchEvents();
+                                    Toast.success('Estado Actualizado', `Cita marcada como ${status}`);
+                                });
+                            }
+                        };
+                    });
+                }
+            },
+            datesSet: (info) => {
+                try { this.renderDayBadges(); } catch (e) { console.warn('renderDayBadges failed', e); }
+            },
+            businessHours: {
+                daysOfWeek: settings.workDays || [1, 2, 3, 4, 5],
+                startTime: settings.workStart || '09:00',
+                endTime: settings.workEnd || '18:00'
+            },
+            events: (fetchInfo, successCallback) => {
+                const filter = document.getElementById('calendar-status-filter')?.value || 'all';
+                const search = document.getElementById('calendar-search')?.value.toLowerCase() || '';
+
+                const appts = (window.NotaryCRM.state.appointments || []).filter(a => {
+                    const matchesStatus = (filter === 'all') || ((a.status || '').toString().toLowerCase() === filter.toLowerCase());
+                    const client = window.NotaryCRM.state.clients.find(c => c.id === a.clientId);
+                    const clientName = client?.name.toLowerCase() || a.clientName?.toLowerCase() || '';
+                    const serviceType = a.type?.toLowerCase() || '';
+                    const title = a.title?.toLowerCase() || '';
+                    const matchesSearch = !search || clientName.includes(search) || serviceType.includes(search) || title.includes(search);
+                    return matchesStatus && matchesSearch;
+                }).map(a => {
+                    const start = a.date && a.time ? `${a.date}T${a.time}` : (a.start || a.date);
+                    return {
+                        id: a.id,
+                        title: a.title || (window.NotaryCRM.state.clients.find(c => c.id === a.clientId)?.name || 'Cita'),
+                        start: start,
+                        allDay: !a.time,
+                        backgroundColor: a.color || this.serviceColors[a.type] || this.serviceColors['Other'],
+                        borderColor: a.color || this.serviceColors[a.type] || this.serviceColors['Other'],
+                        extendedProps: a
+                    };
+                });
+                successCallback(appts);
+            },
+            dateClick: (info) => {
+                NotaryCRM.openModal('calendar-modal');
+                const form = document.getElementById('calendar-form');
+                if (form) {
+                    const dateInput = form.querySelector('input[name="date"]');
+                    if (dateInput) dateInput.value = info.dateStr.slice(0, 10);
+                }
+            },
+            eventClick: (info) => {
+                this.showAppointmentDetails(info.event.id || info.event.extendedProps.id || info.event.extendedProps);
+            },
+            eventDrop: async (info) => {
+                const id = info.event.id;
+                const newDate = info.event.start.toISOString().split('T')[0];
+                const newTime = info.event.start.toTimeString().split(' ')[0].slice(0, 5);
+
+                if (confirm(`¿Mover cita al ${newDate} a las ${newTime}?`)) {
+                    await window.NotaryCRM.updateAppointment(id, {
+                        date: newDate,
+                        time: newTime
+                    });
+                } else {
+                    info.revert();
+                }
+            },
+            eventResize: async (info) => {
+                const id = info.event.id;
+                const start = info.event.start;
+                const end = info.event.end;
+                const duration = Math.round((end - start) / 60000);
+
+                await window.NotaryCRM.updateAppointment(id, {
+                    duration: duration
+                });
+            },
+            eventMouseEnter: (info) => {
+                this.showEventTooltip(info);
+            },
+            eventMouseLeave: (info) => {
+                this.hideEventTooltip();
+            }
+        });
+
+        calendar.render();
+        window.NotaryCRM.calendar = calendar;
+    },
+
+    showAppointmentDetails(appt) {
+        if (!appt) return;
+
+        // Use the detail rendering from app.js if available, otherwise fallback
+        if (window.NotaryCRM && typeof window.NotaryCRM.showAppointmentDetails === 'function') {
+            window.NotaryCRM.showAppointmentDetails(appt.id || appt);
+        } else {
+            // Fill appointment details modal manually if needed
+            NotaryCRM.openModal('appointment-details-modal');
+        }
+    },
+
+    applyColorCoding() {
+        const originalRender = window.NotaryCRM.renderCalendar;
+        if (originalRender) {
+            // Wrap if needed, but we mostly handle it via FullCalendar events function
+        }
+    },
+
+    renderDayBadges() {
+        const dayCells = document.querySelectorAll('.fc-daygrid-day');
+        const appointments = (window.NotaryCRM?.state?.appointments || []).filter(a => a.status !== 'cancelled');
+
+        dayCells.forEach(cell => {
+            const date = cell.getAttribute('data-date');
+            if (!date) return;
+
+            const dayAppts = appointments.filter(a => a.date === date);
+            const count = dayAppts.length;
+
+            // 1. Badge (Number)
+            let badge = cell.querySelector('.day-count-badge');
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'day-count-badge';
+                    badge.style.cssText = 'position:absolute; top:4px; right:4px; background:var(--color-primary); color:white; font-size:10px; font-weight:900; padding:2px 6px; border-radius:10px; z-index:5; pointer-events:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s;';
+                    cell.style.position = 'relative';
+                    cell.appendChild(badge);
+                }
+                badge.textContent = count;
+                // Premium effect: larger badge if many appointments
+                badge.style.transform = count > 3 ? 'scale(1.1)' : 'scale(1)';
+            } else if (badge) {
+                badge.remove();
+            }
+
+            // 2. Heatmap Bar (Visual density)
+            let heatmap = cell.querySelector('.day-heatmap-bar');
+            if (count > 0) {
+                if (!heatmap) {
+                    heatmap = document.createElement('div');
+                    heatmap.className = 'day-heatmap-bar';
+                    heatmap.style.cssText = 'position:absolute; bottom:2px; left:4px; right:4px; height:3px; border-radius:2px; z-index:3; pointer-events:none;';
+                    cell.appendChild(heatmap);
+                }
+                // Color intensity based on density
+                let color = '#3b82f6'; // Light blue (1-2)
+                if (count >= 3) color = '#f59e0b'; // Amber (3-4)
+                if (count >= 5) color = '#ef4444'; // Red (5+)
+                heatmap.style.background = color;
+                heatmap.style.opacity = Math.min(0.3 + (count * 0.15), 0.9);
+            } else if (heatmap) {
+                heatmap.remove();
+            }
         });
     },
 
-    // Limita visualmente la altura de la lista de eventos por día y añade un indicador "+N más"
-    collapseDayEvents() {
-        const dayFrames = document.querySelectorAll('.fc-daygrid-day-frame');
-        dayFrames.forEach(frame => {
-            const eventsContainer = frame.querySelector('.fc-daygrid-day-events');
-            if (!eventsContainer) return;
+    showDayPopover(date, anchorEl) {
+        const pop = document.getElementById('calendar-day-popover');
+        if (!pop) {
+            const newPop = document.createElement('div');
+            newPop.id = 'calendar-day-popover';
+            newPop.style.cssText = 'position:fixed; z-index:9999; display:none; background:white; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); padding:12px; min-width:250px;';
+            document.body.appendChild(newPop);
+        }
 
-            // Ensure container has relative positioning for absolute indicator
-            eventsContainer.style.position = 'relative';
+        const appts = (window.NotaryCRM.state.appointments || []).filter(a => a.date === date);
+        if (appts.length === 0) return;
 
-            // Remove existing indicator
-            const old = eventsContainer.querySelector('.day-more-indicator');
-            if (old) old.remove();
+        const container = document.getElementById('calendar-day-popover');
+        container.innerHTML = `<h4 style="margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:4px;">${date}</h4>` +
+            appts.map(a => `<div style="font-size:0.85rem; margin-bottom:4px;"><strong>${a.time || '--:--'}</strong> ${a.title || a.type}</div>`).join('');
 
-            const events = Array.from(eventsContainer.querySelectorAll('.fc-daygrid-event'));
-            if (events.length === 0) return;
+        const rect = anchorEl.getBoundingClientRect();
+        container.style.top = `${rect.bottom + 5}px`;
+        container.style.left = `${rect.left}px`;
+        container.style.display = 'block';
+    },
 
-            const containerHeight = eventsContainer.clientHeight;
-            let hiddenCount = 0;
+    showEventTooltip(info) {
+        let tip = document.getElementById('calendar-event-tooltip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'calendar-event-tooltip';
+            tip.style.cssText = 'position:fixed; z-index:10000; pointer-events:none; background:rgba(15, 23, 42, 0.95); color:white; padding:10px 14px; border-radius:10px; font-size:0.85rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1); max-width:280px;';
+            document.body.appendChild(tip);
+        }
 
-            for (let ev of events) {
-                const evBottom = ev.offsetTop + ev.offsetHeight;
-                if (evBottom > containerHeight - 2) { // small tolerance
-                    hiddenCount++;
-                }
-            }
+        const appt = info.event.extendedProps;
+        const client = window.NotaryCRM.state.clients.find(c => c.id === appt.clientId);
 
-            if (hiddenCount > 0) {
-                const indicator = document.createElement('div');
-                indicator.className = 'day-more-indicator';
-                indicator.textContent = `+${hiddenCount} más`;
-                eventsContainer.appendChild(indicator);
-            }
-        });
+        tip.innerHTML = `
+            <div style="font-weight:700; margin-bottom:4px; font-size:0.95rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">${info.event.title}</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; align-items:center; gap:6px; opacity:0.9;"><i data-lucide="user" style="width:12px; height:12px;"></i> ${client ? client.name : (appt.clientName || 'Sin cliente')}</div>
+                <div style="display:flex; align-items:center; gap:6px; opacity:0.9;"><i data-lucide="clock" style="width:12px; height:12px;"></i> ${appt.time || '--:--'} (${appt.duration || 30} min)</div>
+                <div style="display:flex; align-items:center; gap:6px; opacity:0.9;"><i data-lucide="info" style="width:12px; height:12px;"></i> ${appt.type || 'Servicio'}</div>
+                ${appt.note ? `<div style="margin-top:6px; font-size:0.75rem; font-style:italic; opacity:0.7; border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">${appt.note}</div>` : ''}
+            </div>
+        `;
+
+        if (window.lucide) window.lucide.createIcons({ root: tip });
+
+        const ev = info.jsEvent;
+        tip.style.left = `${ev.clientX + 15}px`;
+        tip.style.top = `${ev.clientY + 15}px`;
+        tip.style.display = 'block';
+    },
+
+    hideEventTooltip() {
+        const tip = document.getElementById('calendar-event-tooltip');
+        if (tip) tip.style.display = 'none';
+    },
+
+    hideDayPopover() {
+        const pop = document.getElementById('calendar-day-popover');
+        if (pop) pop.style.display = 'none';
     },
 
     addCalendarLegend() {
@@ -357,150 +431,46 @@ const CalendarEnhancements = {
 
         const legend = document.createElement('div');
         legend.id = 'calendar-legend';
-        legend.style.cssText = `
-            margin-top: 1rem;
-            padding: 1rem;
-            background: var(--bg-card);
-            border-radius: 8px;
-            border: 1px solid var(--color-gray-200);
-        `;
+        legend.style.cssText = 'margin-top:1.5rem; padding:1.25rem; background:#fff; border-radius:12px; border:1px solid #e2e8f0;';
 
-        let legendHTML = '<h4 style="margin-bottom: 0.75rem; font-size: 0.9rem; font-weight: 600;">Leyenda de Servicios</h4>';
-        legendHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;">';
+        let html = '<h4 style="margin-bottom:1rem; font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px;"><i data-lucide="tag" style="width:18px; height:18px;"></i> Leyenda de Servicios</h4>';
+        html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:0.75rem;">';
 
-        Object.entries(this.serviceColors).forEach(([service, color]) => {
-            legendHTML += `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 16px; height: 16px; border-radius: 4px; background: ${color};"></div>
-                    <span style="font-size: 0.8rem;">${service}</span>
+        Object.entries(this.serviceColors).forEach(([name, color]) => {
+            html += `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:12px; height:12px; border-radius:3px; background:${color};"></div>
+                    <span style="font-size:0.8rem; color:#475569;">${name}</span>
                 </div>
             `;
         });
+        html += '</div>';
+        legend.innerHTML = html;
 
-        legendHTML += '</div>';
-        legend.innerHTML = legendHTML;
-
-        const calendarContainer = calendarTab.querySelector('#calendar');
-        if (calendarContainer) {
-            calendarContainer.parentElement.appendChild(legend);
-        }
+        const view = document.getElementById('calendar-view');
+        if (view) view.appendChild(legend);
+        if (window.lucide) window.lucide.createIcons({ root: legend });
     },
 
     setupConflictDetection() {
-        // Monitor form submission for conflicts
-        const calendarForm = document.getElementById('calendar-form');
-        if (calendarForm) {
-            calendarForm.addEventListener('submit', (e) => {
-                const hasConflict = this.checkForConflicts(new FormData(calendarForm));
-                if (hasConflict) {
-                    e.preventDefault();
+        // Implement conflict check on appointment save
+        const originalSave = window.NotaryCRM.saveAppointment;
+        if (originalSave) {
+            window.NotaryCRM.saveAppointment = async (apptData) => {
+                const appointments = window.NotaryCRM.state.appointments || [];
+                const conflict = appointments.find(a =>
+                    a.id !== apptData.id &&
+                    a.date === apptData.date &&
+                    a.time === apptData.time
+                );
+
+                if (conflict) {
+                    const proceed = confirm(`⚠️ Conflicto detectado: ya hay una cita a las ${apptData.time}. ¿Desea continuar?`);
+                    if (!proceed) return;
                 }
-            });
+                return originalSave.call(window.NotaryCRM, apptData);
+            };
         }
-    },
-
-    checkForConflicts(formData) {
-        if (!window.NotaryCRM) return false;
-
-        const newStart = new Date(formData.get('start'));
-        const newEnd = new Date(formData.get('end'));
-        const editingId = formData.get('id');
-
-        const appointments = window.NotaryCRM.state.appointments || [];
-        const conflicts = [];
-
-        appointments.forEach(apt => {
-            // Skip if editing the same appointment
-            if (editingId && apt.id === editingId) return;
-
-            const aptStart = new Date(apt.start);
-            const aptEnd = new Date(apt.end);
-
-            // Check for overlap
-            if (this.hasTimeOverlap(newStart, newEnd, aptStart, aptEnd)) {
-                conflicts.push(apt);
-            }
-        });
-
-        if (conflicts.length> 0) {
-            this.showConflictWarning(conflicts, newStart, newEnd);
-            return true;
-        }
-
-        return false;
-    },
-
-    hasTimeOverlap(start1, end1, start2, end2) {
-        return start1 < end2 && end1> start2;
-    },
-
-    showConflictWarning(conflicts, newStart, newEnd) {
-        const conflictList = conflicts.map(apt => {
-            const client = window.NotaryCRM.state.clients.find(c => c.id === apt.clientId);
-            const clientName = client ? client.name : 'Cliente Desconocido';
-            const time = new Date(apt.start).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            return `• ${time} - ${clientName} (${apt.title})`;
-        }).join('\n');
-
-        const message = `⚠️ CONFLICTO DE HORARIO DETECTADO\n\n` +
-            `La cita que intentas crear se solapa con:\n\n${conflictList}\n\n` +
-            `¿Deseas continuar de todas formas?`;
-
-        if (confirm(message)) {
-            // Allow submission
-            const form = document.getElementById('calendar-form');
-            if (form) {
-                // Temporarily remove event listener
-                const newForm = form.cloneNode(true);
-                form.parentNode.replaceChild(newForm, form);
-                newForm.submit();
-            }
-        }
-
-        // Announce for screen readers
-        if (window.ScreenReaderManager) {
-            ScreenReaderManager.announce(
-                `Conflicto de horario detectado. ${conflicts.length} cita(s) se solapan.`,
-                'assertive'
-            );
-        }
-    },
-
-    // Buffer time functionality
-    addBufferTime(date, minutes = 15) {
-        return new Date(date.getTime() + minutes * 60000);
-    },
-
-    suggestNextAvailableSlot(preferredStart, duration = 60) {
-        if (!window.NotaryCRM) return preferredStart;
-
-        const appointments = window.NotaryCRM.state.appointments || [];
-        let currentSlot = new Date(preferredStart);
-        const slotEnd = new Date(currentSlot.getTime() + duration * 60000);
-
-        let attempts = 0;
-        const maxAttempts = 20; // Check up to 20 slots
-
-        while (attempts < maxAttempts) {
-            const hasConflict = appointments.some(apt => {
-                const aptStart = new Date(apt.start);
-                const aptEnd = new Date(apt.end);
-                return this.hasTimeOverlap(currentSlot, slotEnd, aptStart, aptEnd);
-            });
-
-            if (!hasConflict) {
-                return currentSlot;
-            }
-
-            // Move to next 30-minute slot
-            currentSlot = new Date(currentSlot.getTime() + 30 * 60000);
-            attempts++;
-        }
-
-        return preferredStart; // Return original if no slot found
     },
 
     getColorForService(serviceType) {

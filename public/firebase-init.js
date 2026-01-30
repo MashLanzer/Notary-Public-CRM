@@ -57,6 +57,21 @@ window.dbFuncs = {
   getCountFromServer
 };
 
+// Diagnostic wrapper: replace `doc` with a wrapper that logs suspicious calls (helps find invalid refs)
+try {
+  const _origDoc = window.dbFuncs.doc;
+  window.dbFuncs.doc = function(...args) {
+    try {
+      // args typically: (db, 'collection', 'docId', ...)
+      if (args.length === 2 && typeof args[1] === 'string') {
+        // Likely a call like doc(db, 'appointments') — invalid (missing id)
+        console.error('Diagnostic: doc() called with single path segment', args[1], '\nCall stack:', new Error().stack);
+      }
+    } catch (e) { console.warn('doc wrapper diagnostics failed', e); }
+    return _origDoc.apply(this, args);
+  };
+} catch (e) { console.warn('Could not wrap doc for diagnostics', e); }
+
 // Storage helpers
 // Auth helpers
 window.authFuncs = {
