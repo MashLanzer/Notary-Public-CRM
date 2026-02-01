@@ -1,4 +1,8 @@
 /* LANDING PAGE SPECIFIC STYLES (DESKTOP) */
+.mobile-bottom-nav {
+    display: none !important;
+}
+
 .landing-body {
     background-color: #ffffff;
     font-family: 'Inter', sans-serif;
